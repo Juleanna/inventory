@@ -1,0 +1,80 @@
+<!-- inventory/templates/admin/schedule_maintenance.html -->
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>{{ title }}</h3>
+                </div>
+                <div class="card-body">
+                    <p>Ви збираєтеся запланувати обслуговування для наступного обладнання:</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Назва</th>
+                                    <th>Серійний номер</th>
+                                    <th>Місцезнаходження</th>
+                                    <th>Останнє обслуговування</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for equipment in queryset %}
+                                <tr>
+                                    <td>{{ equipment.name }}</td>
+                                    <td>{{ equipment.serial_number }}</td>
+                                    <td>{{ equipment.location }}</td>
+                                    <td>
+                                        {% if equipment.last_maintenance_date %}
+                                            {{ equipment.last_maintenance_date|date:"d.m.Y" }}
+                                        {% else %}
+                                            <span class="text-muted">Ніколи</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="days">Запланувати обслуговування через:</label>
+                            <select name="days" id="days" class="form-control" style="width: 200px;">
+                                <option value="30">30 днів</option>
+                                <option value="90">3 місяці</option>
+                                <option value="180">6 місяців</option>
+                                <option value="365" selected>1 рік</option>
+                                <option value="730">2 роки</option>
+                            </select>
+                        </div>
+                        
+                        {% for equipment in queryset %}
+                            <input type="hidden" name="{{ action_checkbox_name }}" value="{{ equipment.pk }}">
+                        {% endfor %}
+                        
+                        <input type="hidden" name="action" value="schedule_maintenance">
+                        <input type="hidden" name="confirm" value="yes">
+                        
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-calendar-plus"></i> Запланувати обслуговування
+                            </button>
+                            <a href="../" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times"></i> Скасувати
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

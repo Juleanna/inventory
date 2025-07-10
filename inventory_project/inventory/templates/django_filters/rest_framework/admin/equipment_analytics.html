@@ -1,0 +1,185 @@
+<!-- inventory/templates/admin/equipment_analytics.html -->
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.analytics-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>{{ title }}</h2>
+            <p class="text-muted">Аналітика та статистика обладнання</p>
+        </div>
+    </div>
+    
+    <!-- Основна статистика -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="analytics-card text-center">
+                <div class="stat-number">{{ stats.total }}</div>
+                <div class="stat-label">Всього обладнання</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="analytics-card text-center">
+                <div class="stat-number text-success">{{ stats.working }}</div>
+                <div class="stat-label">Робоче</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="analytics-card text-center">
+                <div class="stat-number text-warning">{{ stats.repair }}</div>
+                <div class="stat-label">На ремонті</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="analytics-card text-center">
+                <div class="stat-number text-danger">{{ stats.disposed }}</div>
+                <div class="stat-label">Списано</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Графіки -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="analytics-card">
+                <h5>Розподіл по категоріях</h5>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="analytics-card">
+                <h5>Статус обладнання</h5>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Детальна таблиця -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="analytics-card">
+                <h5>Детальний розподіл по категоріях</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Категорія</th>
+                                <th>Кількість</th>
+                                <th>Відсоток</th>
+                                <th>Прогрес</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category in by_category %}
+                            {% with percentage=category.count|floatformat:1 %}
+                            <tr>
+                                <td>{{ category.category }}</td>
+                                <td>{{ category.count }}</td>
+                                <td>{{ percentage }}%</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" style="width: {{ percentage }}%"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Дані для графіків
+const categoryData = {
+    labels: [{% for cat in by_category %}'{{ cat.category }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+    datasets: [{
+        data: [{% for cat in by_category %}{{ cat.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+        backgroundColor: [
+            '#FF6384',
+            '#36A2EB', 
+            '#FFCE56',
+            '#4BC0C0',
+            '#9966FF',
+            '#FF9F40'
+        ]
+    }]
+};
+
+const statusData = {
+    labels: ['Робоче', 'На ремонті', 'Списано', 'Інше'],
+    datasets: [{
+        data: [{{ stats.working }}, {{ stats.repair }}, {{ stats.disposed }}, {{ stats.total|add:"-"|add:stats.working|add:"-"|add:stats.repair|add:"-"|add:stats.disposed }}],
+        backgroundColor: [
+            '#28a745',
+            '#ffc107', 
+            '#dc3545',
+            '#6c757d'
+        ]
+    }]
+};
+
+// Конфігурація графіків
+const chartConfig = {
+    type: 'doughnut',
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+};
+
+// Створення графіків
+new Chart(document.getElementById('categoryChart'), {
+    ...chartConfig,
+    data: categoryData
+});
+
+new Chart(document.getElementById('statusChart'), {
+    ...chartConfig,
+    data: statusData
+});
+</script>
+{% endblock %}

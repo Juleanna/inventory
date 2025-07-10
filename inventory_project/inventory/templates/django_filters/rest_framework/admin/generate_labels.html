@@ -1,0 +1,240 @@
+<!-- inventory/templates/admin/generate_labels.html -->
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+.label-preview {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin: 5px;
+    display: inline-block;
+    width: 200px;
+    text-align: center;
+    background: white;
+}
+
+.equipment-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+}
+
+.equipment-item {
+    padding: 5px;
+    border-bottom: 1px solid #eee;
+}
+
+.equipment-item:hover {
+    background-color: #f5f5f5;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>{{ title }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="labelsForm">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Оберіть обладнання:</h5>
+                                <div class="equipment-list">
+                                    {% for equipment in equipment_list %}
+                                    <div class="equipment-item">
+                                        <label>
+                                            <input type="checkbox" name="selected_equipment" value="{{ equipment.id }}" class="equipment-checkbox">
+                                            <strong>{{ equipment.name }}</strong><br>
+                                            <small>{{ equipment.serial_number }} | {{ equipment.location }}</small>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <button type="button" class="btn btn-sm btn-secondary" onclick="selectAll()">
+                                        Обрати всі
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-secondary" onclick="selectNone()">
+                                        Скасувати всі
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5>Превʼю етикеток:</h5>
+                                <div id="previewArea">
+                                    <p class="text-muted">Оберіть обладнання для перегляду етикеток</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5>Налаштування етикеток:</h5>
+                                <div class="form-row">
+                                    <div class="form-group col-md-3">
+                                        <label for="labelSize">Розмір етикетки:</label>
+                                        <select id="labelSize" name="label_size" class="form-control">
+                                            <option value="small">Мала (4x2 см)</option>
+                                            <option value="medium" selected>Середня (6x3 см)</option>
+                                            <option value="large">Велика (8x4 см)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group col-md-3">
+                                        <label for="includeQR">Включити QR-код:</label>
+                                        <select id="includeQR" name="include_qr" class="form-control">
+                                            <option value="yes" selected>Так</option>
+                                            <option value="no">Ні</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group col-md-3">
+                                        <label for="includeBarcode">Включити штрих-код:</label>
+                                        <select id="includeBarcode" name="include_barcode" class="form-control">
+                                            <option value="yes">Так</option>
+                                            <option value="no" selected>Ні</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group col-md-3">
+                                        <label for="labelFormat">Формат:</label>
+                                        <select id="labelFormat" name="format" class="form-control">
+                                            <option value="pdf" selected>PDF</option>
+                                            <option value="png">PNG зображення</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary" id="generateBtn" disabled>
+                                <i class="fas fa-print"></i> Згенерувати етикетки
+                            </button>
+                            <a href="../" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times"></i> Скасувати
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Дані обладнання для JavaScript
+const equipmentData = {
+    {% for equipment in equipment_list %}
+    {{ equipment.id }}: {
+        'name': '{{ equipment.name|escapejs }}',
+        'serial': '{{ equipment.serial_number|escapejs }}',
+        'location': '{{ equipment.location|escapejs }}',
+        'qr_url': {% if equipment.qrcode_image %}'{{ equipment.qrcode_image.url }}'{% else %}null{% endif %}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+};
+
+// Обробка вибору обладнання
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.equipment-checkbox');
+    const previewArea = document.getElementById('previewArea');
+    const generateBtn = document.getElementById('generateBtn');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updatePreview);
+    });
+    
+    function updatePreview() {
+        const selected = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => parseInt(cb.value));
+        
+        if (selected.length === 0) {
+            previewArea.innerHTML = '<p class="text-muted">Оберіть обладнання для перегляду етикеток</p>';
+            generateBtn.disabled = true;
+            return;
+        }
+        
+        generateBtn.disabled = false;
+        
+        let html = '<div class="row">';
+        selected.slice(0, 6).forEach(id => { // Показати максимум 6 превʼю
+            const equipment = equipmentData[id];
+            html += `
+                <div class="col-md-4 mb-3">
+                    <div class="label-preview">
+                        <div style="font-size: 12px; font-weight: bold;">${equipment.name}</div>
+                        <div style="font-size: 10px; margin: 5px 0;">${equipment.serial}</div>
+                        <div style="font-size: 9px; color: #666;">${equipment.location}</div>
+                        ${equipment.qr_url ? `<div style="margin-top: 5px;"><img src="${equipment.qr_url}" style="width: 40px; height: 40px;"></div>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        if (selected.length > 6) {
+            html += `<div class="col-12"><p class="text-muted">... та ще ${selected.length - 6} етикеток</p></div>`;
+        }
+        
+        html += '</div>';
+        previewArea.innerHTML = html;
+    }
+});
+
+function selectAll() {
+    document.querySelectorAll('.equipment-checkbox').forEach(cb => {
+        cb.checked = true;
+    });
+    document.querySelector('.equipment-checkbox').dispatchEvent(new Event('change'));
+}
+
+function selectNone() {
+    document.querySelectorAll('.equipment-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+    document.querySelector('.equipment-checkbox').dispatchEvent(new Event('change'));
+}
+
+// Обробка форми
+document.getElementById('labelsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const selected = Array.from(document.querySelectorAll('.equipment-checkbox:checked'))
+        .map(cb => cb.value);
+    
+    if (selected.length === 0) {
+        alert('Оберіть хоча б одне обладнання');
+        return;
+    }
+    
+    // Тут можна додати AJAX запит для генерації етикеток
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Обробка відповіді
+        console.log('Етикетки згенеровано:', data);
+        alert(`Етикетки для ${selected.length} одиниць обладнання згенеровано успішно!`);
+    })
+    .catch(error => {
+        console.error('Помилка:', error);
+        alert('Помилка генерації етикеток');
+    });
+});
+</script>
+{% endblock %}
