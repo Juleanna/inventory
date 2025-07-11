@@ -19,13 +19,11 @@ from django.utils.translation import gettext_lazy as _
 # JWT налаштування
 from datetime import timedelta
 
-# Створити папку для логів
-import os
-os.makedirs(BASE_DIR / 'logs', exist_ok=True)
-
 # Загружаем .env
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
+os.makedirs(BASE_DIR / 'logs', exist_ok=True)
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/

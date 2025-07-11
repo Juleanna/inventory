@@ -1,4 +1,4 @@
-# inventory/admin.py (покращена версія)
+# inventory/admin.py (виправлена версія без помилок)
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse, path
@@ -62,26 +62,6 @@ class EquipmentLocationFilter(admin.SimpleListFilter):
                 Q(location__icontains='сервер') | Q(location__icontains='server')
             )
 
-class EquipmentStatusFilter(admin.SimpleListFilter):
-    """Фільтр статусу з додатковою логікою"""
-    title = _('Статус (розширений)')
-    parameter_name = 'status_extended'
-
-    def lookups(self, request, model_admin):
-        return [
-            ('active', 'Активне (робоче + обслуговування)'),
-            ('problematic', 'Проблемне (ремонт + втрачено)'),
-            ('inactive', 'Неактивне (списано + на складі)'),
-        ]
-
-    def queryset(self, request, queryset):
-        if self.value() == 'active':
-            return queryset.filter(status__in=['WORKING', 'MAINTENANCE'])
-        elif self.value() == 'problematic':
-            return queryset.filter(status__in=['REPAIR', 'LOST'])
-        elif self.value() == 'inactive':
-            return queryset.filter(status__in=['DISPOSED', 'STORAGE'])
-
 @admin.register(Equipment)
 class EquipmentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, ModelAdmin):
     list_display = (
@@ -93,7 +73,6 @@ class EquipmentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, ModelAdmin):
     list_filter = (
         ('category', MultipleChoicesDropdownFilter),
         ('status', MultipleChoicesDropdownFilter),
-        EquipmentStatusFilter,
         EquipmentLocationFilter,
         ('purchase_date', RangeDateFilter),
         ('warranty_until', RangeDateFilter),
@@ -163,20 +142,19 @@ class EquipmentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, ModelAdmin):
     def has_export_to_csv_permission(self, request):
         return request.user.has_perm('inventory.view_equipment')
     
+    def has_mark_maintenance_complete_permission(self, request):
+        return request.user.has_perm('inventory.change_equipment')
+    
     # Список дій
     actions_list = [
         "mark_as_disposed",
         "schedule_maintenance", 
         "generate_qr_codes",
+        "mark_maintenance_complete",
         {
             "title": _("Експорт"),
             "icon": "download",
             "items": ["export_to_csv", "export_financial_report"],
-        },
-        {
-            "title": _("Обслуговування"),
-            "icon": "settings",
-            "items": ["mark_maintenance_complete", "reset_maintenance_schedule"],
         }
     ]
     
@@ -416,7 +394,7 @@ class EquipmentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, ModelAdmin):
     
     @action(
         description=_("Відмітити обслуговування завершеним"),
-        permissions=["schedule_maintenance"],
+        permissions=["mark_maintenance_complete"],
     )
     def mark_maintenance_complete(self, request, queryset):
         """Відмітити обслуговування як завершене"""
@@ -435,70 +413,6 @@ class EquipmentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, ModelAdmin):
             f"Обслуговування завершено для {updated} одиниць обладнання",
             messages.SUCCESS
         )
-    
-    # Кастомні URL
-    def get_urls(self):
-        urls = super().get_urls()
-        custom_urls = [
-            path('analytics/', self.admin_site.admin_view(self.analytics_view), name='equipment_analytics'),
-            path('generate_labels/', self.admin_site.admin_view(self.generate_labels_view), name='equipment_labels'),
-        ]
-        return custom_urls + urls
-    
-    def analytics_view(self, request):
-        """Сторінка аналітики"""
-        from .models import Equipment
-        
-        # Статистика
-        stats = {
-            'total': Equipment.objects.count(),
-            'working': Equipment.objects.filter(status='WORKING').count(),
-            'repair': Equipment.objects.filter(status='REPAIR').count(),
-            'disposed': Equipment.objects.filter(status='DISPOSED').count(),
-        }
-        
-        # По категоріях
-        by_category = Equipment.objects.values('category').annotate(
-            count=Count('id')
-        ).order_by('-count')
-        
-        context = {
-            'title': 'Аналітика обладнання',
-            'stats': stats,
-            'by_category': by_category,
-            'opts': self.model._meta,
-        }
-        
-        return render(request, 'admin/equipment_analytics.html', context)
-    
-    def generate_labels_view(self, request):
-        """Генерація етикеток"""
-        if request.method == 'POST':
-            selected_ids = request.POST.getlist('selected_equipment')
-            equipment_list = Equipment.objects.filter(id__in=selected_ids)
-            
-            # Тут можна додати генерацію PDF з етикетками
-            response = HttpResponse(content_type='application/json')
-            labels_data = []
-            
-            for equipment in equipment_list:
-                labels_data.append({
-                    'name': equipment.name,
-                    'serial': equipment.serial_number,
-                    'qr_url': equipment.qrcode_image.url if equipment.qrcode_image else None
-                })
-            
-            response.content = json.dumps(labels_data, ensure_ascii=False)
-            return response
-        
-        equipment_list = Equipment.objects.all()
-        context = {
-            'title': 'Генерація етикеток',
-            'equipment_list': equipment_list,
-            'opts': self.model._meta,
-        }
-        
-        return render(request, 'admin/generate_labels.html', context)
 
 
 @admin.register(Notification)
