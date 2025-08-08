@@ -831,14 +831,15 @@ def quick_report(request):
     
     created_count = 0
     for admin in admins:
+        report_types = {
+            'hardware': 'Обладнання',
+            'software': 'ПЗ',
+            'network': 'Мережа',
+            'other': 'Проблема'
+        }
         notification = Notification.objects.create(
             user=admin,
-            title=f"Швидкий звіт: {dict([
-                ('hardware', 'Обладнання'),
-                ('software', 'ПЗ'),
-                ('network', 'Мережа'),
-                ('other', 'Проблема')
-            ]).get(report_type, 'Проблема')}",
+            title=f"Швидкий звіт: {report_types.get(report_type, 'Проблема')}",
             message=report_message,
             notification_type='WARNING',
             priority='MEDIUM'
