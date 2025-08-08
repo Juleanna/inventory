@@ -1,0 +1,2538 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інструкція адміністратора - Inventory Management System</title>
+    <style>
+        /* CSS Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Основні стилі */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Заголовки */
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Навігація */
+        .nav-menu {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .nav-menu h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .nav-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 12px 20px;
+            background: white;
+            color: #333;
+            text-decoration: none;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Розділи */
+        .section {
+            margin-bottom: 40px;
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .section h2 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-icon {
+            font-size: 2.5rem;
+        }
+
+        /* Підрозділи */
+        .subsection {
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .subsection h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+
+        /* Кроки */
+        .steps {
+            counter-reset: step-counter;
+        }
+
+        .step {
+            counter-increment: step-counter;
+            position: relative;
+            padding-left: 60px;
+            margin-bottom: 25px;
+            background: #f8f9fa;
+            padding: 20px 20px 20px 60px;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+
+        .step::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #28a745;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* Приклади коду */
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #4a5568;
+        }
+
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        /* Інформаційні блоки */
+        .info-box {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 5px solid;
+        }
+
+        .info-box.tip {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+            color: #0c5460;
+        }
+
+        .info-box.warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+            color: #856404;
+        }
+
+        .info-box.danger {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+
+        .info-box.success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+
+        .info-box-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        /* Таблиці */
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Списки */
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-item {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            transition: transform 0.3s;
+        }
+
+        .feature-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        /* Скріншоти */
+        .screenshot {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .screenshot img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            border: 3px solid #e9ecef;
+        }
+
+        .screenshot-caption {
+            margin-top: 10px;
+            font-style: italic;
+            color: #6c757d;
+        }
+
+        /* Кнопки */
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn.secondary {
+            background: #6c757d;
+        }
+
+        .btn.success {
+            background: #28a745;
+        }
+
+        .btn.danger {
+            background: #dc3545;
+        }
+
+        /* Форми приклади */
+        .form-example {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin: 20px 0;
+        }
+
+        .form-field {
+            margin-bottom: 20px;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-field input,
+        .form-field select,
+        .form-field textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-field .required {
+            color: #dc3545;
+        }
+
+        .form-field .help-text {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        /* Адаптивність */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-links {
+                grid-template-columns: 1fr;
+            }
+            
+            .step {
+                padding: 15px 15px 15px 50px;
+            }
+            
+            .step::before {
+                left: 15px;
+                width: 25px;
+                height: 25px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Анімації */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        /* Кнопка "Вгору" */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #667eea;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: none;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+        }
+
+        .back-to-top:hover {
+            background: #5a6fd8;
+            transform: translateY(-3px);
+        }
+
+        .back-to-top.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Заголовок -->
+        <div class="header">
+            <h1>📋 Інструкція адміністратора</h1>
+            <p>Повний посібник з управління системою Inventory Management</p>
+        </div>
+
+        <!-- Навігація -->
+        <div class="nav-menu">
+            <h3>🧭 Швидка навігація</h3>
+            <div class="nav-links">
+                <a href="#getting-started" class="nav-link">🚀 Початок роботи</a>
+                <a href="#users-management" class="nav-link">👥 Управління користувачами</a>
+                <a href="#equipment-management" class="nav-link">🖥️ Управління обладнанням</a>
+                <a href="#categories-locations" class="nav-link">🏢 Категорії та локації</a>
+                <a href="#licenses" class="nav-link">📜 Управління ліцензіями</a>
+                <a href="#maintenance" class="nav-link">🔧 Технічне обслуговування</a>
+                <a href="#reports-analytics" class="nav-link">📊 Звіти та аналітика</a>
+                <a href="#mobile-access" class="nav-link">📱 Мобільний доступ</a>
+                <a href="#system-settings" class="nav-link">⚙️ Системні налаштування</a>
+                <a href="#troubleshooting" class="nav-link">🚨 Вирішення проблем</a>
+            </div>
+        </div>
+
+        <!-- Початок роботи -->
+        <section id="getting-started" class="section">
+            <h2><span class="section-icon">🚀</span> Початок роботи</h2>
+            
+            <div class="subsection">
+                <h3>Перший запуск системи</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Запуск Docker контейнерів</strong>
+                        <div class="code-block">
+                            <pre># Windows (PowerShell) - рекомендовано
+PowerShell -ExecutionPolicy Bypass -File docker-init.ps1
+
+# або Windows CMD
+docker-init-ua.bat
+
+# Linux/Mac
+./docker-init.sh</pre>
+                        </div>
+                        <div class="info-box tip">
+                            <div class="info-box-title">💡 Порада</div>
+                            PowerShell версія має найкращу підтримку Unicode та кольоровий вивід
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Перевірка запуску</strong>
+                        <p>Відкрийте браузер та перейдіть за адресою:</p>
+                        <div class="code-block">
+                            <pre>🌐 Головна сторінка: http://localhost:8000
+🔐 Адмін-панель: http://localhost:8000/admin
+📱 Мобільна версія: http://localhost:8000/mobile</pre>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Перший вхід в систему</strong>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>👤 Логін:</label>
+                                <input type="text" value="admin" readonly>
+                            </div>
+                            <div class="form-field">
+                                <label>🔑 Пароль:</label>
+                                <input type="password" value="securepassword123" readonly>
+                            </div>
+                        </div>
+                        <div class="info-box warning">
+                            <div class="info-box-title">⚠️ Важливо</div>
+                            Обов'язково змініть стандартний пароль після першого входу!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Початкові налаштування</h3>
+                <div class="info-box warning">
+                    <div class="info-box-title">⚠️ Критично важливо</div>
+                    Ці налаштування необхідно виконати відразу після першого запуску системи для забезпечення безпеки та стабільної роботи.
+                </div>
+
+                <!-- Безпека -->
+                <div class="subsection" style="background: #fff; margin: 30px 0; border: 2px solid #dc3545; border-radius: 10px;">
+                    <h4 style="color: #dc3545; display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <span style="font-size: 1.8rem;">🔐</span> Налаштування безпеки
+                    </h4>
+                    
+                    <div class="steps">
+                        <div class="step">
+                            <strong>Зміна паролю адміністратора</strong>
+                            <p>Стандартний пароль <code>securepassword123</code> необхідно змінити негайно!</p>
+                            <ol>
+                                <li>Увійдіть в адмін-панель з стандартними даними</li>
+                                <li>В правому верхньому куті натисніть на <strong>"admin"</strong></li>
+                                <li>Оберіть <strong>"Change password"</strong></li>
+                                <li>Введіть поточний пароль: <code>securepassword123</code></li>
+                                <li>Встановіть новий надійний пароль</li>
+                            </ol>
+                            
+                            <div class="info-box danger">
+                                <div class="info-box-title">🔒 Вимоги до пароля</div>
+                                <ul>
+                                    <li><strong>Мінімум 12 символів</strong></li>
+                                    <li>Великі та малі літери (A-z)</li>
+                                    <li>Цифри (0-9)</li>
+                                    <li>Спеціальні символи (!@#$%^&*)</li>
+                                    <li>Не використовувати словникові слова</li>
+                                    <li>Не використовувати особисту інформацію</li>
+                                </ul>
+                                <p><strong>Приклад надійного пароля:</strong> <code>Inv3nt0ry#2024$SeCuRe!</code></p>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <strong>Створення безпечного секретного ключа</strong>
+                            <p>Django SECRET_KEY використовується для криптографічних операцій.</p>
+                            
+                            <div class="code-block">
+                                <pre># Зупиніть систему
+docker-compose down
+
+# Згенеруйте новий секретний ключ
+docker-compose run --rm web python -c "
+import secrets
+import string
+alphabet = string.ascii_letters + string.digits + '!@#$%^&*(-_=+)'
+secret_key = ''.join(secrets.choice(alphabet) for i in range(50))
+print('SECRET_KEY=' + secret_key)
+"</pre>
+                            </div>
+                            
+                            <p>Скопіюйте згенерований ключ та відредагуйте файл <code>.env</code>:</p>
+                            <div class="form-example">
+                                <div class="form-field">
+                                    <label>SECRET_KEY:</label>
+                                    <input type="text" placeholder="django-secure-your-secret-key-here-change-this-in-production" readonly style="background: #f8d7da;">
+                                    <div class="help-text" style="color: #dc3545;">⚠️ Замініть на згенерований ключ</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <strong>Налаштування HTTPS (для продакшену)</strong>
+                            <p>Для публічного доступу обов'язково налаштуйте HTTPS:</p>
+                            
+                            <div class="code-block">
+                                <pre># В файлі .env встановіть:
+DEBUG=False
+SECURE_SSL_REDIRECT=True
+SECURE_HSTS_SECONDS=31536000
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
+SECURE_BROWSER_XSS_FILTER=True
+SECURE_CONTENT_TYPE_NOSNIFF=True</pre>
+                            </div>
+                            
+                            <div class="info-box tip">
+                                <div class="info-box-title">💡 SSL сертифікат</div>
+                                <p>Для отримання безкоштовного SSL сертифікату використовуйте:</p>
+                                <ul>
+                                    <li><strong>Let's Encrypt</strong> - автоматичне оновлення</li>
+                                    <li><strong>Cloudflare</strong> - безкоштовний SSL + CDN</li>
+                                    <li><strong>AWS Certificate Manager</strong> - для AWS</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <strong>Налаштування прав доступу до файлів</strong>
+                            <div class="code-block">
+                                <pre># Встановіть правильні права на файли
+chmod 600 .env .env.docker
+chmod 755 docker-init.sh entrypoint.sh
+chmod -R 755 inventory_project/</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email налаштування -->
+                <div class="subsection" style="background: #fff; margin: 30px 0; border: 2px solid #17a2b8; border-radius: 10px;">
+                    <h4 style="color: #17a2b8; display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <span style="font-size: 1.8rem;">📧</span> Налаштування Email
+                    </h4>
+                    
+                    <div class="steps">
+                        <div class="step">
+                            <strong>Налаштування SMTP серверу</strong>
+                            <p>Відредагуйте файл <code>.env</code> для налаштування email:</p>
+                            
+                            <div class="form-example">
+                                <div class="form-field">
+                                    <label>EMAIL_BACKEND:</label>
+                                    <select>
+                                        <option>django.core.mail.backends.smtp.EmailBackend</option>
+                                        <option>django.core.mail.backends.console.EmailBackend (тест)</option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label>EMAIL_HOST:</label>
+                                    <input type="text" placeholder="smtp.gmail.com">
+                                    <div class="help-text">Gmail: smtp.gmail.com, Outlook: smtp-mail.outlook.com</div>
+                                </div>
+                                <div class="form-field">
+                                    <label>EMAIL_PORT:</label>
+                                    <input type="number" placeholder="587">
+                                    <div class="help-text">TLS: 587, SSL: 465</div>
+                                </div>
+                                <div class="form-field">
+                                    <label>EMAIL_USE_TLS:</label>
+                                    <select>
+                                        <option value="True">True (рекомендовано)</option>
+                                        <option value="False">False</option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label>EMAIL_HOST_USER:</label>
+                                    <input type="email" placeholder="inventory@company.com">
+                                </div>
+                                <div class="form-field">
+                                    <label>EMAIL_HOST_PASSWORD:</label>
+                                    <input type="password" placeholder="Пароль додатку">
+                                    <div class="help-text">Для Gmail використовуйте пароль додатку, не основний пароль</div>
+                                </div>
+                            </div>
+
+                            <div class="info-box warning">
+                                <div class="info-box-title">⚠️ Gmail налаштування</div>
+                                <p>Для Gmail необхідно:</p>
+                                <ol>
+                                    <li>Увімкнути двофакторну аутентифікацію</li>
+                                    <li>Створити пароль додатку: <a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com/apppasswords</a></li>
+                                    <li>Використовувати пароль додатку замість основного</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <strong>Тестування відправки email</strong>
+                            <p>Перевірте налаштування email через Django shell:</p>
+                            
+                            <div class="code-block">
+                                <pre># Відкрийте Django shell
+docker-compose exec web python manage.py shell
+
+# В shell виконайте:
+from django.core.mail import send_mail
+from django.conf import settings
+
+# Тест відправки
+result = send_mail(
+    subject='Тест email з Inventory System',
+    message='Якщо ви отримали цей лист, налаштування email працюють правильно!',
+    from_email=settings.DEFAULT_FROM_EMAIL,
+    recipient_list=['your-email@example.com'],  # Вкажіть вашу пошту
+    fail_silently=False,
+)
+
+print(f'Email надіслано: {result == 1}')</pre>
+                            </div>
+
+                            <div class="info-box success">
+                                <div class="info-box-title">✅ Успішне тестування</div>
+                                Якщо команда повернула <code>Email надіслано: True</code> та ви отримали лист - налаштування правильні!
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <strong>Налаштування шаблонів повідомлень</strong>
+                            <p>Система використовує шаблони для автоматичних сповіщень:</p>
+                            
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Тип сповіщення</th>
+                                            <th>Шаблон</th>
+                                            <th>Коли надсилається</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Закінчення гарантії</td>
+                                            <td>warranty_expiry.html</td>
+                                            <td>За 30, 7 днів до закінчення</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Планове ТО</td>
+                                            <td>maintenance_reminder.html</td>
+                                            <td>За 7 днів до планової дати</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Закінчення ліцензії</td>
+                                            <td>license_expiry.html</td>
+                                            <td>За 60, 30 днів до закінчення</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Щоденний дайджест</td>
+                                            <td>daily_digest.html</td>
+                                            <td>Щодня о 9:00 (налаштовується)</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- База даних -->
+                <div class="subsection" style="background: #fff; margin: 30px 0; border: 2px solid #28a745; border-radius: 10px;">
+                    <h4 style="color: #28a745; display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <span style="font-size: 1.8rem;">🗄️</span> Налаштування бази даних
+                    </h4>
+                    
+                    <div class="steps">
+                        <div class="step">
+                            <strong>Перевірка з'єднання з базою даних</strong>
+                            <p>Переконайтесь що PostgreSQL працює правильно:</p>
+                            
+                            <div class="code-block">
+                                <pre># Перевірка статусу PostgreSQL
+docker-compose exec db pg_isready -U postgres -d inventory_db
+
+# Перевірка з'єднання з Django
+docker-compose exec web python manage.py check --database default
+
+# Перевірка кількості таблиць
+docker-compose exec db psql -U postgres -d inventory_db -c "\dt"
+
+# Інформація про базу даних
+docker-compose exec db psql -U postgres -c "\l+ inventory_db"</pre>
+                            </div>
+
+                            <div class="info-box success">
+                                <div class="info-box-title">✅ Успішний результат</div>
+                                <p>Якщо команди виконались без помилок, база даних працює правильно:</p>
+                                <ul>
+                                    <li><code>pg_isready</code> повертає "accepting connections"</li>
+                                    <li><code>check --database</code> показує "System check identified no issues"</li>
+                                    <li><code>\dt</code> показує список таблиць Django</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <strong>Створення backup стратегії</strong>
+                            <p>Налаштуйте автоматичне резервне копіювання:</p>
+                            
+                            <div class="code-block">
+                                <pre># Ручне створення backup
+docker-compose exec db pg_dump -U postgres -v --clean --no-owner --format=custom inventory_db > backup_$(date +%Y%m%d_%H%M%S).dump
+
+# Створення backup в SQL форматі
+docker-compose exec db pg_dump -U postgres inventory_db > backup_$(date +%Y%m%d).sql
+
+# Перевірка розміру backup
+ls -lh backup_*.dump backup_*.sql</pre>
+                            </div>
+
+                            <div class="form-example">
+                                <h5>Автоматичний backup (Windows Task Scheduler):</h5>
+                                <div class="form-field">
+                                    <label>Назва завдання:</label>
+                                    <input type="text" value="Inventory DB Backup" readonly>
+                                </div>
+                                <div class="form-field">
+                                    <label>Команда:</label>
+                                    <input type="text" value='docker-compose exec db pg_dump -U postgres inventory_db > D:\backups\inventory_%date%.sql' readonly>
+                                </div>
+                                <div class="form-field">
+                                    <label>Розклад:</label>
+                                    <input type="text" value="Щодня о 2:00" readonly>
+                                </div>
+                            </div>
+
+                            <div class="info-box tip">
+                                <div class="info-box-title">💡 Поради щодо backup</div>
+                                <ul>
+                                    <li><strong>Частота:</strong> щодня для активного використання</li>
+                                    <li><strong>Зберігання:</strong> мінімум 30 днів</li>
+                                    <li><strong>Тестування:</strong> щомісяця перевіряйте відновлення</li>
+                                    <li><strong>Локація:</strong> зберігайте backup в іншому місці</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <strong>Налаштування індексів для оптимізації</strong>
+                            <p>Створіть додаткові індекси для покращення продуктивності:</p>
+                            
+                            <div class="code-block">
+                                <pre># Відкрийте PostgreSQL
+docker-compose exec db psql -U postgres -d inventory_db
+
+-- Індекси для швидкого пошуку обладнання
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_equipment_serial_number 
+ON inventory_equipment (serial_number);
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_equipment_inventory_number 
+ON inventory_equipment (inventory_number);
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_equipment_name 
+ON inventory_equipment USING gin(to_tsvector('english', name));
+
+-- Індекс для фільтрації за категорією
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_equipment_category 
+ON inventory_equipment (category_id);
+
+-- Індекс для фільтрації за локацією  
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_equipment_location 
+ON inventory_equipment (location_id);
+
+-- Індекс для швидкого пошуку по датах
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_equipment_purchase_date 
+ON inventory_equipment (purchase_date);
+
+-- Перевірка створених індексів
+\di+ inventory_equipment*</pre>
+                            </div>
+
+                            <div class="info-box warning">
+                                <div class="info-box-title">⚠️ Створення індексів</div>
+                                <ul>
+                                    <li>Використовуйте <code>CONCURRENTLY</code> щоб не блокувати таблицю</li>
+                                    <li>Індекси займають додатковий дисковий простір</li>
+                                    <li>Забагато індексів сповільнює операції INSERT/UPDATE</li>
+                                    <li>Моніторте використання індексів</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <strong>Налаштування моніторингу БД</strong>
+                            <div class="code-block">
+                                <pre># Перевірка активних з'єднань
+docker-compose exec db psql -U postgres -c "
+SELECT pid, usename, application_name, client_addr, state, query_start 
+FROM pg_stat_activity 
+WHERE datname = 'inventory_db';"
+
+# Статистика використання таблиць
+docker-compose exec db psql -U postgres -d inventory_db -c "
+SELECT schemaname, tablename, n_tup_ins, n_tup_upd, n_tup_del, n_live_tup 
+FROM pg_stat_user_tables;"
+
+# Розмір бази даних
+docker-compose exec db psql -U postgres -c "
+SELECT pg_size_pretty(pg_database_size('inventory_db')) as database_size;"</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Управління користувачами -->
+        <section id="users-management" class="section">
+            <h2><span class="section-icon">👥</span> Управління користувачами</h2>
+            
+            <div class="subsection">
+                <h3>Створення нового користувача</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Перехід до управління користувачами</strong>
+                        <p>В адмін-панелі перейдіть: <strong>ACCOUNTS → Users</strong></p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Додавання користувача</strong>
+                        <p>Натисніть зелену кнопку <strong>"Додати User"</strong></p>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>Username <span class="required">*</span>:</label>
+                                <input type="text" placeholder="ivan.petrenko">
+                                <div class="help-text">Унікальне ім'я користувача (латиниця, цифри, _, -, .)</div>
+                            </div>
+                            <div class="form-field">
+                                <label>Password <span class="required">*</span>:</label>
+                                <input type="password" placeholder="Надійний пароль">
+                                <div class="help-text">Мінімум 8 символів, цифри та літери</div>
+                            </div>
+                            <div class="form-field">
+                                <label>Email address:</label>
+                                <input type="email" placeholder="ivan.petrenko@company.com">
+                            </div>
+                            <div class="form-field">
+                                <label>First name:</label>
+                                <input type="text" placeholder="Іван">
+                            </div>
+                            <div class="form-field">
+                                <label>Last name:</label>
+                                <input type="text" placeholder="Петренко">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Налаштування прав доступу</strong>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Право</th>
+                                        <th>Опис</th>
+                                        <th>Рекомендація</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Active</strong></td>
+                                        <td>Може входити в систему</td>
+                                        <td>✅ Завжди увімкнуто</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Staff status</strong></td>
+                                        <td>Доступ до адмін-панелі</td>
+                                        <td>✅ Для співробітників</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Superuser status</strong></td>
+                                        <td>Повні права адміністратора</td>
+                                        <td>⚠️ Тільки для IT</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Групи користувачів та ролі</h3>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">👨‍💼</div>
+                        <h4>Адміністратори</h4>
+                        <p><strong>Права:</strong></p>
+                        <ul>
+                            <li>Повний доступ до системи</li>
+                            <li>Управління користувачами</li>
+                            <li>Системні налаштування</li>
+                            <li>Резервне копіювання</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">👨‍💻</div>
+                        <h4>Менеджери інвентаря</h4>
+                        <p><strong>Права:</strong></p>
+                        <ul>
+                            <li>Додавання/редагування обладнання</li>
+                            <li>Управління категоріями</li>
+                            <li>Генерація звітів</li>
+                            <li>Планування ТО</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">👨‍🔧</div>
+                        <h4>Технічні співробітники</h4>
+                        <p><strong>Права:</strong></p>
+                        <ul>
+                            <li>Перегляд обладнання</li>
+                            <li>Зміна статусів</li>
+                            <li>Додавання записів ТО</li>
+                            <li>Мобільний доступ</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">👀</div>
+                        <h4>Користувачі (читання)</h4>
+                        <p><strong>Права:</strong></p>
+                        <ul>
+                            <li>Тільки перегляд</li>
+                            <li>Пошук обладнання</li>
+                            <li>Базові звіти</li>
+                            <li>Сканування QR-кодів</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-box tip">
+                    <div class="info-box-title">💡 Створення груп</div>
+                    <div class="steps">
+                        <div class="step">Перейдіть в <strong>AUTHENTICATION AND AUTHORIZATION → Groups</strong></div>
+                        <div class="step">Створіть групу (наприклад, "Менеджери інвентаря")</div>
+                        <div class="step">Призначте потрібні права через інтерфейс</div>
+                        <div class="step">Додайте користувачів до групи</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Управління обладнанням -->
+        <section id="equipment-management" class="section">
+            <h2><span class="section-icon">🖥️</span> Управління обладнанням</h2>
+            
+            <div class="subsection">
+                <h3>Додавання нового обладнання</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Перехід до списку обладнання</strong>
+                        <p>В адмін-панелі: <strong>INVENTORY → Equipment → Додати Equipment</strong></p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Заповнення основної інформації</strong>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>Name <span class="required">*</span>:</label>
+                                <input type="text" placeholder="Ноутбук Dell Latitude 5520" value="">
+                                <div class="help-text">Детальна назва обладнання</div>
+                            </div>
+                            <div class="form-field">
+                                <label>Model:</label>
+                                <input type="text" placeholder="Latitude 5520" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Brand:</label>
+                                <input type="text" placeholder="Dell" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Serial number:</label>
+                                <input type="text" placeholder="DL2024001234" value="">
+                                <div class="help-text">Унікальний серійний номер виробника</div>
+                            </div>
+                            <div class="form-field">
+                                <label>Inventory number:</label>
+                                <input type="text" placeholder="INV-2024-0001" value="">
+                                <div class="help-text">Внутрішній номер компанії</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Категоризація та розташування</strong>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>Category <span class="required">*</span>:</label>
+                                <select>
+                                    <option>Оберіть категорію...</option>
+                                    <option>Комп'ютерна техніка → Ноутбуки</option>
+                                    <option>Офісна техніка → Принтери</option>
+                                    <option>Мережеве обладнання → Комутатори</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label>Location:</label>
+                                <select>
+                                    <option>Оберіть локацію...</option>
+                                    <option>Головний офіс</option>
+                                    <option>Філія Львів</option>
+                                    <option>Філія Дніпро</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label>Room:</label>
+                                <input type="text" placeholder="201 (IT відділ)" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Responsible person:</label>
+                                <select>
+                                    <option>Оберіть відповідальну особу...</option>
+                                    <option>Іван Петренко (IT відділ)</option>
+                                    <option>Марія Іванова (Бухгалтерія)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Фінансова інформація</strong>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>Purchase price (UAH):</label>
+                                <input type="number" placeholder="35000.00" value="" step="0.01">
+                            </div>
+                            <div class="form-field">
+                                <label>Purchase date:</label>
+                                <input type="date" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Vendor:</label>
+                                <input type="text" placeholder="Dell Ukraine" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Warranty expires:</label>
+                                <input type="date" value="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Технічні характеристики (JSON)</strong>
+                        <div class="code-block">
+                            <pre>{
+  "cpu": "Intel Core i5-1135G7",
+  "memory": "16 GB DDR4",
+  "storage": "512 GB SSD NVMe",
+  "display": "15.6\" Full HD (1920x1080)",
+  "graphics": "Intel Iris Xe Graphics",
+  "os": "Windows 11 Pro",
+  "network": "Wi-Fi 6, Bluetooth 5.1, Ethernet",
+  "ports": "USB-A, USB-C, HDMI, audio jack"
+}</pre>
+                        </div>
+                        <div class="info-box tip">
+                            <div class="info-box-title">💡 Формат JSON</div>
+                            Використовуйте правильний JSON синтаксис. Кожен ключ та значення в лапках, кома після кожного елемента (крім останнього).
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Генерація штрих-кодів та QR-кодів</h3>
+                <div class="info-box success">
+                    <div class="info-box-title">✅ Автоматична генерація</div>
+                    Після збереження обладнання система автоматично згенерує штрих-код та QR-код на основі серійного або інвентарного номера.
+                </div>
+
+                <div class="steps">
+                    <div class="step">
+                        <strong>Перегляд згенерованих кодів</strong>
+                        <p>Відкрийте збережене обладнання для редагування. Внизу сторінки ви побачите згенеровані коди.</p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Друк етикеток</strong>
+                        <p>У списку обладнання:</p>
+                        <ul>
+                            <li>Виберіть потрібні одиниці обладнання (чекбокси зліва)</li>
+                            <li>В дропдауні "Action" оберіть "Generate labels"</li>
+                            <li>Натисніть "Go"</li>
+                            <li>Оберіть розмір етикетки та завантажте PDF</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">📊</div>
+                        <h4>Штрих-код (Barcode)</h4>
+                        <ul>
+                            <li>Формат Code 128</li>
+                            <li>Підходить для принтерів етикеток</li>
+                            <li>Швидке сканування</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📱</div>
+                        <h4>QR-код</h4>
+                        <ul>
+                            <li>Містить посилання на обладнання</li>
+                            <li>Сканування мобільним телефоном</li>
+                            <li>Швидкий доступ до інформації</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Масове додавання обладнання</h3>
+                <div class="info-box tip">
+                    <div class="info-box-title">💡 Імпорт з Excel</div>
+                    Для додавання великої кількості обладнання використовуйте функцію імпорту.
+                </div>
+
+                <div class="steps">
+                    <div class="step">
+                        <strong>Підготовка Excel файлу</strong>
+                        <p>Створіть Excel файл з наступними колонками:</p>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Model</th>
+                                        <th>Brand</th>
+                                        <th>Serial Number</th>
+                                        <th>Category</th>
+                                        <th>Location</th>
+                                        <th>Purchase Price</th>
+                                        <th>Purchase Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Ноутбук Dell Latitude 5520</td>
+                                        <td>Latitude 5520</td>
+                                        <td>Dell</td>
+                                        <td>DL2024001</td>
+                                        <td>Ноутбуки</td>
+                                        <td>Головний офіс</td>
+                                        <td>35000</td>
+                                        <td>2024-01-15</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Імпорт файлу</strong>
+                        <p>В списку обладнання натисніть кнопку <strong>"IMPORT"</strong> вгорі праворуч</p>
+                    </div>
+
+                    <div class="step">
+                        <strong>Перевірка та підтвердження</strong>
+                        <p>Система покаже попередній перегляд імпорту. Перевірте дані та підтвердіть імпорт.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Категорії та локації -->
+        <section id="categories-locations" class="section">
+            <h2><span class="section-icon">🏢</span> Категорії та локації</h2>
+            
+            <div class="subsection">
+                <h3>Створення категорій обладнання</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Додавання нової категорії</strong>
+                        <p><strong>INVENTORY → Categories → Додати Category</strong></p>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>Name <span class="required">*</span>:</label>
+                                <input type="text" placeholder="Комп'ютерна техніка" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Description:</label>
+                                <textarea placeholder="Категорія для всіх видів комп'ютерного обладнання" rows="3"></textarea>
+                            </div>
+                            <div class="form-field">
+                                <label>Parent category:</label>
+                                <select>
+                                    <option>Корінь (без батьківської категорії)</option>
+                                    <option>Офісна техніка</option>
+                                    <option>IT обладнання</option>
+                                </select>
+                                <div class="help-text">Для створення ієрархії категорій</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Приклад ієрархічної структури</strong>
+                        <div class="code-block">
+                            <pre>📁 IT обладнання
+├── 💻 Комп'ютерна техніка
+│   ├── Настільні ПК
+│   ├── Ноутбуки
+│   ├── Планшети
+│   └── Комплектуючі
+├── 🖨️ Офісна техніка  
+│   ├── Принтери
+│   ├── Сканери
+│   ├── МФУ
+│   └── Проєктори
+└── 🌐 Мережеве обладнання
+    ├── Комутатори
+    ├── Маршрутизатори
+    └── Точки доступу Wi-Fi</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Управління локаціями</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Створення локації</strong>
+                        <p><strong>INVENTORY → Locations → Додати Location</strong></p>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>Name <span class="required">*</span>:</label>
+                                <input type="text" placeholder="Головний офіс" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Address:</label>
+                                <input type="text" placeholder="вул. Хрещатик, 1, Київ, 01001" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Building:</label>
+                                <input type="text" placeholder="Офісна будівля" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Floor:</label>
+                                <input type="text" placeholder="2-й поверх" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Description:</label>
+                                <textarea placeholder="Основне місце розташування компанії" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Структура локацій</strong>
+                        <div class="feature-list">
+                            <div class="feature-item">
+                                <div class="feature-icon">🏢</div>
+                                <h4>Головний офіс</h4>
+                                <ul>
+                                    <li>1-й поверх: Reception, HR</li>
+                                    <li>2-й поверх: IT, Development</li>
+                                    <li>3-й поверх: Management</li>
+                                </ul>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon">🏭</div>
+                                <h4>Виробництво</h4>
+                                <ul>
+                                    <li>Цех №1: Основне виробництво</li>
+                                    <li>Цех №2: Пакування</li>
+                                    <li>Склад: Готова продукція</li>
+                                </ul>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon">🏪</div>
+                                <h4>Філії</h4>
+                                <ul>
+                                    <li>Філія Львів</li>
+                                    <li>Філія Дніпро</li>
+                                    <li>Філія Одеса</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Відповідальні особи</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Додавання відповідальної особи</strong>
+                        <p><strong>INVENTORY → Responsible persons → Додати</strong></p>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>First name <span class="required">*</span>:</label>
+                                <input type="text" placeholder="Іван" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Last name <span class="required">*</span>:</label>
+                                <input type="text" placeholder="Петренко" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Email:</label>
+                                <input type="email" placeholder="ivan.petrenko@company.com" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Phone:</label>
+                                <input type="tel" placeholder="+380501234567" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Department:</label>
+                                <input type="text" placeholder="IT відділ" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Position:</label>
+                                <input type="text" placeholder="Системний адміністратор" value="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Призначення обладнання</strong>
+                        <p>Після створення відповідальної особи вона з'явиться в списку при додаванні обладнання</p>
+                        <div class="info-box tip">
+                            <div class="info-box-title">💡 Автоматичні сповіщення</div>
+                            Система може надсилати автоматичні email сповіщення відповідальним особам про:
+                            <ul>
+                                <li>Закінчення гарантії</li>
+                                <li>Планове ТО</li>
+                                <li>Зміни в обладнанні</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Управління ліцензіями -->
+        <section id="licenses" class="section">
+            <h2><span class="section-icon">📜</span> Управління ліцензіями</h2>
+            
+            <div class="subsection">
+                <h3>Додавання ліцензії</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Створення запису ліцензії</strong>
+                        <p><strong>LICENSES → Licenses → Додати License</strong></p>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>Name <span class="required">*</span>:</label>
+                                <input type="text" placeholder="Microsoft Office 365 Business Premium" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>License key:</label>
+                                <input type="text" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX" value="">
+                                <div class="help-text">Ліцензійний ключ (буде зашифрований)</div>
+                            </div>
+                            <div class="form-field">
+                                <label>License type:</label>
+                                <select>
+                                    <option>Оберіть тип...</option>
+                                    <option>Підписка (Subscription)</option>
+                                    <option>Одноразова (Perpetual)</option>
+                                    <option>Корпоративна (Volume)</option>
+                                    <option>OEM</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label>Vendor:</label>
+                                <input type="text" placeholder="Microsoft" value="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Кількість та терміни</strong>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>Seats total:</label>
+                                <input type="number" placeholder="50" value="" min="1">
+                                <div class="help-text">Загальна кількість ліцензій</div>
+                            </div>
+                            <div class="form-field">
+                                <label>Seats used:</label>
+                                <input type="number" placeholder="35" value="" min="0">
+                                <div class="help-text">Використано ліцензій</div>
+                            </div>
+                            <div class="form-field">
+                                <label>Purchase date:</label>
+                                <input type="date" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Expiry date:</label>
+                                <input type="date" value="">
+                                <div class="help-text">Дата закінчення дії</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Прив'язка до обладнання</strong>
+                        <p>В розділі "Equipment" можна обрати обладнання, на якому встановлена ліцензія</p>
+                        <div class="info-box success">
+                            <div class="info-box-title">✅ Автоматичний підрахунок</div>
+                            Система автоматично підраховує кількість використаних ліцензій на основі прив'язаного обладнання.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Моніторинг ліцензій</h3>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">⏰</div>
+                        <h4>Сповіщення про закінчення</h4>
+                        <ul>
+                            <li>За 90 днів - попередження</li>
+                            <li>За 30 днів - нагадування</li>
+                            <li>За 7 днів - критичне сповіщення</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📊</div>
+                        <h4>Використання ліцензій</h4>
+                        <ul>
+                            <li>Поточна утилізація</li>
+                            <li>Вільні ліцензії</li>
+                            <li>Перевищення ліміту</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">💰</div>
+                        <h4>Фінансовий облік</h4>
+                        <ul>
+                            <li>Вартість ліцензій</li>
+                            <li>Дата продовження</li>
+                            <li>Бюджет на ПЗ</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-box warning">
+                    <div class="info-box-title">⚠️ Compliance</div>
+                    Регулярно перевіряйте відповідність ліцензування. Система допоможе уникнути порушення ліцензійних угод.
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Типові ліцензії</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Програмний продукт</th>
+                                <th>Тип ліцензії</th>
+                                <th>Особливості</th>
+                                <th>Моніторинг</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Microsoft Office 365</strong></td>
+                                <td>Підписка</td>
+                                <td>На користувача, щомісячна оплата</td>
+                                <td>Автоматичне продовження</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Windows 10/11 Pro</strong></td>
+                                <td>OEM/Retail</td>
+                                <td>Прив'язка до обладнання</td>
+                                <td>Відстеження активації</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Antivirus (ESET, Kaspersky)</strong></td>
+                                <td>Корпоративна</td>
+                                <td>За кількістю пристроїв</td>
+                                <td>Контроль покриття</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Adobe Creative Suite</strong></td>
+                                <td>Підписка</td>
+                                <td>На користувача або пристрій</td>
+                                <td>Моніторинг використання</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Спеціалізоване ПЗ</strong></td>
+                                <td>Одноразова</td>
+                                <td>Безстрокова ліцензія</td>
+                                <td>Контроль інсталяцій</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Технічне обслуговування -->
+        <section id="maintenance" class="section">
+            <h2><span class="section-icon">🔧</span> Технічне обслуговування</h2>
+            
+            <div class="subsection">
+                <h3>Планування ТО</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Створення графіка ТО</strong>
+                        <p><strong>INVENTORY → Maintenance schedules → Додати</strong></p>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>Equipment:</label>
+                                <select>
+                                    <option>Оберіть обладнання...</option>
+                                    <option>Сервер Dell PowerEdge R640</option>
+                                    <option>Принтер HP LaserJet Pro</option>
+                                    <option>UPS APC Smart-UPS</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label>Maintenance type:</label>
+                                <select>
+                                    <option>Планова профілактика</option>
+                                    <option>Заміна витратних матеріалів</option>
+                                    <option>Калібрування</option>
+                                    <option>Оновлення ПЗ</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label>Frequency:</label>
+                                <select>
+                                    <option>Щомісячно</option>
+                                    <option>Щоквартально</option>
+                                    <option>Раз в півроку</option>
+                                    <option>Щорічно</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label>Next maintenance date:</label>
+                                <input type="date" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Responsible person:</label>
+                                <select>
+                                    <option>Іван Петренко (IT)</option>
+                                    <option>Сергій Коваленко (Технічний відділ)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Автоматичні нагадування</strong>
+                        <div class="info-box success">
+                            <div class="info-box-title">🔔 Система сповіщень</div>
+                            Система автоматично надішле email нагадування:
+                            <ul>
+                                <li>За 7 днів до планової дати</li>
+                                <li>В день планового ТО</li>
+                                <li>Через 3 дні після пропущеної дати</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Ведення журналу ТО</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Додавання запису про ТО</strong>
+                        <p><strong>INVENTORY → Maintenance records → Додати</strong></p>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>Equipment <span class="required">*</span>:</label>
+                                <select>
+                                    <option>Сервер Dell PowerEdge R640</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label>Maintenance date:</label>
+                                <input type="date" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Maintenance type:</label>
+                                <input type="text" placeholder="Планова профілактика" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Description:</label>
+                                <textarea placeholder="Виконані роботи: очищення від пилу, перевірка температурних режимів, оновлення мікропрограми..." rows="4"></textarea>
+                            </div>
+                            <div class="form-field">
+                                <label>Performed by:</label>
+                                <input type="text" placeholder="Іван Петренко" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Cost (UAH):</label>
+                                <input type="number" placeholder="500.00" value="" step="0.01">
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="step">
+                        <strong>Прикріплення документів</strong>
+                        <p>До кожного запису ТО можна прикріпити:</p>
+                        <ul>
+                            <li>Фото виконаних робіт</li>
+                            <li>Чек-листи перевірок</li>
+                            <li>Звіти тестування</li>
+                            <li>Рахунки за матеріали</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Типові види ТО</h3>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">🖥️</div>
+                        <h4>Серверне обладнання</h4>
+                        <p><strong>Щомісячно:</strong></p>
+                        <ul>
+                            <li>Перевірка логів системи</li>
+                            <li>Моніторинг температури</li>
+                            <li>Перевірка дискового простору</li>
+                            <li>Тест резервного копіювання</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🖨️</div>
+                        <h4>Офісна техніка</h4>
+                        <p><strong>Щоквартально:</strong></p>
+                        <ul>
+                            <li>Очищення від пилу</li>
+                            <li>Калібрування сканера</li>
+                            <li>Перевірка витратних матеріалів</li>
+                            <li>Тестова друк</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🌐</div>
+                        <h4>Мережеве обладнання</h4>
+                        <p><strong>Раз в півроку:</strong></p>
+                        <ul>
+                            <li>Оновлення мікропрограми</li>
+                            <li>Перевірка портів</li>
+                            <li>Аналіз трафіку</li>
+                            <li>Резервування конфігурації</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🔌</div>
+                        <h4>ДБЖ та живлення</h4>
+                        <p><strong>Щомісячно:</strong></p>
+                        <ul>
+                            <li>Тест автономної роботи</li>
+                            <li>Перевірка акумуляторів</li>
+                            <li>Калібрування показників</li>
+                            <li>Очищення вентиляції</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Витратні матеріали</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Обладнання</th>
+                                <th>Витратні матеріали</th>
+                                <th>Термін заміни</th>
+                                <th>Вартість (UAH)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Принтер HP LaserJet</td>
+                                <td>Тонер-картридж HP 147A</td>
+                                <td>5000 сторінок</td>
+                                <td>2500</td>
+                            </tr>
+                            <tr>
+                                <td>ДБЖ APC Smart-UPS</td>
+                                <td>Акумуляторна батарея</td>
+                                <td>3-5 років</td>
+                                <td>4500</td>
+                            </tr>
+                            <tr>
+                                <td>Сервер Dell R640</td>
+                                <td>Термопаста</td>
+                                <td>2 роки</td>
+                                <td>150</td>
+                            </tr>
+                            <tr>
+                                <td>Комутатор Cisco</td>
+                                <td>Вентилятор охолодження</td>
+                                <td>При потребі</td>
+                                <td>1200</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Звіти та аналітика -->
+        <section id="reports-analytics" class="section">
+            <h2><span class="section-icon">📊</span> Звіти та аналітика</h2>
+            
+            <div class="subsection">
+                <h3>Стандартні звіти</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Інвентарний звіт</strong>
+                        <p>Повний список всього обладнання з детальною інформацією</p>
+                        <p><strong>Шлях:</strong> Equipment list → Export → Export to Excel/CSV</p>
+                        <div class="info-box tip">
+                            <div class="info-box-title">💡 Фільтрація</div>
+                            Перед експортом використовуйте фільтри для отримання потрібних даних:
+                            <ul>
+                                <li>За категорією обладнання</li>
+                                <li>За локацією</li>
+                                <li>За відповідальною особою</li>
+                                <li>За статусом (активне/неактивне)</li>
+                                <li>За датами закупівлі</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Фінансовий звіт</strong>
+                        <p>Аналіз вартості та амортизації обладнання</p>
+                        <div class="feature-list">
+                            <div class="feature-item">
+                                <div class="feature-icon">💰</div>
+                                <h4>Загальна вартість</h4>
+                                <ul>
+                                    <li>Первісна вартість</li>
+                                    <li>Залишкова вартість</li>
+                                    <li>Амортизація</li>
+                                </ul>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon">📈</div>
+                                <h4>По категоріях</h4>
+                                <ul>
+                                    <li>Комп'ютерна техніка</li>
+                                    <li>Офісна техніка</li>
+                                    <li>Меблі</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Звіт по ліцензіях</strong>
+                        <p>Контроль ліцензійного ПЗ та дат закінчення</p>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Ліцензія</th>
+                                        <th>Використано</th>
+                                        <th>Всього</th>
+                                        <th>Дата закінчення</th>
+                                        <th>Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Office 365</td>
+                                        <td>45</td>
+                                        <td>50</td>
+                                        <td>2024-12-31</td>
+                                        <td style="color: green;">✅ Активна</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Windows 10 Pro</td>
+                                        <td>23</td>
+                                        <td>25</td>
+                                        <td>Безстрокова</td>
+                                        <td style="color: green;">✅ Активна</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Antivirus ESET</td>
+                                        <td>38</td>
+                                        <td>40</td>
+                                        <td>2024-08-15</td>
+                                        <td style="color: orange;">⚠️ Скоро закінчується</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Аналітичні дашборди</h3>
+                <div class="info-box success">
+                    <div class="info-box-title">📊 Інтерактивна аналітика</div>
+                    В списку обладнання натисніть кнопку <strong>"Analytics"</strong> для перегляду графіків та діаграм.
+                </div>
+
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">🥧</div>
+                        <h4>Розподіл за категоріями</h4>
+                        <ul>
+                            <li>Кругова діаграма</li>
+                            <li>Кількість обладнання</li>
+                            <li>Відсоткове співвідношення</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📊</div>
+                        <h4>Статистика по статусах</h4>
+                        <ul>
+                            <li>Активне обладнання</li>
+                            <li>В ремонті</li>
+                            <li>Списане</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">💹</div>
+                        <h4>Вартісний аналіз</h4>
+                        <ul>
+                            <li>Розподіл по вартості</li>
+                            <li>Найдорожче обладнання</li>
+                            <li>Амортизація</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📅</div>
+                        <h4>Часові графіки</h4>
+                        <ul>
+                            <li>Закупівлі по місяцях</li>
+                            <li>Планові ТО</li>
+                            <li>Закінчення гарантії</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Автоматичні звіти</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Налаштування розкладу</strong>
+                        <p>Система може автоматично генерувати та надсилати звіти по email</p>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>Тип звіту:</label>
+                                <select>
+                                    <option>Щомісячний інвентарний звіт</option>
+                                    <option>Звіт по ліцензіях що закінчуються</option>
+                                    <option>Планове ТО на наступний тиждень</option>
+                                    <option>Фінансовий звіт по новим закупівлям</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label>Періодичність:</label>
+                                <select>
+                                    <option>Щотижня</option>
+                                    <option>Щомісячно</option>
+                                    <option>Щоквартально</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label>Email отримувачі:</label>
+                                <input type="email" placeholder="manager@company.com, ceo@company.com" value="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Мобільний доступ -->
+        <section id="mobile-access" class="section">
+            <h2><span class="section-icon">📱</span> Мобільний доступ</h2>
+            
+            <div class="subsection">
+                <h3>Мобільний інтерфейс</h3>
+                <div class="info-box success">
+                    <div class="info-box-title">📱 Адаптивний дизайн</div>
+                    Спеціальна мобільна версія доступна за адресою: <strong>http://localhost:8000/mobile</strong>
+                </div>
+
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">🔍</div>
+                        <h4>Швидкий пошук</h4>
+                        <ul>
+                            <li>Пошук по назві</li>
+                            <li>По інвентарному номеру</li>
+                            <li>По серійному номеру</li>
+                            <li>По QR/штрих-коду</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📷</div>
+                        <h4>Сканування кодів</h4>
+                        <ul>
+                            <li>QR-коди камерою телефону</li>
+                            <li>Миттєвий доступ до інформації</li>
+                            <li>Зміна статусу "на місці"</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📝</div>
+                        <h4>Швидкі дії</h4>
+                        <ul>
+                            <li>Зміна статусу обладнання</li>
+                            <li>Додавання коментарів</li>
+                            <li>Фотографування</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🌐</div>
+                        <h4>Offline режим</h4>
+                        <ul>
+                            <li>Кешування даних</li>
+                            <li>Робота без інтернету</li>
+                            <li>Синхронізація при підключенні</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Практичне використання</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Інвентаризація з мобільним</strong>
+                        <ol>
+                            <li>Відкрийте мобільну версію на планшеті/телефоні</li>
+                            <li>Увійдіть з тими самими обліковими даними</li>
+                            <li>Використовуйте сканер QR-кодів для швидкого пошуку</li>
+                            <li>Перевіряйте та оновлюйте інформацію про обладнання</li>
+                            <li>Робіть фото за необхідності</li>
+                        </ol>
+                        
+                        <div class="info-box tip">
+                            <div class="info-box-title">💡 Поради для мобільної інвентаризації</div>
+                            <ul>
+                                <li>Використовуйте планшет для більшого екрану</li>
+                                <li>Зарядіть пристрій на повний день</li>
+                                <li>Встановіть додаток сканера QR-кодів</li>
+                                <li>Працюйте вдвох: один сканує, інший вводить дані</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Швидка перевірка статусу</strong>
+                        <p>Для технічних співробітників:</p>
+                        <ul>
+                            <li>Відсканувати QR-код на обладнанні</li>
+                            <li>Переглянути поточний статус</li>
+                            <li>При потребі змінити статус (ремонт, обслуговування)</li>
+                            <li>Додати коментар про проблему</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>QR-коди для швидкого доступу</h3>
+                <div class="info-box success">
+                    <div class="info-box-title">🔗 Пряме посилання</div>
+                    Кожен QR-код містить пряме посилання на сторінку обладнання в системі.
+                </div>
+
+                <div class="steps">
+                    <div class="step">
+                        <strong>Генерація QR-кодів</strong>
+                        <p>QR-коди генеруються автоматично для кожної одиниці обладнання і містять:</p>
+                        <ul>
+                            <li>URL для швидкого доступу</li>
+                            <li>Основну інформацію про обладнання</li>
+                            <li>Інвентарний номер</li>
+                        </ul>
+                    </div>
+
+                    <div class="step">
+                        <strong>Друк та розміщення</strong>
+                        <ol>
+                            <li>Згенеруйте етикетки з QR-кодами</li>
+                            <li>Роздрукуйте на принтері етикеток</li>
+                            <li>Наклейте на видному місці обладнання</li>
+                            <li>Переконайтесь що код легко сканується</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Системні налаштування -->
+        <section id="system-settings" class="section">
+            <h2><span class="section-icon">⚙️</span> Системні налаштування</h2>
+            
+            <div class="subsection">
+                <h3>Основні налаштування</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Доступ до налаштувань</strong>
+                        <p><strong>INVENTORY → System settings</strong></p>
+                        <div class="info-box warning">
+                            <div class="info-box-title">⚠️ Права доступу</div>
+                            Тільки користувачі з правами суперадміністратора можуть змінювати системні налаштування.
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Формати нумерації</strong>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>Inventory number format:</label>
+                                <input type="text" placeholder="INV-{year}-{counter:04d}" value="INV-{year}-{counter:04d}">
+                                <div class="help-text">
+                                    Доступні змінні: {year}, {month}, {counter}, {category}
+                                    <br>Приклад: INV-2024-0001, COMP-2024-001
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label>Barcode prefix:</label>
+                                <input type="text" placeholder="BC" value="BC">
+                                <div class="help-text">Префікс для штрих-кодів</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Email налаштування</strong>
+                        <div class="form-example">
+                            <div class="form-field">
+                                <label>SMTP Server:</label>
+                                <input type="text" placeholder="smtp.gmail.com" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>SMTP Port:</label>
+                                <input type="number" placeholder="587" value="587">
+                            </div>
+                            <div class="form-field">
+                                <label>Email от кого:</label>
+                                <input type="email" placeholder="inventory@company.com" value="">
+                            </div>
+                            <div class="form-field">
+                                <label>Email пароль:</label>
+                                <input type="password" placeholder="Пароль додатку" value="">
+                                <div class="help-text">Для Gmail використовуйте пароль додатку</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Сповіщення</h3>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">📅</div>
+                        <h4>Гарантійні терміни</h4>
+                        <ul>
+                            <li>За 90 днів до закінчення</li>
+                            <li>За 30 днів до закінчення</li>
+                            <li>В день закінчення</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🔧</div>
+                        <h4>Планове ТО</h4>
+                        <ul>
+                            <li>За 7 днів до планової дати</li>
+                            <li>В день планового ТО</li>
+                            <li>Через 3 дні після пропуску</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📜</div>
+                        <h4>Ліцензії</h4>
+                        <ul>
+                            <li>За 60 днів до закінчення</li>
+                            <li>За 30 днів до закінчення</li>
+                            <li>При перевищенні ліміту</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="form-example">
+                    <h4>Налаштування сповіщень:</h4>
+                    <div class="form-field">
+                        <label>
+                            <input type="checkbox" checked> Увімкнути email сповіщення
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label>
+                            <input type="checkbox" checked> Сповіщення про гарантію
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label>
+                            <input type="checkbox" checked> Сповіщення про ТО
+                        </label>
+                    </div>
+                    <div class="form-field">
+                        <label>
+                            <input type="checkbox" checked> Сповіщення про ліцензії
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Безпека системи</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Зміна паролю адміністратора</strong>
+                        <p>Вгорі праворуч натисніть на ім'я користувача → <strong>Change password</strong></p>
+                        <div class="info-box danger">
+                            <div class="info-box-title">🔒 Важливо</div>
+                            Використовуйте надійний пароль:
+                            <ul>
+                                <li>Мінімум 12 символів</li>
+                                <li>Великі та малі літери</li>
+                                <li>Цифри та спеціальні символи</li>
+                                <li>Не використовуйте словникові слова</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Налаштування HTTPS</strong>
+                        <p>Для продакшен середовища обов'язково налаштуйте HTTPS:</p>
+                        <div class="code-block">
+                            <pre># В .env файлі встановіть:
+SECURE_SSL_REDIRECT=True
+SECURE_HSTS_SECONDS=31536000
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True</pre>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Журнали безпеки</strong>
+                        <p>Регулярно переглядайте журнали системи:</p>
+                        <div class="code-block">
+                            <pre># Перегляд логів Django
+docker-compose logs -f web
+
+# Журнали безпеки
+tail -f logs/security.log</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Резервне копіювання</h3>
+                <div class="steps">
+                    <div class="step">
+                        <strong>Автоматичний backup бази даних</strong>
+                        <div class="code-block">
+                            <pre># Щоденний backup (додайте в cron/task scheduler)
+docker-compose exec db pg_dump -U postgres inventory_db > backup_$(date +%Y%m%d).sql
+
+# Windows Task Scheduler
+docker-compose exec db pg_dump -U postgres inventory_db > backup_%date%.sql</pre>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Відновлення з backup</strong>
+                        <div class="code-block">
+                            <pre># Зупинити систему
+docker-compose down
+
+# Запустити тільки базу даних
+docker-compose up -d db
+
+# Відновити дані
+docker-compose exec -T db psql -U postgres inventory_db < backup_20240101.sql
+
+# Запустити систему
+docker-compose up -d</pre>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Backup файлів</strong>
+                        <p>Також зробіть копії:</p>
+                        <ul>
+                            <li><strong>Media файлів:</strong> фото обладнання, документи</li>
+                            <li><strong>Налаштувань:</strong> .env файли, конфігурації</li>
+                            <li><strong>Користувацьких скриптів:</strong> модифікації коду</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Вирішення проблем -->
+        <section id="troubleshooting" class="section">
+            <h2><span class="section-icon">🚨</span> Вирішення проблем</h2>
+            
+            <div class="subsection">
+                <h3>Типові проблеми та рішення</h3>
+                
+                <div class="steps">
+                    <div class="step">
+                        <strong>Проблема: Не можу увійти в систему</strong>
+                        <div class="info-box danger">
+                            <div class="info-box-title">Можливі причини:</div>
+                            <ul>
+                                <li>Неправильний логін/пароль</li>
+                                <li>Контейнер не запущений</li>
+                                <li>База даних недоступна</li>
+                                <li>Проблеми з мережею</li>
+                            </ul>
+                        </div>
+                        
+                        <p><strong>Рішення:</strong></p>
+                        <div class="code-block">
+                            <pre># 1. Перевірити статус контейнерів
+docker-compose ps
+
+# 2. Переглянути логи
+docker-compose logs -f web
+
+# 3. Перевірити підключення до БД
+docker-compose exec web python manage.py check --database default
+
+# 4. Скинути пароль адміністратора
+docker-compose exec web python manage.py changepassword admin</pre>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Проблема: Повільна робота системи</strong>
+                        <div class="info-box warning">
+                            <div class="info-box-title">Діагностика:</div>
+                            <div class="code-block">
+                                <pre># Перевірити використання ресурсів
+docker stats
+
+# Перевірити розмір бази даних
+docker-compose exec db psql -U postgres -c "\l+"
+
+# Перевірити логи на помилки
+docker-compose logs --tail=100 web</pre>
+                            </div>
+                        </div>
+                        
+                        <p><strong>Оптимізація:</strong></p>
+                        <ul>
+                            <li>Збільшити пам'ять для Docker</li>
+                            <li>Очистити старі логи</li>
+                            <li>Оптимізувати індекси БД</li>
+                            <li>Архівувати старе обладнання</li>
+                        </ul>
+                    </div>
+
+                    <div class="step">
+                        <strong>Проблема: Не генеруються QR-коди</strong>
+                        <div class="code-block">
+                            <pre># Перевірити встановлення бібліотек
+docker-compose exec web python -c "import qrcode; print('QR OK')"
+docker-compose exec web python -c "from barcode import Code128; print('Barcode OK')"
+
+# Перевірити права на запис
+docker-compose exec web ls -la /app/media/
+
+# Переустановити залежності
+docker-compose exec web pip install qrcode[pil] python-barcode</pre>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <strong>Проблема: Email не надсилаються</strong>
+                        <p><strong>Перевірка налаштувань:</strong></p>
+                        <div class="code-block">
+                            <pre># Тестування email в Django shell
+docker-compose exec web python manage.py shell
+
+# В shell виконати:
+from django.core.mail import send_mail
+send_mail(
+    'Test Subject',
+    'Test message',
+    'from@company.com',
+    ['to@company.com'],
+    fail_silently=False,
+)</pre>
+                        </div>
+                        
+                        <p><strong>Типові помилки:</strong></p>
+                        <ul>
+                            <li>Неправильні SMTP налаштування</li>
+                            <li>Блокування портів провайдером</li>
+                            <li>Неправильний пароль додатку (Gmail)</li>
+                            <li>Відсутність SSL/TLS</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Моніторинг системи</h3>
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">📊</div>
+                        <h4>Системні ресурси</h4>
+                        <div class="code-block">
+                            <pre># Використання ресурсів
+docker stats
+
+# Дисковий простір
+docker system df
+
+# Логи розмір
+docker-compose logs --tail=100</pre>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🗄️</div>
+                        <h4>База даних</h4>
+                        <div class="code-block">
+                            <pre># Перевірка підключення
+docker-compose exec db pg_isready
+
+# Розмір бази
+docker-compose exec db psql -U postgres -c "\l+"
+
+# Активні з'єднання
+docker-compose exec db psql -U postgres -c "SELECT * FROM pg_stat_activity;"</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Контакти підтримки</h3>
+                <div class="info-box tip">
+                    <div class="info-box-title">📞 Де отримати допомогу</div>
+                    <ul>
+                        <li><strong>Документація:</strong> Всі .md файли в проекті</li>
+                        <li><strong>Логи системи:</strong> <code>docker-compose logs</code></li>
+                        <li><strong>Django адмін:</strong> Вбудована довідка та документація</li>
+                        <li><strong>База знань:</strong> Коментарі в коді</li>
+                    </ul>
+                </div>
+
+                <div class="steps">
+                    <div class="step">
+                        <strong>При звертанні за допомогою вкажіть:</strong>
+                        <ul>
+                            <li>Версію системи та Docker</li>
+                            <li>Операційну систему</li>
+                            <li>Детальний опис проблеми</li>
+                            <li>Кроки для відтворення</li>
+                            <li>Логи помилок</li>
+                            <li>Скріншоти при потребі</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Кнопка повернутися догори -->
+        <button class="back-to-top" id="backToTop">↑</button>
+    </div>
+
+    <script>
+        // Показати/сховати кнопку "Вгору"
+        window.addEventListener('scroll', function() {
+            const backToTopButton = document.getElementById('backToTop');
+            if (window.pageYOffset > 300) {
+                backToTopButton.classList.add('show');
+            } else {
+                backToTopButton.classList.remove('show');
+            }
+        });
+
+        // Плавне прокручування догори
+        document.getElementById('backToTop').addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Плавне прокручування для навігаційних посилань
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Підсвічування активного розділу в навігації
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= (sectionTop - 200)) {
+                    current = '#' + section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Додати стилі для активного посилання
+        const style = document.createElement('style');
+        style.textContent = `
+            .nav-link.active {
+                background: #667eea !important;
+                color: white !important;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            }
+        `;
+        document.head.appendChild(style);
+
+        console.log('🎉 Інструкція адміністратора завантажена успішно!');
+        console.log('📖 Використовуйте навігацію для швидкого переходу між розділами');
+    </script>
+</body>
+</html>
