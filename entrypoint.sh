@@ -14,7 +14,7 @@ wait_for_postgres() {
 # Функція для очікування готовності Redis
 wait_for_redis() {
     echo "Очікуємо готовності Redis..."
-    until redis-cli -h redis ping 2>/dev/null; do
+    until python -c "import redis; r=redis.Redis(host='redis', port=6379, db=0); r.ping()" 2>/dev/null; do
         echo "Redis ще не готовий - очікуємо..."
         sleep 1
     done

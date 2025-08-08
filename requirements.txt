@@ -69,6 +69,7 @@ drf-spectacular
 
 # Безпека
 django-security
+cryptography
 
 # Двофакторна аутентифікація
 pyotp
