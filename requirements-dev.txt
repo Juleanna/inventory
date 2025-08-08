@@ -2,37 +2,37 @@
 -r requirements.txt
 
 # Розробка та відладка
-django-debug-toolbar==4.2.*
-django-extensions==3.2.*
-ipython==8.18.*
-jupyter==1.0.*
+django-debug-toolbar
+django-extensions
+ipython
+jupyter
 
 # Тестування
-pytest==7.4.*
-pytest-django==4.8.*
-pytest-cov==4.1.*
-pytest-mock==3.12.*
-factory-boy==3.3.*
-coverage==7.3.*
-mixer==7.2.*
+pytest
+pytest-django
+pytest-cov
+pytest-mock
+factory-boy
+coverage
+mixer
 
 # Лінтинг та форматування
-black==23.12.*
-flake8==7.0.*
-isort==5.13.*
-bandit==1.7.*
-pre-commit==3.6.*
-mypy==1.8.*
-django-stubs==4.2.*
+black
+flake8
+isort
+bandit
+pre-commit
+mypy
+django-stubs
 
 # Профілювання
-django-silk==5.0.*
-memory-profiler==0.61.*
+django-silk
+memory-profiler
 
 # Документація
-mkdocs==1.5.*
-mkdocs-material==9.5.*
+mkdocs
+mkdocs-material
 
 # Утиліти
-watchdog==3.0.*
-python-dotenv==1.0.*
+watchdog
+python-dotenv

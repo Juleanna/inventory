@@ -1,82 +1,82 @@
 # Django та основні компоненти
-Django==5.2.*
-django-unfold==0.29.*
-django-simple-history==3.4.*
-django-import-export==4.0.*
-django-guardian==2.4.*
-django-crispy-forms==2.1.*
-crispy-bootstrap5==2024.2.*
-django-cors-headers==4.3.*
+Django
+django-unfold
+django-simple-history
+django-import-export
+django-guardian
+django-crispy-forms
+crispy-bootstrap5
+django-cors-headers
 
 # Django REST Framework
-djangorestframework==3.15.*
-djangorestframework-simplejwt==5.3.*
-django-filter==23.5.*
+djangorestframework
+djangorestframework-simplejwt
+django-filter
 
 # База даних
-psycopg2-binary==2.9.*
+psycopg2-binary
 
 # Redis та Celery
-redis==5.0.*
-celery==5.3.*
-django-celery-beat==2.5.*
-django-celery-results==2.5.*
-django-redis==5.4.*
+redis
+celery
+django-celery-beat
+django-celery-results
+django-redis
 
 # Конфігурація та змінні оточення
-python-decouple==3.8.*
-python-dotenv==1.0.*
+python-decouple
+python-dotenv
 
 # Генерація кодів
-python-barcode==0.15.*
-qrcode==7.4.*
-Pillow==10.2.*
+python-barcode
+qrcode
+Pillow
 
 # Експорт файлів
-XlsxWriter==3.1.*
-reportlab==4.0.*
+XlsxWriter
+reportlab
 
 # HTTP клієнт та асинхронність
-requests==2.31.*
-aiohttp==3.9.*
-tenacity==8.2.*
+requests
+aiohttp
+tenacity
 
 # Системна інформація (для агента)
-psutil==5.9.*
+psutil
 
 # Дата та час
-python-dateutil==2.8.*
+python-dateutil
 
 # Валідація та парсинг
-marshmallow==3.20.*
+marshmallow
 
 # Тестування (додатково)
-pytest==7.4.*
-pytest-django==4.8.*
-pytest-cov==4.1.*
-factory-boy==3.3.*
+pytest
+pytest-django
+pytest-cov
+factory-boy
 
 # Лінтинг та форматування (додатково)
-black==23.12.*
-flake8==7.0.*
-isort==5.13.*
+black
+flake8
+isort
 
 # Моніторинг помилок (додатково)
-sentry-sdk==1.40.*
+sentry-sdk
 
 # API документація (додатково)
-drf-spectacular==0.27.*
+drf-spectacular
 
 # Безпека
-django-security==0.17.*
+django-security
 
 # Двофакторна аутентифікація
-pyotp==2.9.*
-qrcode[pil]==7.4.*
+pyotp
+qrcode[pil]
 
 # Rate limiting
-django-ratelimit==4.1.*
+django-ratelimit
 
 # WSGI сервер для продакшену
-gunicorn==21.2.*
-whitenoise==6.6.*
+gunicorn
+whitenoise
