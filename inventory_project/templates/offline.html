@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Офлайн - Інвентаризація IT</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+        
+        .status {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .actions {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background: #28a745;
+            border-color: #28a745;
+        }
+        
+        .btn-primary:hover {
+            background: #218838;
+        }
+        
+        .features {
+            margin-top: 30px;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .features h3 {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .features ul {
+            list-style: none;
+        }
+        
+        .features li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .features li::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .connection-status.offline {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .connection-status.online {
+            background: #28a745;
+            color: white;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px;
+                padding: 30px 15px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .subtitle {
+                font-size: 16px;
+            }
+            
+            .icon {
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status" id="connectionStatus">
+        🔴 Офлайн
+    </div>
+
+    <div class="container">
+        <div class="icon">📱</div>
+        <h1>Ви в офлайн режимі</h1>
+        <p class="subtitle">
+            Немає з'єднання з інтернетом, але ви можете продовжити працювати 
+            з раніше завантаженими даними.
+        </p>
+        
+        <div class="status">
+            <strong>Статус:</strong> Дані кешовані локально
+        </div>
+        
+        <div class="actions">
+            <button class="btn btn-primary" onclick="tryReconnect()">
+                🔄 Спробувати підключитися
+            </button>
+            <a href="/" class="btn">
+                🏠 На головну
+            </a>
+            <button class="btn" onclick="showCachedData()">
+                📄 Переглянути збережені дані
+            </button>
+        </div>
+        
+        <div class="features">
+            <h3>Доступно офлайн:</h3>
+            <ul>
+                <li>Перегляд раніше завантажених даних</li>
+                <li>Сканування QR кодів</li>
+                <li>Створення заміток</li>
+                <li>Локальний пошук</li>
+                <li>Автоматична синхронізація при відновленні з'єднання</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Моніторинг з'єднання
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connectionStatus');
+            
+            if (navigator.onLine) {
+                statusEl.textContent = '🟢 Онлайн';
+                statusEl.className = 'connection-status online';
+            } else {
+                statusEl.textContent = '🔴 Офлайн';
+                statusEl.className = 'connection-status offline';
+            }
+        }
+        
+        // Спроба підключення
+        function tryReconnect() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '🔄 Підключення...';
+            
+            // Перевірити з'єднання
+            fetch('/api/health-check/', { 
+                method: 'GET',
+                cache: 'no-cache'
+            })
+            .then(response => {
+                if (response.ok) {
+                    btn.textContent = '✅ Підключено!';
+                    btn.style.background = '#28a745';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    throw new Error('Server error');
+                }
+            })
+            .catch(() => {
+                btn.textContent = '❌ Не вдалося підключитися';
+                btn.style.background = '#dc3545';
+                
+                setTimeout(() => {
+                    btn.textContent = '🔄 Спробувати підключитися';
+                    btn.style.background = '';
+                    btn.disabled = false;
+                }, 3000);
+            });
+        }
+        
+        // Показати кешовані дані
+        function showCachedData() {
+            // Перевірити Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then(registration => {
+                    // Спробувати відкрити кешовану сторінку
+                    window.location.href = '/dashboard/';
+                });
+            } else {
+                alert('Service Worker не підтримується у вашому браузері');
+            }
+        }
+        
+        // Слухачі подій
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        
+        // Ініціалізація
+        updateConnectionStatus();
+        
+        // Автоматична перевірка з'єднання кожні 30 секунд
+        setInterval(() => {
+            if (!navigator.onLine) {
+                fetch('/api/health-check/', { 
+                    method: 'GET',
+                    cache: 'no-cache'
+                }).then(() => {
+                    if (!navigator.onLine) {
+                        // Примусово оновити статус
+                        window.dispatchEvent(new Event('online'));
+                    }
+                }).catch(() => {
+                    // З'єднання все ще відсутнє
+                });
+            }
+        }, 30000);
+        
+        // Повідомити Service Worker про активність
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'PAGE_VIEW',
+                url: '/offline.html'
+            });
+        }
+    </script>
+</body>
+</html>

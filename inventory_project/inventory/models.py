@@ -617,3 +617,344 @@ class EquipmentDocument(models.Model):
 
     def __str__(self):
         return self.file.name
+
+
+class UserPreferences(models.Model):
+    """Налаштування користувача для персоналізації"""
+    
+    THEME_CHOICES = [
+        ('light', 'Світла'),
+        ('dark', 'Темна'),
+        ('auto', 'Автоматично'),
+    ]
+    
+    LAYOUT_CHOICES = [
+        ('default', 'Стандартний'),
+        ('compact', 'Компактний'),
+        ('detailed', 'Детальний'),
+    ]
+    
+    VIEW_CHOICES = [
+        ('cards', 'Картки'),
+        ('table', 'Таблиця'),
+        ('list', 'Список'),
+    ]
+    
+    LANGUAGE_CHOICES = [
+        ('uk', 'Українська'),
+        ('en', 'English'),
+        ('ru', 'Русский'),
+    ]
+    
+    user = models.OneToOneField(
+        'accounts.CustomUser',
+        on_delete=models.CASCADE,
+        related_name='preferences',
+        verbose_name="Користувач"
+    )
+    
+    # Налаштування інтерфейсу
+    theme = models.CharField(
+        max_length=10,
+        choices=THEME_CHOICES,
+        default='light',
+        verbose_name="Тема"
+    )
+    
+    dashboard_layout = models.CharField(
+        max_length=20,
+        choices=LAYOUT_CHOICES,
+        default='default',
+        verbose_name="Макет дашборду"
+    )
+    
+    default_view = models.CharField(
+        max_length=10,
+        choices=VIEW_CHOICES,
+        default='cards',
+        verbose_name="Вид за замовчуванням"
+    )
+    
+    language = models.CharField(
+        max_length=5,
+        choices=LANGUAGE_CHOICES,
+        default='uk',
+        verbose_name="Мова"
+    )
+    
+    items_per_page = models.IntegerField(
+        default=25,
+        choices=[
+            (10, '10'),
+            (25, '25'),
+            (50, '50'),
+            (100, '100'),
+        ],
+        verbose_name="Елементів на сторінку"
+    )
+    
+    # Налаштування сповіщень
+    notifications_email = models.BooleanField(
+        default=True,
+        verbose_name="Email сповіщення"
+    )
+    
+    notifications_push = models.BooleanField(
+        default=True,
+        verbose_name="Push сповіщення"
+    )
+    
+    notifications_daily_digest = models.BooleanField(
+        default=False,
+        verbose_name="Щоденний дайджест"
+    )
+    
+    notifications_maintenance = models.BooleanField(
+        default=True,
+        verbose_name="Сповіщення про ТО"
+    )
+    
+    notifications_warranty = models.BooleanField(
+        default=True,
+        verbose_name="Сповіщення про гарантію"
+    )
+    
+    # Персоналізація дашборду
+    dashboard_shortcuts = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name="Ярлики дашборду"
+    )
+    
+    dashboard_widgets = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name="Віджети дашборду"
+    )
+    
+    favorite_equipment = models.ManyToManyField(
+        Equipment,
+        blank=True,
+        related_name='favorited_by_preferences',
+        verbose_name="Улюблене обладнання"
+    )
+    
+    # Налаштування фільтрів
+    default_filters = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name="Фільтри за замовчуванням"
+    )
+    
+    # Метадані
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Створено"
+    )
+    
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Оновлено"
+    )
+    
+    class Meta:
+        verbose_name = "Налаштування користувача"
+        verbose_name_plural = "Налаштування користувачів"
+    
+    def __str__(self):
+        return f"Налаштування {self.user.username}"
+    
+    def get_dashboard_widgets(self):
+        """Отримати список віджетів дашборду"""
+        default_widgets = [
+            {'type': 'my_equipment', 'enabled': True, 'order': 0},
+            {'type': 'my_tasks', 'enabled': True, 'order': 1},
+            {'type': 'quick_actions', 'enabled': True, 'order': 2},
+            {'type': 'recent_activity', 'enabled': True, 'order': 3},
+            {'type': 'recommendations', 'enabled': True, 'order': 4},
+        ]
+        
+        if self.dashboard_widgets:
+            return self.dashboard_widgets
+        
+        return default_widgets
+    
+    def set_dashboard_widget(self, widget_type, enabled=True, order=None):
+        """Встановити налаштування віджету"""
+        widgets = self.get_dashboard_widgets()
+        
+        # Знайти віджет або створити новий
+        widget = next((w for w in widgets if w['type'] == widget_type), None)
+        
+        if widget:
+            widget['enabled'] = enabled
+            if order is not None:
+                widget['order'] = order
+        else:
+            widgets.append({
+                'type': widget_type,
+                'enabled': enabled,
+                'order': order or len(widgets)
+            })
+        
+        self.dashboard_widgets = widgets
+        self.save()
+
+
+class UserActivity(models.Model):
+    """Активність користувача для аналітики та рекомендацій"""
+    
+    ACTION_TYPES = [
+        ('view_equipment', 'Перегляд обладнання'),
+        ('edit_equipment', 'Редагування обладнання'),
+        ('add_equipment', 'Додавання обладнання'),
+        ('search', 'Пошук'),
+        ('export', 'Експорт'),
+        ('maintenance', 'Технічне обслуговування'),
+        ('login', 'Вхід в систему'),
+    ]
+    
+    user = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.CASCADE,
+        related_name='activities',
+        verbose_name="Користувач"
+    )
+    
+    action_type = models.CharField(
+        max_length=20,
+        choices=ACTION_TYPES,
+        verbose_name="Тип дії"
+    )
+    
+    target_object_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="ID об'єкта"
+    )
+    
+    target_model = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Модель об'єкта"
+    )
+    
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name="Додаткові дані"
+    )
+    
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        verbose_name="IP адреса"
+    )
+    
+    user_agent = models.TextField(
+        blank=True,
+        verbose_name="User Agent"
+    )
+    
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Час дії"
+    )
+    
+    class Meta:
+        verbose_name = "Активність користувача"
+        verbose_name_plural = "Активність користувачів"
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['user', 'action_type']),
+            models.Index(fields=['timestamp']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_action_type_display()} ({self.timestamp})"
+
+
+class CustomDashboard(models.Model):
+    """Користувацькі дашборди"""
+    
+    user = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.CASCADE,
+        related_name='custom_dashboards',
+        verbose_name="Користувач"
+    )
+    
+    name = models.CharField(
+        max_length=100,
+        verbose_name="Назва дашборду"
+    )
+    
+    description = models.TextField(
+        blank=True,
+        verbose_name="Опис"
+    )
+    
+    layout = models.JSONField(
+        default=dict,
+        verbose_name="Макет дашборду"
+    )
+    
+    filters = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name="Фільтри"
+    )
+    
+    is_default = models.BooleanField(
+        default=False,
+        verbose_name="Дашборд за замовчуванням"
+    )
+    
+    is_shared = models.BooleanField(
+        default=False,
+        verbose_name="Спільний доступ"
+    )
+    
+    shared_with = models.ManyToManyField(
+        'accounts.CustomUser',
+        blank=True,
+        related_name='shared_dashboards',
+        verbose_name="Спільний доступ з користувачами"
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Створено"
+    )
+    
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Оновлено"
+    )
+    
+    class Meta:
+        verbose_name = "Користувацький дашборд"
+        verbose_name_plural = "Користувацькі дашборди"
+        unique_together = ['user', 'name']
+    
+    def __str__(self):
+        return f"{self.name} ({self.user.username})"
+    
+    def save(self, *args, **kwargs):
+        # Якщо цей дашборд встановлено як основний, 
+        # зняти прапорець з інших дашбордів користувача
+        if self.is_default:
+            CustomDashboard.objects.filter(
+                user=self.user,
+                is_default=True
+            ).exclude(pk=self.pk).update(is_default=False)
+        
+        super().save(*args, **kwargs)
+
+
+# Імпорт моделей управління паролями
+from .password_management import (
+    SystemCategory, System, SystemAccount, PasswordAccessLog,
+    PasswordEncryptionService, PasswordManagementService
+)

@@ -9,6 +9,7 @@ from django.db.models import Q, Count
 import logging
 
 from .models import Equipment, Notification
+from .notifications import NotificationService
 
 User = get_user_model()
 logger = logging.getLogger('inventory')
@@ -407,4 +408,253 @@ def backup_critical_data():
         
     except Exception as e:
         logger.error(f"Помилка створення резервної копії: {e}")
+        raise
+
+
+# ========== НОВІ ЗАВДАННЯ З ПОКРАЩЕНОЮ СИСТЕМОЮ СПОВІЩЕНЬ ==========
+
+@shared_task
+def run_smart_notifications():
+    """Запустити розумні сповіщення"""
+    try:
+        results = []
+        
+        # Перевірка гарантій
+        warranty_count = NotificationService.check_warranty_expiration()
+        results.append(f"Гарантії: {warranty_count}")
+        
+        # Перевірка ТО
+        maintenance_count = NotificationService.check_maintenance_due()
+        results.append(f"ТО: {maintenance_count}")
+        
+        # Перевірка віку обладнання
+        age_count = NotificationService.check_equipment_age()
+        results.append(f"Вік: {age_count}")
+        
+        logger.info(f"Розумні сповіщення завершено: {', '.join(results)}")
+        return f"Розумні сповіщення: {', '.join(results)}"
+        
+    except Exception as e:
+        logger.error(f"Помилка розумних сповіщень: {e}")
+        raise
+
+
+@shared_task
+def send_daily_digests():
+    """Відправити щоденні дайджести"""
+    try:
+        digest_count = NotificationService.send_daily_digest()
+        logger.info(f"Відправлено {digest_count} щоденних дайджестів")
+        return f"Відправлено {digest_count} дайджестів"
+        
+    except Exception as e:
+        logger.error(f"Помилка відправки дайджестів: {e}")
+        raise
+
+
+@shared_task
+def cleanup_notifications():
+    """Очистити старі сповіщення"""
+    try:
+        deleted_count = NotificationService.cleanup_old_notifications()
+        logger.info(f"Видалено {deleted_count} старих сповіщень")
+        return f"Видалено {deleted_count} сповіщень"
+        
+    except Exception as e:
+        logger.error(f"Помилка очищення сповіщень: {e}")
+        raise
+
+
+@shared_task
+def monitor_equipment_health():
+    """Моніторинг здоров'я обладнання"""
+    try:
+        alerts_created = 0
+        today = timezone.now().date()
+        
+        # Знайти обладнання що довго не оновлювалося
+        stale_equipment = Equipment.objects.filter(
+            updated_at__date__lt=today - timedelta(days=3),
+            status='WORKING'
+        )
+        
+        for equipment in stale_equipment:
+            days_stale = (today - equipment.updated_at.date()).days
+            
+            if equipment.current_user:
+                title = f"Обладнання не відповідає: {equipment.name}"
+                message = f"""
+                Обладнання "{equipment.name}" ({equipment.serial_number}) 
+                не передавало дані {days_stale} днів.
+                
+                Можливі причини:
+                • Вимкнено або не працює
+                • Проблеми з мережею
+                • Агент не запущений
+                
+                Локація: {equipment.location}
+                """
+                
+                notification = NotificationService.create_notification(
+                    user=equipment.current_user,
+                    title=title,
+                    message=message,
+                    notification_type='WARNING',
+                    priority='MEDIUM',
+                    equipment=equipment
+                )
+                
+                if notification:
+                    alerts_created += 1
+        
+        logger.info(f"Створено {alerts_created} алертів про здоров'я обладнання")
+        return f"Створено {alerts_created} алертів"
+        
+    except Exception as e:
+        logger.error(f"Помилка моніторингу здоров'я: {e}")
+        raise
+
+
+@shared_task
+def generate_weekly_summary():
+    """Генерувати тижневу зводку"""
+    try:
+        from django.db.models import Count
+        
+        today = timezone.now().date()
+        week_ago = today - timedelta(days=7)
+        
+        # Статистика за тиждень
+        weekly_stats = {
+            'new_equipment': Equipment.objects.filter(
+                created_at__date__gte=week_ago
+            ).count(),
+            
+            'equipment_repaired': Equipment.objects.filter(
+                updated_at__date__gte=week_ago,
+                status='WORKING'
+            ).count(),
+            
+            'notifications_created': Notification.objects.filter(
+                created_at__date__gte=week_ago
+            ).count(),
+            
+            'maintenance_completed': Equipment.objects.filter(
+                last_maintenance_date__gte=week_ago
+            ).count()
+        }
+        
+        # Створити сводку для IT менеджерів
+        it_managers = User.objects.filter(
+            department='IT',
+            position__in=['MANAGER', 'DIRECTOR'],
+            is_active=True
+        )
+        
+        summary_message = f"""
+        Тижнева зводка інвентаризації ({week_ago.strftime('%d.%m')} - {today.strftime('%d.%m.%Y')})
+        
+        📊 Статистика:
+        • Додано нового обладнання: {weekly_stats['new_equipment']}
+        • Відремонтовано: {weekly_stats['equipment_repaired']}
+        • Проведено ТО: {weekly_stats['maintenance_completed']}
+        • Створено сповіщень: {weekly_stats['notifications_created']}
+        
+        💡 Рекомендації:
+        • Перевірити прострочене ТО
+        • Оновити інформацію про гарантії
+        • Провести аудит обладнання
+        """
+        
+        summaries_sent = 0
+        for manager in it_managers:
+            notification = NotificationService.create_notification(
+                user=manager,
+                title=f"Тижнева зводка {today.strftime('%d.%m.%Y')}",
+                message=summary_message,
+                notification_type='INFO',
+                priority='LOW'
+            )
+            
+            if notification:
+                summaries_sent += 1
+        
+        logger.info(f"Відправлено {summaries_sent} тижневих зводок")
+        return f"Відправлено {summaries_sent} тижневих зводок"
+        
+    except Exception as e:
+        logger.error(f"Помилка генерації тижневої зводки: {e}")
+        raise
+
+
+@shared_task
+def detect_equipment_anomalies():
+    """Виявити аномалії в обладнанні"""
+    try:
+        anomalies_found = 0
+        
+        # Обладнання без користувача довше 30 днів
+        unassigned_equipment = Equipment.objects.filter(
+            current_user__isnull=True,
+            status='WORKING',
+            created_at__lt=timezone.now() - timedelta(days=30)
+        )
+        
+        for equipment in unassigned_equipment:
+            # Повідомити IT відділ
+            it_staff = User.objects.filter(department='IT', is_active=True)
+            
+            for user in it_staff:
+                notification = NotificationService.create_notification(
+                    user=user,
+                    title=f"Обладнання без користувача: {equipment.name}",
+                    message=f"""
+                    Обладнання "{equipment.name}" ({equipment.serial_number}) 
+                    не має призначеного користувача вже {(timezone.now().date() - equipment.created_at.date()).days} днів.
+                    
+                    Локація: {equipment.location}
+                    Статус: {equipment.get_status_display()}
+                    """,
+                    notification_type='WARNING',
+                    priority='LOW',
+                    equipment=equipment
+                )
+                
+                if notification:
+                    anomalies_found += 1
+        
+        # Обладнання з дублікатами серійних номерів
+        from django.db.models import Count
+        duplicate_serials = Equipment.objects.values('serial_number').annotate(
+            count=Count('serial_number')
+        ).filter(count__gt=1)
+        
+        for dup in duplicate_serials:
+            duplicates = Equipment.objects.filter(serial_number=dup['serial_number'])
+            
+            # Повідомити адміністраторів
+            admins = User.objects.filter(is_staff=True, is_active=True)
+            
+            for admin in admins:
+                notification = NotificationService.create_notification(
+                    user=admin,
+                    title="Знайдено дублікати серійних номерів",
+                    message=f"""
+                    Серійний номер "{dup['serial_number']}" використовується 
+                    для {dup['count']} одиниць обладнання.
+                    
+                    Необхідно перевірити та виправити дублікати.
+                    """,
+                    notification_type='ERROR',
+                    priority='HIGH'
+                )
+                
+                if notification:
+                    anomalies_found += 1
+        
+        logger.info(f"Виявлено {anomalies_found} аномалій")
+        return f"Виявлено {anomalies_found} аномалій"
+        
+    except Exception as e:
+        logger.error(f"Помилка виявлення аномалій: {e}")
         raise

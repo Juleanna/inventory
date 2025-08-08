@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ notification.title }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .priority {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .priority.LOW { background-color: #28a745; }
+        .priority.MEDIUM { background-color: #ffc107; color: #000; }
+        .priority.HIGH { background-color: #fd7e14; }
+        .priority.URGENT { background-color: #dc3545; }
+        .content {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .message {
+            background-color: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .equipment-info {
+            background-color: #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .equipment-info h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        .value {
+            color: #495057;
+        }
+        .action-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            border-top: 1px solid #dee2e6;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .type-icon {
+            font-size: 48px;
+            margin: 20px 0;
+        }
+        .type-INFO { color: #17a2b8; }
+        .type-WARNING { color: #ffc107; }
+        .type-ERROR { color: #dc3545; }
+        .type-SUCCESS { color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="type-icon type-{{ notification.notification_type }}">
+                {% if notification.notification_type == 'INFO' %}ℹ️
+                {% elif notification.notification_type == 'WARNING' %}⚠️
+                {% elif notification.notification_type == 'ERROR' %}❌
+                {% elif notification.notification_type == 'SUCCESS' %}✅
+                {% endif %}
+            </div>
+            <h1>{{ notification.title }}</h1>
+            <div class="priority {{ notification.priority }}">
+                {{ notification.get_priority_display }}
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">
+                Привіт {{ user.get_full_name|default:user.username }}!
+            </div>
+            
+            <div class="message">
+                {{ notification.message|linebreaks }}
+            </div>
+            
+            {% if notification.equipment %}
+            <div class="equipment-info">
+                <h3>📱 Інформація про обладнання</h3>
+                <div class="info-row">
+                    <span class="label">Назва:</span>
+                    <span class="value">{{ notification.equipment.name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Серійний номер:</span>
+                    <span class="value">{{ notification.equipment.serial_number }}</span>
+                </div>
+                {% if notification.equipment.location %}
+                <div class="info-row">
+                    <span class="label">Локація:</span>
+                    <span class="value">{{ notification.equipment.location }}</span>
+                </div>
+                {% endif %}
+                {% if notification.equipment.manufacturer %}
+                <div class="info-row">
+                    <span class="label">Виробник:</span>
+                    <span class="value">{{ notification.equipment.manufacturer }}</span>
+                </div>
+                {% endif %}
+                <div class="info-row">
+                    <span class="label">Статус:</span>
+                    <span class="value">{{ notification.equipment.get_status_display }}</span>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="#" class="action-button">
+                    Переглянути в системі
+                </a>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 14px;">
+                <strong>Дата:</strong> {{ notification.created_at|date:"d.m.Y H:i" }}<br>
+                <strong>Тип:</strong> {{ notification.get_notification_type_display }}<br>
+                <strong>Пріоритет:</strong> {{ notification.get_priority_display }}
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>
+                Це автоматичне повідомлення з системи інвентаризації IT-обладнання.<br>
+                Якщо у вас є питання, зверніться до ІТ відділу.
+            </p>
+            <p>
+                <a href="#">Налаштування сповіщень</a> | 
+                <a href="#">Підтримка</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

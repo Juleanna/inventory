@@ -1,0 +1,300 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Inventory">
+    <meta name="theme-color" content="#28a745">
+    <meta name="msapplication-TileColor" content="#28a745">
+    <meta name="application-name" content="IT Equipment Inventory">
+    
+    <title>{% block title %}Інвентаризація IT{% endblock %}</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    
+    <!-- Favicon та іконки -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'icons/icon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'icons/icon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'icons/apple-touch-icon.png' %}">
+    <link rel="mask-icon" href="{% static 'icons/safari-pinned-tab.svg' %}" color="#28a745">
+    
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{% static 'css/pwa.css' %}" rel="stylesheet">
+    <link href="{% static 'css/mobile.css' %}" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Прелоадинг критичних ресурсів -->
+    <link rel="preload" href="{% static 'js/app.js' %}" as="script">
+    <link rel="preload" href="{% static 'js/pwa.js' %}" as="script">
+</head>
+<body class="mobile-layout {% block body_class %}{% endblock %}">
+    <!-- Прелоадер -->
+    <div id="app-loader" class="app-loader">
+        <div class="loader-content">
+            <div class="loader-logo">📱</div>
+            <div class="loader-spinner"></div>
+            <div class="loader-text">Завантаження...</div>
+        </div>
+    </div>
+
+    <!-- Навігація -->
+    <nav class="mobile-navbar" id="mobileNavbar">
+        <div class="navbar-brand">
+            <i class="fas fa-boxes"></i>
+            <span>Inventory</span>
+        </div>
+        
+        <div class="navbar-actions">
+            {% if user.is_authenticated %}
+                <button class="btn-icon" id="notificationBtn" title="Сповіщення">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" id="notificationBadge">0</span>
+                </button>
+                
+                <button class="btn-icon" id="searchBtn" title="Пошук">
+                    <i class="fas fa-search"></i>
+                </button>
+                
+                <button class="btn-icon" id="menuBtn" title="Меню">
+                    <i class="fas fa-bars"></i>
+                </button>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Пошукова панель -->
+    <div class="search-panel" id="searchPanel">
+        <div class="search-input-group">
+            <input type="text" class="search-input" id="searchInput" placeholder="Пошук обладнання..." autocomplete="off">
+            <button class="search-clear-btn" id="searchClearBtn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="search-filters">
+            <button class="filter-chip active" data-filter="all">Все</button>
+            <button class="filter-chip" data-filter="equipment">Обладнання</button>
+            <button class="filter-chip" data-filter="users">Користувачі</button>
+            <button class="filter-chip" data-filter="locations">Локації</button>
+        </div>
+        <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- Бічне меню -->
+    <div class="mobile-sidebar" id="mobileSidebar">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <div class="user-info">
+                    {% if user.is_authenticated %}
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                            <div class="user-role">{{ user.profile.get_position_display|default:"Користувач" }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+                <button class="sidebar-close-btn" id="sidebarCloseBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-menu">
+                <a href="/dashboard/" class="menu-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Дашборд</span>
+                </a>
+                
+                <a href="/equipment/" class="menu-item {% if request.resolver_match.url_name == 'equipment' %}active{% endif %}">
+                    <i class="fas fa-laptop"></i>
+                    <span>Обладнання</span>
+                </a>
+                
+                <a href="/notifications/" class="menu-item {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
+                    <i class="fas fa-bell"></i>
+                    <span>Сповіщення</span>
+                </a>
+                
+                <a href="/scan/" class="menu-item {% if request.resolver_match.url_name == 'scan' %}active{% endif %}">
+                    <i class="fas fa-qrcode"></i>
+                    <span>QR Сканер</span>
+                </a>
+                
+                <a href="/reports/" class="menu-item {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Звіти</span>
+                </a>
+                
+                {% if user.is_staff %}
+                <div class="menu-divider"></div>
+                <div class="menu-group-title">Адміністрування</div>
+                
+                <a href="/admin/" class="menu-item" target="_blank">
+                    <i class="fas fa-cog"></i>
+                    <span>Адмін панель</span>
+                </a>
+                
+                <a href="/maintenance/" class="menu-item">
+                    <i class="fas fa-tools"></i>
+                    <span>Технічне обслуговування</span>
+                </a>
+                
+                <a href="/spare-parts/" class="menu-item">
+                    <i class="fas fa-puzzle-piece"></i>
+                    <span>Запчастини</span>
+                </a>
+                {% endif %}
+                
+                <div class="menu-divider"></div>
+                
+                <a href="/profile/" class="menu-item">
+                    <i class="fas fa-user-cog"></i>
+                    <span>Профіль</span>
+                </a>
+                
+                <a href="/settings/" class="menu-item">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>Налаштування</span>
+                </a>
+                
+                <button class="menu-item" id="installAppBtn" style="display: none;">
+                    <i class="fas fa-download"></i>
+                    <span>Встановити додаток</span>
+                </button>
+                
+                <a href="{% url 'admin:logout' %}" class="menu-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Вийти</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основний контент -->
+    <main class="main-content" id="mainContent">
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Плаваюча кнопка дій -->
+    <div class="fab-container" id="fabContainer">
+        <button class="fab fab-main" id="fabMain">
+            <i class="fas fa-plus"></i>
+        </button>
+        
+        <div class="fab-menu" id="fabMenu">
+            <button class="fab fab-secondary" id="addEquipmentBtn" title="Додати обладнання">
+                <i class="fas fa-laptop"></i>
+            </button>
+            
+            <button class="fab fab-secondary" id="scanQRBtn" title="Сканувати QR">
+                <i class="fas fa-qrcode"></i>
+            </button>
+            
+            <button class="fab fab-secondary" id="quickReportBtn" title="Швидкий звіт">
+                <i class="fas fa-bug"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Нижня навігація -->
+    <nav class="bottom-nav" id="bottomNav">
+        <a href="/dashboard/" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <i class="fas fa-home"></i>
+            <span>Головна</span>
+        </a>
+        
+        <a href="/equipment/" class="nav-item {% if request.resolver_match.url_name == 'equipment' %}active{% endif %}">
+            <i class="fas fa-laptop"></i>
+            <span>Обладнання</span>
+        </a>
+        
+        <a href="/scan/" class="nav-item {% if request.resolver_match.url_name == 'scan' %}active{% endif %}">
+            <i class="fas fa-qrcode"></i>
+            <span>Сканер</span>
+        </a>
+        
+        <a href="/notifications/" class="nav-item {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
+            <i class="fas fa-bell"></i>
+            <span>Сповіщення</span>
+            <span class="nav-badge" id="navNotificationBadge">0</span>
+        </a>
+        
+        <a href="/profile/" class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+            <i class="fas fa-user"></i>
+            <span>Профіль</span>
+        </a>
+    </nav>
+
+    <!-- Модальні вікна -->
+    {% block modals %}{% endblock %}
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/pwa.js' %}"></script>
+    <script src="{% static 'js/mobile.js' %}"></script>
+    <script src="{% static 'js/app.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+
+    <script>
+        // Ініціалізація мобільного додатку
+        document.addEventListener('DOMContentLoaded', function() {
+            // Приховати прелоадер
+            setTimeout(() => {
+                const loader = document.getElementById('app-loader');
+                if (loader) {
+                    loader.classList.add('fade-out');
+                    setTimeout(() => loader.remove(), 300);
+                }
+            }, 1000);
+
+            // Ініціалізувати мобільну навігацію
+            if (window.MobileApp) {
+                window.mobileApp = new MobileApp();
+            }
+
+            // Оновити лічильники сповіщень
+            updateNotificationBadges();
+        });
+
+        // Оновлення лічильників сповіщень
+        function updateNotificationBadges() {
+            fetch('/api/notifications/unread-count/')
+                .then(response => response.json())
+                .then(data => {
+                    const count = data.count || 0;
+                    const badges = document.querySelectorAll('#notificationBadge, #navNotificationBadge');
+                    
+                    badges.forEach(badge => {
+                        badge.textContent = count > 99 ? '99+' : count;
+                        badge.style.display = count > 0 ? 'block' : 'none';
+                    });
+                })
+                .catch(console.error);
+        }
+
+        // Періодичне оновлення сповіщень
+        setInterval(updateNotificationBadges, 30000);
+    </script>
+</body>
+</html>

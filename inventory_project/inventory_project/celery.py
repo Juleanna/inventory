@@ -90,6 +90,50 @@ app.conf.update(
             'schedule': 60.0 * 60.0 * 24.0,  # Кожні 24 години
             'options': {'queue': 'backup'}
         },
+        
+        # ========== НОВІ ЗАВДАННЯ ==========
+        
+        # Розумні сповіщення кожні 12 годин
+        'run-smart-notifications': {
+            'task': 'inventory.tasks.run_smart_notifications',
+            'schedule': 60.0 * 60.0 * 12.0,  # Кожні 12 годин
+            'options': {'queue': 'notifications'}
+        },
+        
+        # Щоденні дайджести о 8:00 ранку
+        'send-daily-digests': {
+            'task': 'inventory.tasks.send_daily_digests',
+            'schedule': 60.0 * 60.0 * 24.0,  # Кожні 24 години
+            'options': {'queue': 'notifications'}
+        },
+        
+        # Моніторинг здоров'я обладнання кожні 4 години
+        'monitor-equipment-health': {
+            'task': 'inventory.tasks.monitor_equipment_health',
+            'schedule': 60.0 * 60.0 * 4.0,  # Кожні 4 години
+            'options': {'queue': 'monitoring'}
+        },
+        
+        # Тижнева зводка по понеділках о 9:00
+        'generate-weekly-summary': {
+            'task': 'inventory.tasks.generate_weekly_summary',
+            'schedule': 60.0 * 60.0 * 24.0 * 7.0,  # Кожний тиждень
+            'options': {'queue': 'reports'}
+        },
+        
+        # Виявлення аномалій щодня о 23:00
+        'detect-equipment-anomalies': {
+            'task': 'inventory.tasks.detect_equipment_anomalies',
+            'schedule': 60.0 * 60.0 * 24.0,  # Кожні 24 години
+            'options': {'queue': 'analytics'}
+        },
+        
+        # Очищення сповіщень щодня о 3:00
+        'cleanup-notifications': {
+            'task': 'inventory.tasks.cleanup_notifications',
+            'schedule': 60.0 * 60.0 * 24.0,  # Кожні 24 години
+            'options': {'queue': 'maintenance'}
+        },
     },
     
     # Маршрутизація завдань по чергах
@@ -100,6 +144,13 @@ app.conf.update(
         'inventory.tasks.backup_critical_data': {'queue': 'backup'},
         'inventory.tasks.cleanup_*': {'queue': 'maintenance'},
         'inventory.tasks.update_*': {'queue': 'maintenance'},
+        
+        # Нові маршрути
+        'inventory.tasks.run_smart_notifications': {'queue': 'notifications'},
+        'inventory.tasks.send_daily_digests': {'queue': 'notifications'},
+        'inventory.tasks.monitor_equipment_health': {'queue': 'monitoring'},
+        'inventory.tasks.generate_weekly_summary': {'queue': 'reports'},
+        'inventory.tasks.detect_equipment_anomalies': {'queue': 'analytics'},
     },
     
     # Налаштування воркерів

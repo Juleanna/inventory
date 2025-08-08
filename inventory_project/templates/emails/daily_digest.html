@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Щоденний дайджест</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border-left: 4px solid;
+        }
+        .stat-card.total { border-left-color: #6c757d; }
+        .stat-card.maintenance { border-left-color: #ffc107; }
+        .stat-card.warranty { border-left-color: #fd7e14; }
+        .stat-card.notifications { border-left-color: #dc3545; }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #495057;
+            margin: 0;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .alert-section {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .alert-section h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .alert-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #ffeaa7;
+        }
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            border-top: 1px solid #dee2e6;
+        }
+        .action-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="font-size: 48px; margin: 10px 0;">📊</div>
+            <h1>Щоденний дайджест</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">{{ date|date:"d.m.Y" }}</p>
+        </div>
+        
+        <div class="content">
+            <div style="font-size: 18px; margin-bottom: 20px; color: #333;">
+                Доброго дня, {{ user.get_full_name|default:user.username }}!
+            </div>
+            
+            <p>Ось короткий звіт про ваше обладнання за сьогодні:</p>
+            
+            <div class="stats-grid">
+                <div class="stat-card total">
+                    <div class="stat-number">{{ total_equipment }}</div>
+                    <div class="stat-label">Всього одиниць</div>
+                </div>
+                
+                {% if needs_maintenance > 0 %}
+                <div class="stat-card maintenance">
+                    <div class="stat-number">{{ needs_maintenance }}</div>
+                    <div class="stat-label">Потребує ТО</div>
+                </div>
+                {% endif %}
+                
+                {% if warranty_expiring > 0 %}
+                <div class="stat-card warranty">
+                    <div class="stat-number">{{ warranty_expiring }}</div>
+                    <div class="stat-label">Гарантія закінчується</div>
+                </div>
+                {% endif %}
+                
+                {% if unread_notifications > 0 %}
+                <div class="stat-card notifications">
+                    <div class="stat-number">{{ unread_notifications }}</div>
+                    <div class="stat-label">Нових сповіщень</div>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if needs_maintenance > 0 or warranty_expiring > 0 %}
+            <div class="alert-section">
+                <h3>⚠️ Потребує уваги</h3>
+                
+                {% if needs_maintenance > 0 %}
+                <div class="alert-item">
+                    <span>Обладнання потребує технічного обслуговування</span>
+                    <strong>{{ needs_maintenance }} од.</strong>
+                </div>
+                {% endif %}
+                
+                {% if warranty_expiring > 0 %}
+                <div class="alert-item">
+                    <span>Гарантія закінчується найближчим часом (30 днів)</span>
+                    <strong>{{ warranty_expiring }} од.</strong>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="#" class="action-button">
+                    Переглянути дашборд
+                </a>
+            </div>
+            
+            <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                <strong>💡 Порада дня:</strong><br>
+                Регулярно перевіряйте стан вашого обладнання та своєчасно проводьте технічне обслуговування. 
+                Це допоможе продовжити термін служби та уникнути несподіваних поломок.
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>
+                Щоденний дайджест системи інвентаризації IT-обладнання<br>
+                Згенеровано {{ date|date:"d.m.Y" }} о {{ date|time:"H:i" }}
+            </p>
+            <p>
+                <a href="#" style="color: #28a745;">Налаштувати дайджест</a> | 
+                <a href="#" style="color: #28a745;">Відписатися</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

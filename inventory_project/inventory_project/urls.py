@@ -7,4 +7,17 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('inventory.urls')),  # Просто пустой путь, чтобы не было повторного /api
 ]
+
+# Статичні файли
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Debug Toolbar URLs (тільки в режимі розробки)
+if settings.DEBUG:
+    try:
+        import debug_toolbar
+        urlpatterns = [
+            path('__debug__/', include(debug_toolbar.urls)),
+        ] + urlpatterns
+    except ImportError:
+        # Django Debug Toolbar не встановлено
+        pass

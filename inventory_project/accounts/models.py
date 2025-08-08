@@ -359,7 +359,7 @@ class UserProfile(models.Model):
     favorite_equipment = models.ManyToManyField(
         'inventory.Equipment',
         blank=True,
-        related_name='favorited_by',
+        related_name='favorited_by_users',
         verbose_name="Улюблене обладнання"
     )
     

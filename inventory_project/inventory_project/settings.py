@@ -29,12 +29,12 @@ os.makedirs(BASE_DIR / 'logs', exist_ok=True)
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-l0%nhoomv)z^l9$_te1jx$o_c_966rlu_-vsxc)1z237^q=%13'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=lambda v: [s.strip() for s in v.split(',')])
 
 
 # Application definition
@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'licenses',
     'accounts',
+   
     
 ]
 
@@ -149,6 +150,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -311,8 +316,8 @@ LOGGING = {
 # Додати до inventory_project/settings.py
 
 # Celery налаштування
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -327,27 +332,43 @@ CELERY_TIMEZONE = TIME_ZONE
 # EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 # DEFAULT_FROM_EMAIL = 'inventory@yourcompany.com'
 
-# Для розробки
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email налаштування
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='inventory@yourcompany.com')
 
 # Налаштування файлів
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Налаштування кешування
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+if DEBUG:
+    # Для розробки використовуємо простий кеш
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'inventory-cache',
         }
     }
-}
-
-# Налаштування сесій
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
+    # Стандартні сесії для розробки
+    SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+else:
+    # Для продакшену використовуємо Redis
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': config('REDIS_URL', default='redis://127.0.0.1:6379/1'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            }
+        }
+    }
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'default'
 
 # Додаткові налаштування DRF
 REST_FRAMEWORK.update({
@@ -383,87 +404,36 @@ ADDITIONAL_APPS = [
     'redis',
 ]
 
-# Оновлення UNFOLD конфігурації
-UNFOLD.update({
-    "SIDEBAR": {
-        "show_search": True,
-        "show_all_applications": True,
-        "navigation": [
-            {
-                "title": _("Обладнання"),
-                "separator": True,
-                "items": [
-                    {
-                        "title": _("Всe обладнання"),
-                        "icon": "computer",
-                        "link": reverse_lazy("admin:inventory_equipment_changelist"),
-                    },
-                    {
-                        "title": _("Додати обладнання"),
-                        "icon": "add",
-                        "link": reverse_lazy("admin:inventory_equipment_add"),
-                    },
-                    {
-                        "title": _("Аналітика"),
-                        "icon": "analytics",
-                        "link": reverse_lazy("admin:equipment_analytics"),
-                    },
-                ],
-            },
-            {
-                "title": _("Уведомлення"),
-                "separator": True,
-                "items": [
-                    {
-                        "title": _("Всі уведомлення"),
-                        "icon": "notifications",
-                        "link": reverse_lazy("admin:inventory_notification_changelist"),
-                    },
-                ],
-            },
-            {
-                "title": _("Користувачі"),
-                "separator": True,
-                "items": [
-                    {
-                        "title": _("Користувачі"),
-                        "icon": "people",
-                        "link": reverse_lazy("admin:accounts_customuser_changelist"),
-                    },
-                    {
-                        "title": _("Групи"),
-                        "icon": "group",
-                        "link": reverse_lazy("admin:auth_group_changelist"),
-                    },
-                ],
-            },
-        ],
-    },
-    "COLORS": {
-        "primary": {
-            "50": "250 245 255",
-            "100": "243 232 255", 
-            "200": "233 213 255",
-            "300": "196 181 255",
-            "400": "147 125 255",
-            "500": "99 102 241",
-            "600": "79 70 229",
-            "700": "67 56 202",
-            "800": "55 48 163",
-            "900": "49 46 129"
-        }
-    },
-})
+# Імпортуємо розширену UNFOLD конфігурацію
+from .unfold_config import UNFOLD as UNFOLD_CONFIG
+
+# Застосовуємо розширену конфігурацію
+UNFOLD = UNFOLD_CONFIG
+
+# Налаштування для управління паролями
+PASSWORD_ENCRYPTION_KEY = config('PASSWORD_ENCRYPTION_KEY', default=None)
+
+# Якщо ключ не встановлено, генеруємо попередження
+if not PASSWORD_ENCRYPTION_KEY:
+    import warnings
+    warnings.warn(
+        "PASSWORD_ENCRYPTION_KEY не встановлено в .env файлі. "
+        "Додайте PASSWORD_ENCRYPTION_KEY=<your-32-byte-base64-key> для безпечного зберігання паролів."
+    )
 
 # Налаштування для розробки
 if DEBUG:
-    # Django Debug Toolbar
+    # Django Debug Toolbar (тільки якщо встановлено)
     try:
         import debug_toolbar
         INSTALLED_APPS += ['debug_toolbar']
         MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
-        INTERNAL_IPS = ['127.0.0.1']
+        INTERNAL_IPS = ['127.0.0.1', '::1']
+        DEBUG_TOOLBAR_CONFIG = {
+            'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
+        }
     except ImportError:
+        # Django Debug Toolbar не встановлено - це нормально
         pass
     
        
@@ -476,22 +446,40 @@ if DEBUG:
     
     LOGGING['loggers']['inventory']['handlers'].append('console')
 
+# Sentry для моніторингу помилок (додатково)
+SENTRY_DSN = config('SENTRY_DSN', default='')
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(),
+        ],
+        traces_sample_rate=0.1,
+        send_default_pii=True
+    )
+
 # Налаштування для продакшену
 else:
     # Безпека
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_HSTS_SECONDS = 31536000
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     
     # Сесії
-    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
     SESSION_COOKIE_HTTPONLY = True
-    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
     
     # CORS для продакшену
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = [
-        # Додати ваші домени
+        # Додати ваші домени в .env файл
     ]
