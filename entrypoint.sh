@@ -23,6 +23,9 @@ wait_for_redis() {
 
 cd /app/inventory_project
 
+# Встановлюємо Django налаштування для Docker
+export DJANGO_SETTINGS_MODULE=inventory_project.settings_docker
+
 # Очікуємо готовності баз даних
 if [ "$DB_HOST" ]; then
     wait_for_postgres

@@ -2,6 +2,9 @@
 import os
 from .settings import *
 
+# Повністю відключаємо логування для Docker щоб уникнути помилок з файлами
+LOGGING_CONFIG = None
+
 # Завантажуємо Docker-специфічні змінні
 if os.path.exists('/app/.env.docker'):
     from dotenv import load_dotenv
@@ -46,6 +49,9 @@ CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://redis:6379/0
 # Статичні файли для Docker
 STATIC_URL = '/static/'
 STATIC_ROOT = '/app/staticfiles/'
+STATICFILES_DIRS = [
+    '/app/inventory_project/static',
+]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/app/media/'
 
@@ -53,57 +59,7 @@ MEDIA_ROOT = '/app/media/'
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Логування для Docker
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose'
-        },
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/app/logs/inventory.log',
-            'maxBytes': 1024*1024*10,  # 10 MB
-            'backupCount': 5,
-            'formatter': 'verbose'
-        },
-    },
-    'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'inventory': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'celery': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-    },
-}
+# Логування відключено для Docker
 
 # Безпека для Docker
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

@@ -11,7 +11,6 @@ services:
       POSTGRES_PASSWORD: 123456
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db_init:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
     networks:
@@ -49,10 +48,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./inventory_project:/app/inventory_project
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-      - ./logs:/app/logs
     environment:
       - DEBUG=False
       - ALLOWED_HOSTS=localhost,127.0.0.1,web
@@ -85,9 +82,6 @@ services:
       dockerfile: Dockerfile
     container_name: inventory_celery_worker
     command: celery -A inventory_project worker -l info
-    volumes:
-      - ./inventory_project:/app/inventory_project
-      - ./logs:/app/logs
     environment:
       - DEBUG=False
       - DATABASE_URL=postgresql://postgres:123456@db:5432/inventory_db
@@ -114,9 +108,6 @@ services:
       dockerfile: Dockerfile
     container_name: inventory_celery_beat
     command: celery -A inventory_project beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    volumes:
-      - ./inventory_project:/app/inventory_project
-      - ./logs:/app/logs
     environment:
       - DEBUG=False
       - DATABASE_URL=postgresql://postgres:123456@db:5432/inventory_db
