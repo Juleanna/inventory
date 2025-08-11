@@ -40,6 +40,7 @@ RUN groupadd -r django && useradd -r -g django django
 # Встановлюємо права на директорії
 RUN chown -R django:django /app
 RUN chmod +x /app/entrypoint.sh
+RUN chmod 755 /app/logs
 
 # Переключаємося на непривілейованого користувача
 USER django
