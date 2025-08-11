@@ -2,9 +2,6 @@
 import os
 from .settings import *
 
-# Повністю відключаємо логування для Docker щоб уникнути помилок з файлами
-LOGGING_CONFIG = None
-
 # Завантажуємо Docker-специфічні змінні
 if os.path.exists('/app/.env.docker'):
     from dotenv import load_dotenv

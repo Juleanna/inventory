@@ -19,6 +19,9 @@ RUN apt-get update \
 # Створюємо робочу директорію
 WORKDIR /app
 
+# Створюємо директорію для логів
+RUN mkdir -p /app/logs
+
 # Копіюємо файли залежностей
 COPY requirements.txt /app/
 COPY requirements-dev.txt /app/
