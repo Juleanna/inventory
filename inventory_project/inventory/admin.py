@@ -83,7 +83,7 @@ class EquipmentLocationFilter(admin.SimpleListFilter):
             )
 
 @admin.register(Equipment)
-class EquipmentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, ModelAdmin):
+class EquipmentAdmin(SimpleHistoryAdmin, ModelAdmin):
     list_display = (
         'name', 'category', 'manufacturer', 'serial_number', 'location', 
         'status_badge', 'current_user', 'purchase_date', 'warranty_status',
@@ -97,7 +97,7 @@ class EquipmentAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, ModelAdmin):
         ('purchase_date', RangeDateFilter),
         ('warranty_until', RangeDateFilter),
         ('manufacturer', ChoicesDropdownFilter),
-        ('purchase_price', RangeDateFilter),
+        'purchase_price',  # Змінено з RangeDateFilter на звичайний фільтр
         'priority'
     )
     

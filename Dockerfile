@@ -41,6 +41,8 @@ RUN groupadd -r django && useradd -r -g django django
 RUN chown -R django:django /app
 RUN chmod +x /app/entrypoint.sh
 RUN chmod 755 /app/logs
+RUN mkdir -p /app/staticfiles && chown django:django /app/staticfiles
+RUN mkdir -p /app/media && chown django:django /app/media
 
 # Переключаємося на непривілейованого користувача
 USER django
