@@ -64,6 +64,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'licenses',
     'accounts',
+    'django_celery_beat',  # Для планування завдань Celery
+    'django_celery_results',  # Для результатів Celery
    
     
 ]
@@ -397,12 +399,7 @@ SIMPLE_JWT.update({
     'BLACKLIST_AFTER_ROTATION': True,
 })
 
-# Додати до INSTALLED_APPS (якщо ще не додано)
-ADDITIONAL_APPS = [
-    'django_celery_beat',  # Для планування завдань
-    'django_celery_results',  # Для збереження результатів
-    'redis',
-]
+# Django Celery додано до INSTALLED_APPS вище
 
 # Імпортуємо розширену UNFOLD конфігурацію
 from .unfold_config import UNFOLD as UNFOLD_CONFIG
