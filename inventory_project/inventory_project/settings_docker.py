@@ -2,6 +2,12 @@
 import os
 from .settings import *
 
+# Додаємо Django Celery додатки, якщо їх немає
+if 'django_celery_beat' not in INSTALLED_APPS:
+    INSTALLED_APPS += ['django_celery_beat']
+if 'django_celery_results' not in INSTALLED_APPS:
+    INSTALLED_APPS += ['django_celery_results']
+
 # Завантажуємо Docker-специфічні змінні
 if os.path.exists('/app/.env.docker'):
     from dotenv import load_dotenv
