@@ -1,0 +1,875 @@
+{
+  "name": "DESKTOP-GUHT53P",
+  "hostname": "DESKTOP-GUHT53P",
+  "category": "LAPTOP",
+  "model": "20JRS0G904",
+  "manufacturer": "LENOVO",
+  "serial_number": "MP19XHTZ",
+  "inventory_number": "MP19XHTZ-842EB149",
+  "mac_address": "25:6b",
+  "ip_address": "192.168.68.63",
+  "network_adapters": [
+    {
+      "name": "Ethernet",
+      "addresses": [
+        {
+          "type": "IPv4",
+          "address": "169.254.6.23",
+          "netmask": "255.255.0.0",
+          "broadcast": null
+        },
+        {
+          "type": "IPv6",
+          "address": "fe80::57a3:5906:48d4:7c9b",
+          "netmask": null
+        }
+      ],
+      "stats": {
+        "is_up": false,
+        "duplex": "NIC_DUPLEX_FULL",
+        "speed": 0,
+        "mtu": 1500
+      }
+    },
+    {
+      "name": "Підключення через локальну мережу* 1",
+      "addresses": [
+        {
+          "type": "IPv4",
+          "address": "169.254.126.170",
+          "netmask": "255.255.0.0",
+          "broadcast": null
+        },
+        {
+          "type": "IPv6",
+          "address": "fe80::c82:9275:4721:a258",
+          "netmask": null
+        }
+      ],
+      "stats": {
+        "is_up": false,
+        "duplex": "NIC_DUPLEX_FULL",
+        "speed": 0,
+        "mtu": 1500
+      }
+    },
+    {
+      "name": "Підключення через локальну мережу* 10",
+      "addresses": [
+        {
+          "type": "IPv4",
+          "address": "169.254.35.87",
+          "netmask": "255.255.0.0",
+          "broadcast": null
+        },
+        {
+          "type": "IPv6",
+          "address": "fe80::88ea:2bbd:aa60:c463",
+          "netmask": null
+        }
+      ],
+      "stats": {
+        "is_up": false,
+        "duplex": "NIC_DUPLEX_FULL",
+        "speed": 0,
+        "mtu": 1500
+      }
+    },
+    {
+      "name": "Wi-Fi",
+      "addresses": [
+        {
+          "type": "IPv4",
+          "address": "192.168.68.63",
+          "netmask": "255.255.252.0",
+          "broadcast": null
+        },
+        {
+          "type": "IPv6",
+          "address": "fe80::63e3:848b:7cf8:f5e2",
+          "netmask": null
+        }
+      ],
+      "stats": {
+        "is_up": true,
+        "duplex": "NIC_DUPLEX_FULL",
+        "speed": 300,
+        "mtu": 1500
+      }
+    },
+    {
+      "name": "Підключення через мережу Bluetooth",
+      "addresses": [
+        {
+          "type": "IPv4",
+          "address": "169.254.41.252",
+          "netmask": "255.255.0.0",
+          "broadcast": null
+        },
+        {
+          "type": "IPv6",
+          "address": "fe80::fd58:34b3:2d0b:6737",
+          "netmask": null
+        }
+      ],
+      "stats": {
+        "is_up": false,
+        "duplex": "NIC_DUPLEX_FULL",
+        "speed": 3,
+        "mtu": 1500
+      }
+    },
+    {
+      "name": "vEthernet (WSL)",
+      "addresses": [
+        {
+          "type": "IPv4",
+          "address": "172.28.192.1",
+          "netmask": "255.255.240.0",
+          "broadcast": null
+        },
+        {
+          "type": "IPv6",
+          "address": "fe80::4f4e:84ea:daec:2bab",
+          "netmask": null
+        }
+      ],
+      "stats": {
+        "is_up": true,
+        "duplex": "NIC_DUPLEX_FULL",
+        "speed": 4294,
+        "mtu": 1500
+      }
+    },
+    {
+      "name": "Loopback Pseudo-Interface 1",
+      "addresses": [
+        {
+          "type": "IPv4",
+          "address": "127.0.0.1",
+          "netmask": "255.0.0.0",
+          "broadcast": null
+        },
+        {
+          "type": "IPv6",
+          "address": "::1",
+          "netmask": null
+        }
+      ],
+      "stats": {
+        "is_up": true,
+        "duplex": "NIC_DUPLEX_FULL",
+        "speed": 1073,
+        "mtu": 1500
+      }
+    }
+  ],
+  "location": "Не вказано",
+  "status": "WORKING",
+  "cpu_info": {
+    "name": "Intel(R) Core(TM) i5-6300U CPU @ 2.40GHz",
+    "brand": "Unknown",
+    "vendor": "GenuineIntel",
+    "family": 6,
+    "model": 78,
+    "stepping": 3,
+    "microarchitecture": "X86_64",
+    "cores_physical": 2,
+    "cores_logical": 4,
+    "l2_cache": 524288,
+    "l3_cache": 3145728,
+    "current_freq": 2500.0,
+    "max_freq": 2501.0
+  },
+  "memory_info": {
+    "total": 8464175104
+  },
+  "disk_info": {
+    "partitions": [
+      {
+        "device": "C:\\",
+        "mountpoint": "C:\\",
+        "fstype": "NTFS",
+        "total": 104160497664,
+        "used": 80615362560,
+        "free": 23545135104,
+        "percentage": 77.39533159686728
+      },
+      {
+        "device": "D:\\",
+        "mountpoint": "D:\\",
+        "fstype": "NTFS",
+        "total": 135198142464,
+        "used": 44758921216,
+        "free": 90439221248,
+        "percentage": 33.106165809872884
+      }
+    ]
+  },
+  "gpu_info": [],
+  "cpu": "Intel(R) Core(TM) i5-6300U CPU @ 2.40GHz",
+  "ram": "8 GB",
+  "operating_system": "Windows 10 10.0.19045",
+  "installed_software": [
+    {
+      "name": "CCleaner",
+      "version": "6.38",
+      "publisher": "Piriform"
+    },
+    {
+      "name": "DBeaver 25.1.2",
+      "version": "25.1.2",
+      "publisher": "DBeaver Corp"
+    },
+    {
+      "name": "Docker Desktop",
+      "version": "4.44.0",
+      "publisher": "Docker Inc.",
+      "size": 2792578
+    },
+    {
+      "name": "gettext 0.25.1 + iconv 1.17 - shared (64 bit)",
+      "publisher": "Michele Locati",
+      "install_date": "20250723",
+      "size": 24825
+    },
+    {
+      "name": "GIMP 3.0.4",
+      "version": "3.0.4.0",
+      "publisher": "The GIMP Team",
+      "install_date": "20250716",
+      "size": 837118
+    },
+    {
+      "name": "Git",
+      "version": "2.50.1",
+      "publisher": "The Git Development Community",
+      "install_date": "20250715",
+      "size": 364866
+    },
+    {
+      "name": "Mozilla Thunderbird (x64 ru)",
+      "version": "141.0",
+      "publisher": "Mozilla",
+      "size": 305695
+    },
+    {
+      "name": "Mozilla Maintenance Service",
+      "version": "141.0",
+      "publisher": "Mozilla",
+      "size": 380
+    },
+    {
+      "name": "Notepad++ (64-bit x64)",
+      "version": "8.8.3",
+      "publisher": "Notepad++ Team",
+      "size": 24473
+    },
+    {
+      "name": "Microsoft OneDrive",
+      "version": "25.137.0715.0001",
+      "publisher": "Microsoft Corporation",
+      "size": 437276
+    },
+    {
+      "name": "PostgreSQL 17 ",
+      "version": "17.5-3",
+      "publisher": "PostgreSQL Global Development Group",
+      "install_date": "20250715",
+      "size": 1037801
+    },
+    {
+      "name": "Microsoft Office профессиональный плюс 2024 - ru-ru",
+      "version": "16.0.19029.20156",
+      "publisher": "Microsoft Corporation"
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 x64 Additional Runtime - 12.0.40664",
+      "version": "12.0.40664",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 11784
+    },
+    {
+      "name": "Python 3.13.5 Documentation (64-bit)",
+      "version": "3.13.5150.0",
+      "publisher": "Python Software Foundation",
+      "install_date": "20250715",
+      "size": 60268
+    },
+    {
+      "name": "Common Desktop Agent",
+      "version": "1.62.0",
+      "publisher": "OEM",
+      "install_date": "20250714",
+      "size": 953
+    },
+    {
+      "name": "Viber",
+      "version": "25.7.0.0",
+      "publisher": "2010-2025 Viber Media S.a.r.l",
+      "install_date": "20250715",
+      "size": 359712
+    },
+    {
+      "name": "Microsoft Visual C++ 2005 Redistributable - x64 8.0.56336 False",
+      "version": "8.0.56336",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 7212
+    },
+    {
+      "name": "Microsoft Visual C++ 2010 Redistributable - x64 10.0.40219",
+      "version": "10.0.40219",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 14140
+    },
+    {
+      "name": "Python 3.13.5 pip Bootstrap (64-bit)",
+      "version": "3.13.5150.0",
+      "publisher": "Python Software Foundation",
+      "install_date": "20250715",
+      "size": 288
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 x64 Additional Runtime - 12.0.40649 False",
+      "version": "12.0.40649",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 132
+    },
+    {
+      "name": "Windows Subsystem for Linux",
+      "version": "2.5.10.0",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250807",
+      "size": 858372
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729.0 False",
+      "version": "9.0.30729",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 232
+    },
+    {
+      "name": "Microsoft Visual C++ 2012 x64 Minimum Runtime - 11.0.60610 False",
+      "version": "11.0.60610",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 140
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x64 9.0.21022 False",
+      "version": "9.0.21022",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 236
+    },
+    {
+      "name": "Microsoft Visual C++ 2012 x64 Additional Runtime - 11.0.61030",
+      "version": "11.0.61030",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 12272
+    },
+    {
+      "name": "Microsoft Visual C++ 2022 X64 Additional Runtime - 14.32.31326",
+      "version": "14.32.31326",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 11736
+    },
+    {
+      "name": "Python 3.13.5 Executables (64-bit)",
+      "version": "3.13.5150.0",
+      "publisher": "Python Software Foundation",
+      "install_date": "20250715",
+      "size": 2596
+    },
+    {
+      "name": "Microsoft Visual C++ 2012 x64 Additional Runtime - 11.0.51106 False",
+      "version": "11.0.51106",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 140
+    },
+    {
+      "name": "Canon MF450 Series",
+      "version": "7.2.0.0",
+      "publisher": "CANON INC."
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729.4148 False",
+      "version": "9.0.30729.4148",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 228
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729 False",
+      "version": "9.0.30729",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 236
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 x64 Minimum Runtime - 12.0.40664",
+      "version": "12.0.40664",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 2524
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 x64 Additional Runtime - 12.0.40660 False",
+      "version": "12.0.40660",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 132
+    },
+    {
+      "name": "Microsoft Visual C++ 2012 x64 Minimum Runtime - 11.0.51106 False",
+      "version": "11.0.51106",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 140
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729.6161",
+      "version": "9.0.30729.6161",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 13528
+    },
+    {
+      "name": "Microsoft Visual C++ 2005 Redistributable - x64 8.0.59192 False",
+      "version": "8.0.59192",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 448
+    },
+    {
+      "name": "Microsoft Visual C++ 2005 Redistributable - x64 8.0.50727.42 False",
+      "version": "8.0.50727.42",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 232
+    },
+    {
+      "name": "Microsoft Visual C++ 2012 x64 Additional Runtime - 11.0.60610 False",
+      "version": "11.0.60610",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 140
+    },
+    {
+      "name": "PDF24 Creator 11.27.0",
+      "version": "11.27.0",
+      "publisher": "Geek Software GmbH",
+      "install_date": "20250715",
+      "size": 1019675
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729.17 False",
+      "version": "9.0.30729",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 13596
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729.5570 False",
+      "version": "9.0.30729.5570",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 232
+    },
+    {
+      "name": "Office 16 Click-to-Run Licensing Component",
+      "version": "16.0.19029.20156",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250808",
+      "size": 7180
+    },
+    {
+      "name": "Office 16 Click-to-Run Extensibility Component",
+      "version": "16.0.19029.20156",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250808",
+      "size": 30472
+    },
+    {
+      "name": "Office 16 Click-to-Run Localization Component",
+      "version": "16.0.19029.20156",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250808",
+      "size": 1216
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729.4048 False",
+      "version": "9.0.30729.4048",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 228
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 x64 Additional Runtime - 12.0.21005 False",
+      "version": "12.0.21005",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 132
+    },
+    {
+      "name": "Python 3.13.5 Core Interpreter (64-bit)",
+      "version": "3.13.5150.0",
+      "publisher": "Python Software Foundation",
+      "install_date": "20250715",
+      "size": 6024
+    },
+    {
+      "name": "Node.js",
+      "version": "22.17.1",
+      "publisher": "Node.js Foundation",
+      "install_date": "20250716",
+      "size": 101161
+    },
+    {
+      "name": "Python 3.13.5 Test Suite (64-bit)",
+      "version": "3.13.5150.0",
+      "publisher": "Python Software Foundation",
+      "install_date": "20250715",
+      "size": 33204
+    },
+    {
+      "name": "Revo Uninstaller 2.6.0",
+      "version": "2.6.0",
+      "publisher": "VS Revo Group, Ltd.",
+      "install_date": "20250808",
+      "size": 32685
+    },
+    {
+      "name": "Microsoft Visual C++ 2012 x64 Minimum Runtime - 11.0.50727 False",
+      "version": "11.0.50727",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 136
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 x64 Minimum Runtime - 12.0.21005 False",
+      "version": "12.0.21005",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 132
+    },
+    {
+      "name": "Microsoft Teams Meeting Add-in for Microsoft Office",
+      "version": "1.25.18302",
+      "publisher": "Microsoft",
+      "install_date": "20250729",
+      "size": 34544
+    },
+    {
+      "name": "Microsoft Visual C++ 2005 Redistributable - x64 8.0.51011 False",
+      "version": "8.0.51011",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 480
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 x64 Minimum Runtime - 12.0.40649 False",
+      "version": "12.0.40649",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 132
+    },
+    {
+      "name": "Python 3.13.5 Tcl/Tk Support (64-bit)",
+      "version": "3.13.5150.0",
+      "publisher": "Python Software Foundation",
+      "install_date": "20250715",
+      "size": 13884
+    },
+    {
+      "name": "Microsoft Visual C++ 2012 x64 Additional Runtime - 11.0.50727 False",
+      "version": "11.0.50727",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 140
+    },
+    {
+      "name": "Microsoft Visual C++ 2005 Redistributable - x64 8.0.61000",
+      "version": "8.0.61000",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 7096
+    },
+    {
+      "name": "Python 3.13.5 Development Libraries (64-bit)",
+      "version": "3.13.5150.0",
+      "publisher": "Python Software Foundation",
+      "install_date": "20250715",
+      "size": 2832
+    },
+    {
+      "name": "Microsoft Visual C++ 2005 Redistributable - x64 8.0.50727.4053 False",
+      "version": "8.0.50727.4053",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 244
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x64 9.0.21022.218 False",
+      "version": "9.0.21022.218",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 228
+    },
+    {
+      "name": "Microsoft Visual C++ 2022 X64 Minimum Runtime - 14.32.31326",
+      "version": "14.32.31326",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 2184
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 x64 Minimum Runtime - 12.0.40660 False",
+      "version": "12.0.40660",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 132
+    },
+    {
+      "name": "Python 3.13.5 Standard Library (64-bit)",
+      "version": "3.13.5150.0",
+      "publisher": "Python Software Foundation",
+      "install_date": "20250715",
+      "size": 23468
+    },
+    {
+      "name": "Microsoft Visual C++ 2012 x64 Minimum Runtime - 11.0.61030",
+      "version": "11.0.61030",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 2000
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x64 9.0.21022.0 False",
+      "version": "9.0.21022",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 232
+    },
+    {
+      "name": "Python 3.13.5 Add to Path (64-bit)",
+      "version": "3.13.5150.0",
+      "publisher": "Python Software Foundation",
+      "install_date": "20250715",
+      "size": 52
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x64 9.0.30411 False",
+      "version": "9.0.30411",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 236
+    },
+    {
+      "name": "Microsoft Visual C++ 2010 Redistributable - x64 10.0.30319 False",
+      "version": "10.0.30319",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 172
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729.4148.0 False",
+      "version": "9.0.30729.4148",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 208
+    },
+    {
+      "name": "Microsoft Visual C++ 2005 Redistributable - x64 8.0.57102 False",
+      "version": "8.0.57102",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 360
+    },
+    {
+      "name": "Microsoft Visual C++ 2005 Redistributable - x64 8.0.58298 False",
+      "version": "8.0.58298",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 396
+    },
+    {
+      "name": "Dolby Audio X2 Windows API SDK",
+      "version": "0.8.8.90",
+      "publisher": "Dolby Laboratories, Inc.",
+      "install_date": "20250714",
+      "size": 8481
+    },
+    {
+      "name": "Canon MF Scan Utility",
+      "version": "1.21.0.2",
+      "publisher": "CANON INC."
+    },
+    {
+      "name": "Google Chrome",
+      "version": "139.0.7258.67",
+      "publisher": "Google LLC",
+      "install_date": "20250812"
+    },
+    {
+      "name": "Microsoft Edge",
+      "version": "139.0.3405.86",
+      "publisher": "Корпорація Майкрософт",
+      "install_date": "20250811"
+    },
+    {
+      "name": "Середовище виконання Microsoft Edge WebView2",
+      "version": "139.0.3405.86",
+      "publisher": "Корпорація Майкрософт",
+      "install_date": "20250808"
+    },
+    {
+      "name": "Nmap 7.97",
+      "version": "7.97",
+      "publisher": "Nmap Project"
+    },
+    {
+      "name": "Npcap",
+      "version": "1.82",
+      "publisher": "Nmap Project"
+    },
+    {
+      "name": "Samsung Scan Process Machine",
+      "version": "1.03.05.28",
+      "publisher": "Samsung Electronics Co., Ltd.",
+      "size": 12092
+    },
+    {
+      "name": "SearcherBar",
+      "version": "0.3"
+    },
+    {
+      "name": "Xerox B215 Multifunction Printer",
+      "version": "1.12 (14.06.2022)",
+      "publisher": "Xerox Corporation"
+    },
+    {
+      "name": "Xerox Easy Document Creator",
+      "version": "1.06.00 (12.05.2021)",
+      "publisher": "Xerox Corporation"
+    },
+    {
+      "name": "Xerox Easy Printer Manager",
+      "version": "2.0.1.56",
+      "publisher": "Xerox Corporation"
+    },
+    {
+      "name": "Xerox OCR Software",
+      "version": "1.01.21 (22.11.2018)",
+      "publisher": "Xerox Corporation",
+      "size": 59632
+    },
+    {
+      "name": "Xerox Scan Process Machine",
+      "version": "1.01.13.02",
+      "publisher": "Xerox Corporation",
+      "size": 10909
+    },
+    {
+      "name": "Перегляд посібника користувача",
+      "version": "4.0.0.16"
+    },
+    {
+      "name": "Microsoft Visual C++ 2008 Redistributable - x86 9.0.30729.4148.0 False",
+      "version": "9.0.30729.4148",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 200
+    },
+    {
+      "name": "Microsoft Visual C++ 2012 Redistributable (x86) - 11.0.60610 False",
+      "version": "11.0.60610.1",
+      "publisher": "Корпорация Майкрософт",
+      "size": 17800
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 Redistributable (x64) - 12.0.40664 False Eng",
+      "version": "12.0.40664.0",
+      "publisher": "Microsoft Corporation",
+      "size": 21062
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 Redistributable (x64) - 12.0.30501 False Eng",
+      "version": "12.0.30501.0",
+      "publisher": "Microsoft Corporation",
+      "size": 21062
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 Redistributable (x64) - 12.0.40660 False",
+      "version": "12.0.40660.0",
+      "publisher": "Корпорация Майкрософт",
+      "size": 21062
+    },
+    {
+      "name": "Microsoft Visual C++ 2005 Redistributable - x86 8.0.58299 False",
+      "version": "8.0.58299",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 372
+    },
+    {
+      "name": "Microsoft Visual C++ 2012 Redistributable (x64) - 11.0.50727 False",
+      "version": "11.0.50727.1",
+      "publisher": "Корпорация Майкрософт",
+      "size": 20920
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 Redistributable (x86) - 12.0.40660 False",
+      "version": "12.0.40660.0",
+      "publisher": "Корпорация Майкрософт",
+      "size": 17601
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 x86 Minimum Runtime - 12.0.21005 False",
+      "version": "12.0.21005",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 132
+    },
+    {
+      "name": "Microsoft Visual C++ 2012 Redistributable (x64) - 11.0.50727 False Eng",
+      "version": "11.0.50727.1",
+      "publisher": "Microsoft Corporation",
+      "size": 20920
+    },
+    {
+      "name": "Xerox PowerENGAGE",
+      "version": "2.52.0016",
+      "publisher": "Xerox Inc.",
+      "install_date": "20250714",
+      "size": 1825
+    },
+    {
+      "name": "Microsoft Visual C++ 2010 Redistributable - x86 10.0.30319 False",
+      "version": "10.0.30319",
+      "publisher": "Microsoft Corporation",
+      "install_date": "20250714",
+      "size": 160
+    },
+    {
+      "name": "Microsoft Visual C++ 2013 Redistributable (x64) - 12.0.30501 False",
+      "version": "12.0.30501.0",
+      "publisher": "Корпорация Майкрософт",
+      "size": 21062
+    }
+  ],
+  "performance_metrics": {},
+  "agent_version": "3.0_Enhanced",
+  "collection_time": "2025-08-12T15:29:12.836492",
+  "last_seen": "2025-08-12T15:29:12.836536",
+  "purchase_date": "2025-08-12",
+  "collection_duration": 5.7220458984375e-06
+}
