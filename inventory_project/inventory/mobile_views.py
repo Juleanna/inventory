@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from datetime import timedelta
 from django.db.models import Q
 import logging
 
@@ -427,12 +428,12 @@ def mobile_dashboard(request):
         
         needs_attention = {
             'expiring_soon': user_equipment.filter(
-                expiry_date__lte=today + timezone.timedelta(days=30),
+                expiry_date__lte=today + timedelta(days=30),
                 expiry_date__gte=today
             ).count(),
             'needs_maintenance': len([eq for eq in user_equipment if eq.needs_maintenance()]),
             'warranty_expiring': user_equipment.filter(
-                warranty_until__lte=today + timezone.timedelta(days=30),
+                warranty_until__lte=today + timedelta(days=30),
                 warranty_until__gte=today
             ).count()
         }
@@ -440,7 +441,7 @@ def mobile_dashboard(request):
         # Останні уведомлення
         recent_notifications = Notification.objects.filter(
             user=user,
-            created_at__gte=today - timezone.timedelta(days=7)
+            created_at__gte=today - timedelta(days=7)
         ).count()
         
         unread_notifications = Notification.objects.filter(

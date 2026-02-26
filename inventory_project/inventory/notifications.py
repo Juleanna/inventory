@@ -3,6 +3,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
 from django.template.loader import render_to_string
+from django.db.models import Q
 from datetime import datetime, timedelta
 import logging
 
@@ -300,7 +301,7 @@ class NotificationService:
         for user in users:
             # Збираємо статистику для користувача
             user_equipment = Equipment.objects.filter(
-                models.Q(current_user=user) | models.Q(responsible_person=user)
+                Q(current_user=user) | Q(responsible_person=user)
             ).distinct()
             
             if not user_equipment.exists():

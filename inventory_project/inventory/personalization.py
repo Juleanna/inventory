@@ -84,7 +84,7 @@ class PersonalizationService:
         """Обладнання користувача"""
         my_equipment = Equipment.objects.filter(
             Q(current_user=user) | Q(responsible_person=user)
-        ).select_related('manufacturer', 'category')[:10]
+        ).select_related('current_user', 'responsible_person')[:10]
         
         equipment_data = []
         for eq in my_equipment:
@@ -103,8 +103,8 @@ class PersonalizationService:
                 'needs_maintenance': eq.next_maintenance_date and eq.next_maintenance_date <= timezone.now().date() + timedelta(days=7),
                 'days_until_maintenance': (eq.next_maintenance_date - timezone.now().date()).days if eq.next_maintenance_date else None,
                 'is_responsible': eq.responsible_person == user,
-                'category': eq.category.name if eq.category else None,
-                'manufacturer': eq.manufacturer.name if eq.manufacturer else None
+                'category': eq.get_category_display() if eq.category else None,
+                'manufacturer': eq.manufacturer if eq.manufacturer else None
             })
         
         return equipment_data
@@ -414,9 +414,9 @@ class PersonalizationService:
             stats['equipment_by_status'][item['status']] = item['count']
         
         # Розподіл за категоріями
-        category_counts = user_equipment.values('category__name').annotate(count=Count('id'))
+        category_counts = user_equipment.values('category').annotate(count=Count('id'))
         for item in category_counts:
-            category_name = item['category__name'] or 'Без категорії'
+            category_name = item['category'] or 'Без категорії'
             stats['equipment_by_category'][category_name] = item['count']
         
         # Статистика ТО

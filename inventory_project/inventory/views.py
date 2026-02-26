@@ -164,12 +164,14 @@ def add_equipment(request):
 
 
 def check_expired_equipment():
-    expired_equipment = Equipment.objects.filter(expiry_date__lt=datetime.now())
+    expired_equipment = Equipment.objects.filter(expiry_date__lt=timezone.now())
     for item in expired_equipment:
-        Notification.objects.create(
-            user=item.owner,
-            message=f"Срок службы оборудования {item.name} истек.",
-        )
+        if item.current_user:
+            Notification.objects.create(
+                user=item.current_user,
+                title=f"Термін служби обладнання закінчився",
+                message=f"Термін служби обладнання {item.name} закінчився.",
+            )
 
 
 # ============ НОВІ КЛАСИ ДЛЯ АНАЛІТИКИ ТА ДАШБОРДУ ============

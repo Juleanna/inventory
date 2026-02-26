@@ -112,7 +112,7 @@ class TwoFactorAuthService:
             from .models import UserPreferences
             preferences = UserPreferences.objects.get(user=user)
             return preferences.default_filters.get('totp_enabled', False)
-        except:
+        except Exception:
             return False
     
     @classmethod
@@ -178,7 +178,7 @@ class TwoFactorAuthService:
             from .models import UserPreferences
             preferences = UserPreferences.objects.get(user=user)
             return preferences.default_filters.get('backup_codes', [])
-        except:
+        except Exception:
             return []
     
     @classmethod
@@ -224,7 +224,8 @@ class TwoFactorAuthService:
             return None
         
         # Перевірити чи не закінчилася сесія
-        expires_at = timezone.datetime.fromisoformat(session_data['expires_at']).replace(tzinfo=timezone.utc)
+        from datetime import datetime as dt
+        expires_at = dt.fromisoformat(session_data['expires_at'])
         if timezone.now() > expires_at:
             cache.delete(cache_key)
             return None
@@ -283,5 +284,3 @@ class TwoFactorMiddleware:
         else:
             from django.shortcuts import redirect
             return redirect('/auth/2fa-required/')
-        
-        return self.get_response(request)

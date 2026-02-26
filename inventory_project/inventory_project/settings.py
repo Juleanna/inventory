@@ -139,7 +139,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'Ru-ru'
+LANGUAGE_CODE = 'uk'
 
 TIME_ZONE = 'Europe/Kyiv'
 
@@ -433,15 +433,9 @@ if DEBUG:
         # Django Debug Toolbar не встановлено - це нормально
         pass
     
-       
-    # Логування в консоль
-    LOGGING['handlers']['console'] = {
-        'level': 'DEBUG',
-        'class': 'logging.StreamHandler',
-        'formatter': 'simple',
-    }
-    
-    LOGGING['loggers']['inventory']['handlers'].append('console')
+
+    # Логування в консоль (console handler вже визначено в базовій конфігурації)
+    LOGGING['handlers']['console']['level'] = 'DEBUG'
 
 # Sentry для моніторингу помилок (додатково)
 SENTRY_DSN = config('SENTRY_DSN', default='')

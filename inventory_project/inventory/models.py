@@ -43,7 +43,8 @@ class EquipmentManager(models.Manager):
     
     def expiring_soon(self, days=30):
         """Обладнання що скоро закінчується"""
-        expiry_date = timezone.now().date() + timezone.timedelta(days=days)
+        from datetime import timedelta
+        expiry_date = timezone.now().date() + timedelta(days=days)
         return self.filter(
             expiry_date__lte=expiry_date,
             expiry_date__gte=timezone.now().date(),
