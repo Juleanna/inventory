@@ -3,6 +3,7 @@ import type { Equipment, PaginatedResponse } from '@/types'
 
 export interface EquipmentFilters {
   page?: number
+  page_size?: number
   search?: string
   category?: string
   status?: string
@@ -33,4 +34,7 @@ export const equipmentApi = {
 
   exportExcel: (filters?: EquipmentFilters) =>
     apiClient.get('/export/', { params: { ...filters, format: 'xlsx' }, responseType: 'blob' }),
+
+  regenerateCodes: (id: number) =>
+    apiClient.post<Equipment>(`/equipment/${id}/regenerate-codes/`),
 }

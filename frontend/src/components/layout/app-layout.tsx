@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import { Sidebar } from './sidebar'
 import { Header } from './header'
 import { MobileNav } from './mobile-nav'
+import { Breadcrumb } from '@/components/shared/breadcrumb'
 
 export function AppLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -14,6 +15,7 @@ export function AppLayout() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setMobileNavOpen(true)} />
         <main className="flex-1 overflow-auto p-4 md:p-6">
+          <Breadcrumb />
           <Outlet />
         </main>
       </div>

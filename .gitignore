@@ -18,7 +18,6 @@ static/
 # Логи
 *.log
 logs/
-agent_log.log
 
 # IDE
 .vscode/
@@ -35,6 +34,7 @@ agent_log.log
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
 
 # Python
 *.egg-info/
@@ -61,11 +61,14 @@ celerybeat.pid
 # Redis dump
 dump.rdb
 
-# Node modules (якщо використовуєте)
+# Node modules
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Frontend build
+frontend/dist/
 
 # Backup files
 *.bak
@@ -79,10 +82,12 @@ qrcodes/
 # Документи обладнання
 documents/
 
-# Токени агента
+# Агент — тимчасові файли
 tokens.json
 failed_data.json
 last_data.json
+agent/gui_settings.json
+agent/report.json
 
 # Coverage reports
 htmlcov/
@@ -95,8 +100,5 @@ docker-compose.override.yml
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# pytest
-.pytest_cache/
-
-# mypy
-.mypy_cache/
+# Claude Code
+.claude/

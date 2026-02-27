@@ -25,4 +25,10 @@ export const authApi = {
 
   get2FAStatus: () =>
     apiClient.get<{ enabled: boolean }>('/auth/2fa-status/'),
+
+  changePassword: (data: { old_password: string; new_password: string }) =>
+    apiClient.post('/auth/change-password/', data),
+
+  listUsers: () =>
+    apiClient.get<Array<{ id: number; username: string; first_name: string; last_name: string; email: string }>>('/users/'),
 }

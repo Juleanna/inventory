@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useEquipment } from '@/hooks/use-equipment'
 import { PageHeader } from '@/components/shared/page-header'
@@ -6,13 +7,15 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Pencil } from 'lucide-react'
 import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { EquipmentFormDialog } from '@/components/equipment/equipment-form'
 
 export default function EquipmentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: equipment, isLoading } = useEquipment(Number(id))
+  const [editOpen, setEditOpen] = useState(false)
 
   if (isLoading) return <LoadingSpinner size="lg" />
   if (!equipment) return <div className="p-8 text-center text-muted-foreground">Обладнання не знайдено</div>
@@ -53,12 +56,18 @@ export default function EquipmentDetailPage() {
         title={equipment.name}
         description={`${CATEGORY_LABELS[equipment.category] || equipment.category} — ${equipment.manufacturer} ${equipment.model}`}
         actions={
-          <Button variant="outline" asChild>
-            <Link to="/equipment">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Назад
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Редагувати
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/equipment">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Назад
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -144,6 +153,12 @@ export default function EquipmentDetailPage() {
         Створено: {new Date(equipment.created_at).toLocaleString('uk-UA')} |
         Оновлено: {new Date(equipment.updated_at).toLocaleString('uk-UA')}
       </div>
+
+      <EquipmentFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        equipment={equipment}
+      />
     </div>
   )
 }

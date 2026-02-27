@@ -1,21 +1,26 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { usePurchaseOrders } from '@/hooks/use-spare-parts'
+import { usePurchaseOrders, useCreatePurchaseOrder, useSuppliersList } from '@/hooks/use-spare-parts'
 import { PageHeader } from '@/components/shared/page-header'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { ArrowLeft, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, ShoppingCart, Plus, Loader2 } from 'lucide-react'
 import { ORDER_STATUS_LABELS } from '@/lib/constants'
 
 export default function OrdersPage() {
   const [status, setStatus] = useState<string>('')
   const [page, setPage] = useState(1)
+  const [showCreate, setShowCreate] = useState(false)
   const { data, isLoading } = usePurchaseOrders({
     page,
     status: status || undefined,
@@ -28,12 +33,18 @@ export default function OrdersPage() {
         title="Замовлення"
         description="Замовлення на закупівлю запчастин"
         actions={
-          <Button variant="outline" asChild>
-            <Link to="/spare-parts">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Назад
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowCreate(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Створити
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/spare-parts">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Назад
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -102,6 +113,77 @@ export default function OrdersPage() {
           )}
         </>
       )}
+
+      <CreateOrderDialog open={showCreate} onOpenChange={setShowCreate} />
     </div>
+  )
+}
+
+function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const createOrder = useCreatePurchaseOrder()
+  const { data: suppliersData } = useSuppliersList()
+
+  const [form, setForm] = useState({
+    supplier: '',
+    expected_delivery_date: '',
+    notes: '',
+  })
+
+  const update = (field: string, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }))
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    createOrder.mutate(
+      {
+        supplier: Number(form.supplier),
+        expected_delivery_date: form.expected_delivery_date || undefined,
+        notes: form.notes || undefined,
+      },
+      {
+        onSuccess: () => {
+          onOpenChange(false)
+          setForm({ supplier: '', expected_delivery_date: '', notes: '' })
+        },
+      }
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Створити замовлення</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Постачальник *</Label>
+            <Select value={form.supplier} onValueChange={(v) => update('supplier', v)}>
+              <SelectTrigger><SelectValue placeholder="Оберіть постачальника" /></SelectTrigger>
+              <SelectContent>
+                {suppliersData?.results?.map((s) => (
+                  <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Очікувана дата доставки</Label>
+            <Input type="date" value={form.expected_delivery_date} onChange={(e) => update('expected_delivery_date', e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Нотатки</Label>
+            <Textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} placeholder="Деталі замовлення..." />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Скасувати</Button>
+            <Button type="submit" disabled={createOrder.isPending}>
+              {createOrder.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Створити
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }

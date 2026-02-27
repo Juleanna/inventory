@@ -6,16 +6,19 @@ echo   IT Inventory - Запуск Frontend
 echo ========================================
 echo.
 
-cd /d "%~dp0frontend"
+set "ROOT=%~dp0"
+set "ROOT=%ROOT:~0,-1%"
+
+cd /d "%ROOT%\frontend"
 
 if not exist "node_modules" (
-    echo [1/2] Встановлення залежностей...
-    npm install
+    echo Встановлення залежностей...
+    call npm install
     echo.
 )
 
 echo Запуск React dev-сервера на порту 3000...
 echo Frontend доступний за адресою: http://localhost:3000
 echo.
-npm run dev
+call npm run dev
 pause

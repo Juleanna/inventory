@@ -369,6 +369,9 @@ class Equipment(models.Model):
             models.Index(fields=['location', 'status']),
             models.Index(fields=['current_user', 'status']),
             models.Index(fields=['purchase_date']),
+            models.Index(fields=['warranty_until', 'status']),
+            models.Index(fields=['purchase_date', 'status']),
+            models.Index(fields=['next_maintenance_date']),
         ]
     
     def clean(self):

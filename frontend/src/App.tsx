@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth-store'
 import { AppLayout } from '@/components/layout/app-layout'
 import { lazy, Suspense, type ReactNode } from 'react'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
+import { ErrorBoundary } from '@/components/error/error-boundary'
 
 const LoginPage = lazy(() => import('@/pages/auth/login'))
 const RegisterPage = lazy(() => import('@/pages/auth/register'))
@@ -17,6 +18,10 @@ const MaintenanceSchedulePage = lazy(() => import('@/pages/maintenance/schedule'
 const SparePartsListPage = lazy(() => import('@/pages/spare-parts/list'))
 const SuppliersPage = lazy(() => import('@/pages/spare-parts/suppliers'))
 const OrdersPage = lazy(() => import('@/pages/spare-parts/orders'))
+const SoftwareListPage = lazy(() => import('@/pages/software/list'))
+const PeripheralsListPage = lazy(() => import('@/pages/peripherals/list'))
+const LicensesListPage = lazy(() => import('@/pages/licenses/list'))
+const UsersListPage = lazy(() => import('@/pages/users/list'))
 const PasswordVaultPage = lazy(() => import('@/pages/passwords/vault'))
 const AnalyticsPage = lazy(() => import('@/pages/analytics'))
 const NotificationsPage = lazy(() => import('@/pages/notifications'))
@@ -48,6 +53,7 @@ function GuestRoute({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
       <BrowserRouter>
         <Suspense fallback={<LoadingSpinner size="lg" className="h-screen" />}>
           <Routes>
@@ -67,11 +73,15 @@ export default function App() {
               <Route index element={<DashboardPage />} />
               <Route path="equipment" element={<EquipmentListPage />} />
               <Route path="equipment/:id" element={<EquipmentDetailPage />} />
+              <Route path="software" element={<SoftwareListPage />} />
+              <Route path="peripherals" element={<PeripheralsListPage />} />
+              <Route path="licenses" element={<LicensesListPage />} />
               <Route path="maintenance" element={<MaintenanceListPage />} />
               <Route path="maintenance/schedule" element={<MaintenanceSchedulePage />} />
               <Route path="spare-parts" element={<SparePartsListPage />} />
               <Route path="spare-parts/suppliers" element={<SuppliersPage />} />
               <Route path="spare-parts/orders" element={<OrdersPage />} />
+              <Route path="users" element={<UsersListPage />} />
               <Route path="passwords" element={<PasswordVaultPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
@@ -82,6 +92,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </BrowserRouter>
+      </ErrorBoundary>
       <Toaster position="top-right" richColors />
     </QueryClientProvider>
   )

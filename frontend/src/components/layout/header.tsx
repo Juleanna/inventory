@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { NotificationBell } from '@/components/notifications/notification-bell'
+import { CommandSearch } from '@/components/shared/command-search'
 import { Moon, Sun, LogOut, User, Menu } from 'lucide-react'
 
 interface HeaderProps {
@@ -32,7 +33,9 @@ export function Header({ onMenuClick }: HeaderProps) {
         <Menu className="h-5 w-5" />
       </Button>
 
-      <div className="flex-1" />
+      <div className="flex-1 flex justify-center">
+        <CommandSearch />
+      </div>
 
       <Button
         variant="ghost"

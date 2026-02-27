@@ -4,9 +4,20 @@ export interface User {
   email: string
   first_name: string
   last_name: string
-  department: string
-  position: string
   phone: string
+  mobile_phone: string
+  position: string
+  custom_position: string
+  department: string
+  custom_department: string
+  office_location: string
+  room_number: string
+  manager: number | null
+  hire_date: string | null
+  birth_date: string | null
+  bio: string
+  skills: string
+  employment_type: string
   is_staff: boolean
   is_active: boolean
 }
@@ -19,6 +30,7 @@ export interface Equipment {
   manufacturer: string
   serial_number: string
   inventory_number: string
+  asset_tag: string
   mac_address: string
   ip_address: string
   hostname: string
@@ -37,6 +49,7 @@ export interface Equipment {
   current_user_details?: User
   responsible_person: number | null
   responsible_person_details?: User
+  supplier: string
   purchase_price: string | null
   depreciation_rate: string | null
   cpu: string
@@ -44,6 +57,8 @@ export interface Equipment {
   storage: string
   gpu: string
   operating_system: string
+  description: string
+  notes: string
   barcode_image: string | null
   qrcode_image: string | null
   photo: string | null
@@ -64,17 +79,27 @@ export interface Notification {
 }
 
 export interface MaintenanceRequest {
-  id: number
+  id: string
   equipment: number
   equipment_details?: Equipment
   request_type: string
+  title: string
   description: string
   status: string
   priority: string
-  requested_by: number
-  assigned_to: number | null
+  requester: number
+  assigned_technician: number | null
+  approved_by: number | null
+  requested_date: string
   scheduled_date: string | null
+  started_date: string | null
   completed_date: string | null
+  estimated_cost: string | null
+  actual_cost: string | null
+  parts_needed: string
+  downtime_required: boolean
+  estimated_duration: string | null
+  actual_duration: string | null
   notes: string
   created_at: string
   updated_at: string
@@ -84,31 +109,52 @@ export interface MaintenanceSchedule {
   id: number
   equipment: number
   equipment_details?: Equipment
-  schedule_type: string
-  interval_days: number
-  last_performed: string | null
-  next_due: string | null
-  assigned_technician: number | null
+  title: string
+  description: string
+  frequency: string
+  custom_interval_days: number | null
+  next_maintenance: string
+  responsible_person: number | null
+  responsible_person_details?: User
+  estimated_duration: string
+  checklist: string[]
   is_active: boolean
-  notes: string
   created_at: string
+  updated_at: string
 }
 
 export interface SparePart {
-  id: number
+  id: string
   name: string
-  category: number | null
-  category_details?: SparePartCategory
   part_number: string
-  manufacturer: string
+  manufacturer_part_number: string
   description: string
-  quantity: number
-  min_quantity: number
+  category: string | null
+  category_details?: SparePartCategory
+  manufacturer: string
+  quantity_in_stock: number
+  minimum_stock_level: number
+  maximum_stock_level: number
+  reorder_point: number
+  unit_cost: string
   unit_price: string
-  location: string
-  supplier: number | null
-  supplier_details?: Supplier
-  compatible_equipment: string
+  weight: string | null
+  dimensions: string
+  condition: string
+  status: string
+  primary_supplier: number | null
+  primary_supplier_details?: Supplier
+  alternative_suppliers: number[]
+  storage_location: string
+  last_received_date: string | null
+  last_issued_date: string | null
+  expiry_date: string | null
+  warranty_period_days: number
+  barcode: string
+  image: string | null
+  notes: string
+  is_critical: boolean
+  compatible_equipment: number[]
   is_active: boolean
   created_at: string
   updated_at: string
@@ -118,6 +164,7 @@ export interface SparePartCategory {
   id: number
   name: string
   description: string
+  parent: number | null
 }
 
 export interface Supplier {
@@ -128,58 +175,84 @@ export interface Supplier {
   phone: string
   address: string
   website: string
+  tax_id: string
+  rating: string
   notes: string
   is_active: boolean
   created_at: string
+  updated_at: string
 }
 
 export interface PurchaseOrder {
-  id: number
+  id: string
   order_number: string
   supplier: number
   supplier_details?: Supplier
   status: string
+  order_date: string
+  expected_delivery_date: string | null
+  actual_delivery_date: string | null
   total_amount: string
+  tax_amount: string
+  shipping_cost: string
   items: PurchaseOrderItem[]
   notes: string
-  created_by: number
+  created_by: number | null
+  approved_by: number | null
   created_at: string
   updated_at: string
 }
 
 export interface PurchaseOrderItem {
   id: number
-  spare_part: number
+  spare_part: string
   spare_part_details?: SparePart
-  quantity: number
+  quantity_ordered: number
+  quantity_received: number
   unit_price: string
   total_price: string
+  notes: string
 }
 
 export interface SparePartMovement {
-  id: number
-  spare_part: number
+  id: string
+  spare_part: string
   movement_type: string
   quantity: number
+  unit_cost: string
+  reference_number: string
   equipment: number | null
-  performed_by: number
+  maintenance_request: string | null
+  performed_by: number | null
   notes: string
+  performed_at: string
   created_at: string
 }
 
 export interface PasswordSystem {
   id: number
   name: string
-  url: string
   category: number | null
+  system_type: string
+  url: string
+  ip_address: string | null
+  port: number | null
   description: string
+  criticality: string
+  owner: number | null
+  is_active: boolean
+  accounts_count: number
   created_at: string
+  updated_at: string
 }
 
 export interface PasswordCategory {
   id: number
   name: string
   description: string
+  icon: string
+  color: string
+  is_active: boolean
 }
 
 export interface PasswordAccount {
@@ -188,10 +261,59 @@ export interface PasswordAccount {
   system_details?: PasswordSystem
   username: string
   password?: string
+  account_type: string
+  email: string
+  description: string
+  status: string
+  assigned_to: number | null
+  assigned_to_details?: User
+  password_expires: string | null
   notes: string
   created_by: number
   created_at: string
   updated_at: string
+}
+
+export interface Software {
+  id: number
+  name: string
+  version: string
+  vendor: string
+  license: number | null
+  license_details?: License
+  installed_on: number[]
+  installed_on_details?: Equipment[]
+}
+
+export interface PeripheralDevice {
+  id: number
+  name: string
+  type: string
+  serial_number: string
+  connected_to: number | null
+  connected_to_details?: Equipment
+}
+
+export interface License {
+  id: number
+  license_type: string
+  key: string
+  description: string
+  activations: number
+  start_date: string
+  end_date: string
+  device: number | null
+  device_details?: Equipment
+  user: number | null
+  user_details?: User
+}
+
+export interface EquipmentDocument {
+  id: number
+  equipment: number
+  file: string
+  description: string
+  uploaded_at: string
 }
 
 export interface PaginatedResponse<T> {

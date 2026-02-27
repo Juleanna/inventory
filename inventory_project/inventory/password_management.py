@@ -151,6 +151,8 @@ class System(models.Model):
     category = models.ForeignKey(
         SystemCategory,
         on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         verbose_name="Категорія"
     )
     
@@ -193,6 +195,8 @@ class System(models.Model):
     owner = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name='owned_systems',
         verbose_name="Власник системи"
     )

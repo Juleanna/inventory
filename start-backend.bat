@@ -6,7 +6,10 @@ echo   IT Inventory - Запуск Backend
 echo ========================================
 echo.
 
-cd /d "%~dp0inventory_project"
+set "ROOT=%~dp0"
+set "ROOT=%ROOT:~0,-1%"
+
+cd /d "%ROOT%\inventory_project"
 
 echo [1/2] Застосування мiграцiй...
 python manage.py migrate --no-input

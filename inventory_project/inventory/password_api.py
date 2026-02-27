@@ -27,19 +27,22 @@ class SystemCategorySerializer(serializers.ModelSerializer):
 
 
 class SystemSerializer(serializers.ModelSerializer):
-    category_name = serializers.CharField(source='category.name', read_only=True)
-    owner_name = serializers.CharField(source='owner.get_full_name', read_only=True)
-    accounts_count = serializers.IntegerField(read_only=True)
+    category_name = serializers.CharField(source='category.name', read_only=True, default='')
+    owner_name = serializers.CharField(source='owner.get_full_name', read_only=True, default='')
+    accounts_count = serializers.IntegerField(read_only=True, default=0)
     criticality_display = serializers.CharField(source='get_criticality_display', read_only=True)
-    
+
     class Meta:
         model = System
         fields = [
-            'id', 'name', 'category', 'category_name', 'system_type', 'url', 
+            'id', 'name', 'category', 'category_name', 'system_type', 'url',
             'ip_address', 'port', 'description', 'criticality', 'criticality_display',
             'owner', 'owner_name', 'administrators', 'is_active', 'accounts_count',
             'created_at', 'updated_at'
         ]
+        extra_kwargs = {
+            'owner': {'read_only': True},
+        }
 
 
 class SystemAccountSerializer(serializers.ModelSerializer):
@@ -124,7 +127,10 @@ class SystemViewSet(viewsets.ModelViewSet):
         return System.objects.annotate(
             accounts_count=Count('system_accounts')
         ).select_related('category', 'owner').prefetch_related('administrators')
-    
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
     @action(detail=True, methods=['get'])
     def accounts(self, request, pk=None):
         """Отримати облікові записи системи"""

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { equipmentApi, type EquipmentFilters } from '@/api/equipment'
 import type { Equipment } from '@/types'
 import { toast } from 'sonner'
+import { getApiErrorMessage } from '@/lib/api-error'
 
 export function useEquipmentList(filters?: EquipmentFilters) {
   return useQuery({
@@ -27,8 +28,8 @@ export function useCreateEquipment() {
       queryClient.invalidateQueries({ queryKey: ['equipment'] })
       toast.success('Обладнання додано')
     },
-    onError: () => {
-      toast.error('Помилка додавання обладнання')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка додавання обладнання'))
     },
   })
 }
@@ -43,8 +44,8 @@ export function useUpdateEquipment() {
       queryClient.invalidateQueries({ queryKey: ['equipment'] })
       toast.success('Обладнання оновлено')
     },
-    onError: () => {
-      toast.error('Помилка оновлення обладнання')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка оновлення обладнання'))
     },
   })
 }
@@ -58,8 +59,23 @@ export function useDeleteEquipment() {
       queryClient.invalidateQueries({ queryKey: ['equipment'] })
       toast.success('Обладнання видалено')
     },
-    onError: () => {
-      toast.error('Помилка видалення обладнання')
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка видалення обладнання'))
+    },
+  })
+}
+
+export function useRegenerateCodes() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => equipmentApi.regenerateCodes(id).then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipment'] })
+      toast.success('QR-код та штрих-код згенеровано')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка генерації кодів'))
     },
   })
 }

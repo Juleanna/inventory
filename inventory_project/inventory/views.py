@@ -4,7 +4,7 @@ from django.db import models
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.decorators import api_view, permission_classes, authentication_classes, action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import Serializer, CharField
@@ -37,9 +37,33 @@ from .personalization import PersonalizationService
 from .two_factor import TwoFactorAuthService
 from .maintenance import MaintenanceService, MaintenanceRequest, MaintenanceSchedule, MaintenanceTask
 from .spare_parts import (
-    SparePartsService, SparePart, SparePartCategory, SparePartMovement, 
+    SparePartsService, SparePart, SparePartCategory, SparePartMovement,
     Supplier, PurchaseOrder, PurchaseOrderItem
 )
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.db import connection
+
+
+# Health check endpoint (без DRF для уникнення JWT перевірки)
+from django.http import JsonResponse
+def health_check(request):
+    """Перевірка стану системи"""
+    db_ok = False
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        db_ok = True
+    except Exception:
+        pass
+
+    healthy = db_ok
+    data = {
+        'status': 'healthy' if healthy else 'unhealthy',
+        'database': 'ok' if db_ok else 'error',
+    }
+    return JsonResponse(data, status=200 if healthy else 503)
+
 
 # Простий home view
 @api_view(['GET'])
@@ -61,76 +85,215 @@ def home(request):
     })
 
 class EquipmentViewSet(ModelViewSet):
-    """
-    ViewSet для модели Equipment.
-    Позволяет выполнять CRUD операции, фильтрацию, сортировку и поиск.
-    """
-    queryset = Equipment.objects.all()  # Получаем все записи из модели Equipment
-    serializer_class = EquipmentSerializer  # Сериализатор для обработки данных
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]  # Подключаем фильтры, поиск и сортировку
-    filterset_class = EquipmentFilter  # Кастомный фильтр. Если не используется, замените на filterset_fields
-    search_fields = ['name', 'serial_number', 'location']  # Поля для поиска
-    ordering_fields = ['name', 'purchase_date', 'last_maintenance_date']  # Поля для сортировки
-    ordering = ['name']  # Сортировка по умолчанию
-    permission_classes = [permissions.IsAuthenticated]  # Доступ только для авторизованных пользователей
+    """ViewSet для обладнання з CRUD, фільтрацією, пошуком і сортуванням."""
+    queryset = Equipment.objects.select_related(
+        'current_user', 'responsible_person'
+    ).all()
+    serializer_class = EquipmentSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = EquipmentFilter
+    search_fields = ['name', 'serial_number', 'location', 'manufacturer', 'model', 'inventory_number']
+    ordering_fields = ['name', 'purchase_date', 'last_maintenance_date', 'created_at', 'status', 'category']
+    ordering = ['name']
+    permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=True, methods=['post'], url_path='regenerate-codes')
+    def regenerate_codes(self, request, pk=None):
+        """Перегенерувати QR-код та штрих-код для обладнання."""
+        equipment = self.get_object()
+        equipment.generate_barcode()
+        equipment.generate_qrcode()
+        equipment.save(update_fields=['barcode_image', 'qrcode_image'])
+        serializer = self.get_serializer(equipment)
+        return Response(serializer.data)
     
 
-# Сериализатор для регистрации пользователя
-class RegisterSerializer(Serializer):
+# Серіалізатори для авторизації
+class LoginSerializer(Serializer):
     username = CharField(max_length=100)
     password = CharField(max_length=100)
 
+class RegisterSerializer(Serializer):
+    username = CharField(max_length=100)
+    password = CharField(max_length=128, min_length=8)
+    password2 = CharField(max_length=128, min_length=8, required=False)
+    email = CharField(max_length=254, required=False, default='')
+    first_name = CharField(max_length=150, required=False, default='')
+    last_name = CharField(max_length=150, required=False, default='')
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError('Користувач з таким іменем вже існує')
+        return value
+
+    def validate(self, data):
+        if data.get('password2') and data['password'] != data['password2']:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({'password2': 'Паролі не співпадають'})
+        return data
+
 class NotificationViewSet(ModelViewSet):
-    queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user).select_related('equipment')
 
 
 class LicenseViewSet(ModelViewSet):
-    queryset = License.objects.all()
+    queryset = License.objects.select_related('device', 'user').order_by('-id')
     serializer_class = LicenseSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class SoftwareViewSet(ModelViewSet):
-    queryset = Software.objects.all()
+    queryset = Software.objects.select_related('license').prefetch_related('installed_on').all()
     serializer_class = SoftwareSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class PeripheralDeviceViewSet(ModelViewSet):
-    queryset = PeripheralDevice.objects.all()
+    queryset = PeripheralDevice.objects.select_related('connected_to').all()
     serializer_class = PeripheralDeviceSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
-# Регистрация нового пользователя
+# ============ AGENT REPORT ENDPOINT ============
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def agent_report(request):
+    """
+    Приймає звіт від агента інвентаризації.
+    Upsert обладнання за serial_number, синхронізує ПЗ та периферію.
+    """
+    data = request.data
+
+    serial_number = data.get('serial_number')
+    if not serial_number:
+        return Response({'error': 'serial_number is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # --- Upsert Equipment ---
+    equipment_fields = {}
+    field_map = {
+        'name': 'name', 'category': 'category', 'model': 'model',
+        'manufacturer': 'manufacturer', 'inventory_number': 'inventory_number',
+        'asset_tag': 'asset_tag', 'location': 'location', 'building': 'building',
+        'floor': 'floor', 'room': 'room', 'status': 'status',
+        'priority': 'priority', 'ip_address': 'ip_address',
+        'mac_address': 'mac_address', 'hostname': 'hostname',
+        'cpu': 'cpu', 'ram': 'ram', 'storage': 'storage', 'gpu': 'gpu',
+        'operating_system': 'operating_system', 'description': 'description',
+        'notes': 'notes', 'supplier': 'supplier',
+    }
+    for src, dst in field_map.items():
+        val = data.get(src)
+        if val is not None and val != '':
+            equipment_fields[dst] = val
+
+    # Значення за замовчуванням
+    equipment_fields.setdefault('name', serial_number)
+    equipment_fields.setdefault('category', 'PC')
+    equipment_fields.setdefault('status', 'WORKING')
+
+    equipment, created = Equipment.objects.update_or_create(
+        serial_number=serial_number,
+        defaults=equipment_fields,
+    )
+
+    # --- Синхронізація Software ---
+    software_synced = 0
+    installed_software = data.get('installed_software', [])
+    for sw in installed_software:
+        sw_name = sw.get('name', '').strip()
+        if not sw_name:
+            continue
+        sw_obj, _ = Software.objects.get_or_create(
+            name=sw_name,
+            version=sw.get('version', '') or '',
+            defaults={'vendor': sw.get('vendor', '') or ''},
+        )
+        sw_obj.installed_on.add(equipment)
+        software_synced += 1
+
+    # --- Синхронізація Peripherals ---
+    peripherals_synced = 0
+    peripherals = data.get('peripherals', [])
+    for peri in peripherals:
+        peri_serial = peri.get('serial_number', '').strip()
+        peri_name = peri.get('name', '').strip()
+        if not peri_name:
+            continue
+        if peri_serial:
+            peri_obj, _ = PeripheralDevice.objects.update_or_create(
+                serial_number=peri_serial,
+                defaults={
+                    'name': peri_name,
+                    'type': peri.get('type', 'OTHER') or 'OTHER',
+                    'connected_to': equipment,
+                },
+            )
+        else:
+            peri_obj, _ = PeripheralDevice.objects.get_or_create(
+                name=peri_name,
+                connected_to=equipment,
+                defaults={
+                    'type': peri.get('type', 'OTHER') or 'OTHER',
+                    'serial_number': f'AUTO-{equipment.id}-{peri_name[:20]}',
+                },
+            )
+        peripherals_synced += 1
+
+    return Response({
+        'status': 'ok',
+        'equipment_id': equipment.id,
+        'created': created,
+        'software_synced': software_synced,
+        'peripherals_synced': peripherals_synced,
+    }, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
+
+
+# Реєстрація нового користувача
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def register(request):
-    if request.method == 'POST':
-        serializer = RegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            username = serializer.validated_data['username']
-            password = serializer.validated_data['password']
-            user = User.objects.create_user(username=username, password=password)
-            return Response({"message": "Пользователь создан"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    serializer = RegisterSerializer(data=request.data)
+    if serializer.is_valid():
+        data = serializer.validated_data
+        user = User.objects.create_user(
+            username=data['username'],
+            password=data['password'],
+            email=data.get('email', ''),
+            first_name=data.get('first_name', ''),
+            last_name=data.get('last_name', ''),
+        )
+        return Response({"message": "Користувача створено"}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# Логин пользователя и получение JWT токена
+
+# Логін та отримання JWT токена
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def login(request):
-    from rest_framework_simplejwt.tokens import RefreshToken
+    serializer = LoginSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    if request.method == 'POST':
-        username = request.data.get('username')
-        password = request.data.get('password')
-        user = User.objects.filter(username=username).first()
+    username = serializer.validated_data['username']
+    password = serializer.validated_data['password']
+    user = User.objects.filter(username=username).first()
 
-        if user and user.check_password(password):
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-            })
-        return Response({"message": "Неверное имя пользователя или пароль"}, status=status.HTTP_400_BAD_REQUEST)
+    if user and user.check_password(password):
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+        })
+    return Response(
+        {"detail": "Невірне ім'я користувача або пароль"},
+        status=status.HTTP_400_BAD_REQUEST
+    )
 
 
 @api_view(['GET'])
@@ -163,6 +326,133 @@ def add_equipment(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    """Зміна пароля користувача"""
+    old_password = request.data.get('old_password')
+    new_password = request.data.get('new_password')
+
+    if not old_password or not new_password:
+        return Response(
+            {'detail': 'Потрібно вказати старий та новий пароль'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if not request.user.check_password(old_password):
+        return Response(
+            {'detail': 'Невірний поточний пароль'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if len(new_password) < 8:
+        return Response(
+            {'detail': 'Новий пароль повинен містити мінімум 8 символів'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    request.user.set_password(new_password)
+    request.user.save()
+    return Response({'detail': 'Пароль успішно змінено'})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def users_list(request):
+    """Список користувачів з пагінацією та пошуком."""
+    queryset = User.objects.all().order_by('-date_joined')
+
+    # Фільтри
+    search = request.query_params.get('search', '').strip()
+    department = request.query_params.get('department', '')
+    is_active = request.query_params.get('is_active', '')
+
+    if search:
+        queryset = queryset.filter(
+            models.Q(username__icontains=search) |
+            models.Q(first_name__icontains=search) |
+            models.Q(last_name__icontains=search) |
+            models.Q(email__icontains=search) |
+            models.Q(phone__icontains=search)
+        )
+    if department:
+        queryset = queryset.filter(department=department)
+    if is_active == 'true':
+        queryset = queryset.filter(is_active=True)
+    elif is_active == 'false':
+        queryset = queryset.filter(is_active=False)
+
+    # Пагінація
+    page = int(request.query_params.get('page', 1))
+    page_size = int(request.query_params.get('page_size', 25))
+    total = queryset.count()
+    start = (page - 1) * page_size
+    page_queryset = queryset[start:start + page_size]
+
+    results = []
+    for u in page_queryset:
+        results.append({
+            'id': u.id,
+            'username': u.username,
+            'email': u.email,
+            'first_name': u.first_name,
+            'last_name': u.last_name,
+            'phone': u.phone or '',
+            'mobile_phone': getattr(u, 'mobile_phone', '') or '',
+            'position': u.position or '',
+            'custom_position': getattr(u, 'custom_position', '') or '',
+            'department': u.department or '',
+            'custom_department': getattr(u, 'custom_department', '') or '',
+            'office_location': getattr(u, 'office_location', '') or '',
+            'room_number': getattr(u, 'room_number', '') or '',
+            'employment_type': getattr(u, 'employment_type', '') or '',
+            'hire_date': u.hire_date.isoformat() if getattr(u, 'hire_date', None) else None,
+            'is_staff': u.is_staff,
+            'is_active': u.is_active,
+            'date_joined': u.date_joined.isoformat() if u.date_joined else None,
+            'last_login': u.last_login.isoformat() if u.last_login else None,
+        })
+
+    return Response({
+        'count': total,
+        'next': None if (start + page_size) >= total else f'?page={page + 1}',
+        'previous': None if page <= 1 else f'?page={page - 1}',
+        'results': results,
+    })
+
+
+@api_view(['GET', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def user_profile(request):
+    """Профіль користувача — перегляд та оновлення"""
+    user = request.user
+    if request.method == 'GET':
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'is_staff': user.is_staff,
+            'is_active': user.is_active,
+        })
+
+    # PATCH
+    for field in ('first_name', 'last_name', 'email'):
+        if field in request.data:
+            setattr(user, field, request.data[field])
+    user.save()
+    return Response({
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'is_staff': user.is_staff,
+        'is_active': user.is_active,
+    })
+
+
 def check_expired_equipment():
     expired_equipment = Equipment.objects.filter(expiry_date__lt=timezone.now())
     for item in expired_equipment:
@@ -179,7 +469,8 @@ def check_expired_equipment():
 class DashboardView(APIView):
     """API для отримання даних дашборду"""
     permission_classes = [IsAuthenticated]
-    
+
+    @method_decorator(cache_page(300))
     def get(self, request):
         """Отримати всі дані дашборду"""
         try:
@@ -743,17 +1034,6 @@ class PWAManifestView(APIView):
         }
         
         return Response(manifest)
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def health_check(request):
-    """Перевірка стану сервера для PWA"""
-    return Response({
-        'status': 'healthy',
-        'timestamp': datetime.now().isoformat(),
-        'user': request.user.username
-    })
 
 
 @api_view(['GET'])
@@ -1605,6 +1885,74 @@ class MaintenanceRequestViewSet(ModelViewSet):
                 'equipment', 'requester', 'assigned_technician'
             ).prefetch_related('tasks')
     
+    def list(self, request):
+        """Список запитів на ТО"""
+        queryset = self.get_queryset()
+
+        # Фільтри
+        status_filter = request.query_params.get('status')
+        priority_filter = request.query_params.get('priority')
+        request_type_filter = request.query_params.get('request_type')
+
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        if priority_filter:
+            queryset = queryset.filter(priority=priority_filter)
+        if request_type_filter:
+            queryset = queryset.filter(request_type=request_type_filter)
+
+        queryset = queryset.order_by('-requested_date')
+
+        # Пагінація
+        page = int(request.query_params.get('page', 1))
+        page_size = 25
+        total = queryset.count()
+        start = (page - 1) * page_size
+        end = start + page_size
+        page_queryset = queryset[start:end]
+
+        results = []
+        for mr in page_queryset:
+            results.append({
+                'id': str(mr.id),
+                'equipment': mr.equipment.id if mr.equipment else None,
+                'equipment_details': {
+                    'id': mr.equipment.id,
+                    'name': mr.equipment.name,
+                    'serial_number': mr.equipment.serial_number,
+                    'location': mr.equipment.location,
+                } if mr.equipment else None,
+                'request_type': mr.request_type,
+                'title': mr.title,
+                'description': mr.description,
+                'priority': mr.priority,
+                'status': mr.status,
+                'requester': {
+                    'id': mr.requester.id,
+                    'name': mr.requester.get_full_name() or mr.requester.username
+                } if mr.requester else None,
+                'assigned_technician': {
+                    'id': mr.assigned_technician.id,
+                    'name': mr.assigned_technician.get_full_name() or mr.assigned_technician.username
+                } if mr.assigned_technician else None,
+                'created_at': mr.requested_date.isoformat() if mr.requested_date else None,
+                'requested_date': mr.requested_date.isoformat() if mr.requested_date else None,
+                'scheduled_date': mr.scheduled_date.isoformat() if mr.scheduled_date else None,
+                'completed_date': mr.completed_date.isoformat() if mr.completed_date else None,
+                'estimated_cost': float(mr.estimated_cost) if mr.estimated_cost else None,
+                'actual_cost': float(mr.actual_cost) if mr.actual_cost else None,
+                'parts_needed': mr.parts_needed,
+                'downtime_required': mr.downtime_required,
+                'notes': mr.notes,
+            })
+
+        return Response({
+            'count': total,
+            'next': None if end >= total else f'?page={page + 1}',
+            'previous': None if page <= 1 else f'?page={page - 1}',
+            'results': results,
+        })
+
     def create(self, request):
         """Створити новий запит на ТО"""
         equipment_id = request.data.get('equipment_id')

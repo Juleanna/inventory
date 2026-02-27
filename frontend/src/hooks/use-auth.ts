@@ -55,6 +55,17 @@ export function useProfile() {
   })
 }
 
+export function useUsersList() {
+  return useQuery({
+    queryKey: ['users'],
+    queryFn: () => authApi.listUsers().then((r) => {
+      const data = r.data
+      // API повертає {count, results} або масив
+      return Array.isArray(data) ? data : (data as any).results ?? []
+    }),
+  })
+}
+
 export function useLogout() {
   const { logout } = useAuthStore()
   const navigate = useNavigate()

@@ -66,20 +66,22 @@ INSTALLED_APPS = [
     'accounts',
     'django_celery_beat',  # Для планування завдань Celery
     'django_celery_results',  # Для результатів Celery
-   
-    
+    'drf_spectacular',  # API документація (Swagger/ReDoc)
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # ← ОБЯЗАТЕЛЬНО первым
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'inventory.middleware.RateLimitMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
+    'inventory.middleware.SecurityHeadersMiddleware',
+    'inventory.middleware.RequestLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'inventory_project.urls'
@@ -113,6 +115,7 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', default='5432'),
+        'CONN_MAX_AGE': 600,
     }
 }
 
@@ -388,8 +391,19 @@ REST_FRAMEWORK.update({
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/hour',
         'user': '1000/hour'
-    }
+    },
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 })
+
+# drf-spectacular налаштування
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'IT Inventory API',
+    'DESCRIPTION': 'API для системи інвентаризації IT обладнання',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/',
+}
 
 # Налаштування JWT (оновлення)
 SIMPLE_JWT.update({
