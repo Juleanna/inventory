@@ -36,5 +36,5 @@ export const passwordsApi = {
     apiClient.delete(`/password-accounts/${id}/`),
 
   getDecryptedPassword: (accountId: number) =>
-    apiClient.get<{ password: string }>(`/password-accounts/${accountId}/decrypt/`),
+    apiClient.post<{ password: string }>(`/password-accounts/${accountId}/get_password/`),
 }
