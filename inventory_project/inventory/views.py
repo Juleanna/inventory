@@ -421,6 +421,109 @@ def users_list(request):
     })
 
 
+def _serialize_user(u):
+    """Серіалізація користувача в dict."""
+    return {
+        'id': u.id,
+        'username': u.username,
+        'email': u.email,
+        'first_name': u.first_name,
+        'last_name': u.last_name,
+        'phone': getattr(u, 'phone', '') or '',
+        'mobile_phone': getattr(u, 'mobile_phone', '') or '',
+        'position': getattr(u, 'position', '') or '',
+        'custom_position': getattr(u, 'custom_position', '') or '',
+        'department': getattr(u, 'department', '') or '',
+        'custom_department': getattr(u, 'custom_department', '') or '',
+        'office_location': getattr(u, 'office_location', '') or '',
+        'room_number': getattr(u, 'room_number', '') or '',
+        'employment_type': getattr(u, 'employment_type', '') or '',
+        'hire_date': u.hire_date.isoformat() if getattr(u, 'hire_date', None) else None,
+        'is_staff': u.is_staff,
+        'is_active': u.is_active,
+        'date_joined': u.date_joined.isoformat() if u.date_joined else None,
+        'last_login': u.last_login.isoformat() if u.last_login else None,
+    }
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def user_create(request):
+    """Створення нового користувача (тільки staff)."""
+    if not request.user.is_staff:
+        return Response({'detail': 'Недостатньо прав'}, status=status.HTTP_403_FORBIDDEN)
+    data = request.data
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+    if not username or not password:
+        return Response({'detail': "Ім'я користувача та пароль обов'язкові"}, status=status.HTTP_400_BAD_REQUEST)
+    if User.objects.filter(username=username).exists():
+        return Response({'detail': "Користувач з таким ім'ям вже існує"}, status=status.HTTP_400_BAD_REQUEST)
+    user = User.objects.create_user(
+        username=username,
+        password=password,
+        email=data.get('email', ''),
+        first_name=data.get('first_name', ''),
+        last_name=data.get('last_name', ''),
+    )
+    for field in ('phone', 'mobile_phone', 'position', 'custom_position',
+                  'department', 'custom_department', 'office_location',
+                  'room_number', 'employment_type'):
+        if field in data:
+            setattr(user, field, data[field])
+    if 'hire_date' in data and data['hire_date']:
+        user.hire_date = data['hire_date']
+    if 'is_staff' in data:
+        user.is_staff = data['is_staff']
+    user.save()
+    return Response(_serialize_user(user), status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def user_detail(request, user_id):
+    """Перегляд, оновлення або деактивація користувача."""
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({'detail': 'Користувача не знайдено'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response(_serialize_user(user))
+
+    if not request.user.is_staff:
+        return Response({'detail': 'Недостатньо прав'}, status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == 'DELETE':
+        if request.query_params.get('permanent') == 'true':
+            user.delete()
+            return Response({'detail': 'Користувача видалено'})
+        user.is_active = False
+        user.save(update_fields=['is_active'])
+        return Response({'detail': 'Користувача деактивовано'})
+
+    # PATCH
+    data = request.data
+    try:
+        for field in ('first_name', 'last_name', 'email', 'phone', 'mobile_phone',
+                      'position', 'custom_position', 'department', 'custom_department',
+                      'office_location', 'room_number', 'employment_type'):
+            if field in data:
+                setattr(user, field, data[field])
+        if 'hire_date' in data:
+            user.hire_date = data['hire_date'] or None
+        if 'is_active' in data:
+            user.is_active = data['is_active']
+        if 'is_staff' in data:
+            user.is_staff = data['is_staff']
+        if 'password' in data and data['password']:
+            user.set_password(data['password'])
+        user.save()
+        return Response(_serialize_user(user))
+    except Exception as e:
+        return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def user_profile(request):

@@ -107,6 +107,8 @@ urlpatterns = [
     path('api/profile/', views.user_profile, name='user-profile'),
     path('api/auth/change-password/', views.change_password, name='change-password'),
     path('api/users/', views.users_list, name='users-list'),
+    path('api/users/create/', views.user_create, name='user-create'),
+    path('api/users/<int:user_id>/', views.user_detail, name='user-detail'),
 
     # ============ 2FA AUTHENTICATION ============
     path('api/auth/2fa-setup/', TwoFactorSetupView.as_view(), name='2fa-setup'),

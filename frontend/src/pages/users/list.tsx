@@ -1,37 +1,65 @@
 import { useState } from 'react'
-import { useUsersList } from '@/hooks/use-users'
+import { useUsersList, useDeactivateUser, useDeleteUser } from '@/hooks/use-users'
 import { useDebounce } from '@/hooks/use-debounce'
 import { PageHeader } from '@/components/shared/page-header'
 import { SearchInput } from '@/components/shared/search-input'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { EmptyState } from '@/components/shared/empty-state'
+import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import { UserFormDialog } from '@/components/users/user-form'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { Users, Mail, Phone } from 'lucide-react'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Users, Mail, Phone, Plus, MoreHorizontal, Pencil, UserX, Trash2 } from 'lucide-react'
 import { DEPARTMENT_LABELS, POSITION_LABELS } from '@/lib/constants'
+import type { User } from '@/types'
 
 export default function UsersListPage() {
   const [search, setSearch] = useState('')
   const [department, setDepartment] = useState('')
   const [page, setPage] = useState(1)
+  const [formOpen, setFormOpen] = useState(false)
+  const [editUser, setEditUser] = useState<User | null>(null)
+  const [deactivateId, setDeactivateId] = useState<number | null>(null)
+  const [deleteId, setDeleteId] = useState<number | null>(null)
+
   const debouncedSearch = useDebounce(search)
   const { data, isLoading } = useUsersList({
     page,
     search: debouncedSearch || undefined,
     department: department || undefined,
-    is_active: 'true',
   })
+  const deactivateUser = useDeactivateUser()
+  const deleteUser = useDeleteUser()
   const totalPages = data ? Math.ceil(data.count / 25) : 0
+
+  const handleEdit = (user: User) => {
+    setEditUser(user)
+    setFormOpen(true)
+  }
+
+  const handleFormClose = (open: boolean) => {
+    setFormOpen(open)
+    if (!open) setEditUser(null)
+  }
 
   return (
     <div>
       <PageHeader
         title="Користувачі"
         description={`Всього: ${data?.count || 0} користувачів`}
+        actions={
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Додати
+          </Button>
+        }
       />
 
       <div className="mb-4 flex flex-wrap gap-3">
@@ -61,6 +89,12 @@ export default function UsersListPage() {
           icon={<Users className="h-12 w-12" />}
           title="Користувачів не знайдено"
           description="Немає користувачів з обраними фільтрами"
+          action={
+            <Button onClick={() => setFormOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Додати користувача
+            </Button>
+          }
         />
       ) : (
         <>
@@ -74,6 +108,7 @@ export default function UsersListPage() {
                   <TableHead className="hidden lg:table-cell">Контакти</TableHead>
                   <TableHead className="hidden lg:table-cell">Локація</TableHead>
                   <TableHead className="w-24">Статус</TableHead>
+                  <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -123,6 +158,34 @@ export default function UsersListPage() {
                           {user.is_active ? 'Активний' : 'Неактивний'}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(user)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Редагувати
+                            </DropdownMenuItem>
+                            {user.is_active && (
+                              <DropdownMenuItem onClick={() => setDeactivateId(user.id)}>
+                                <UserX className="mr-2 h-4 w-4" />
+                                Деактивувати
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setDeleteId(user.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Видалити
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
                   )
                 })}
@@ -141,6 +204,42 @@ export default function UsersListPage() {
           )}
         </>
       )}
+
+      <UserFormDialog
+        open={formOpen}
+        onOpenChange={handleFormClose}
+        user={editUser}
+      />
+
+      <ConfirmDialog
+        open={deactivateId !== null}
+        onOpenChange={() => setDeactivateId(null)}
+        title="Деактивувати користувача?"
+        description="Користувач не зможе увійти в систему. Це можна скасувати через редагування."
+        confirmLabel="Деактивувати"
+        onConfirm={() => {
+          if (deactivateId) {
+            deactivateUser.mutate(deactivateId)
+            setDeactivateId(null)
+          }
+        }}
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={() => setDeleteId(null)}
+        title="Видалити користувача назавжди?"
+        description="Ця дія є незворотною. Користувач та всі його дані будуть видалені."
+        confirmLabel="Видалити"
+        onConfirm={() => {
+          if (deleteId) {
+            deleteUser.mutate(deleteId)
+            setDeleteId(null)
+          }
+        }}
+        variant="destructive"
+      />
     </div>
   )
 }

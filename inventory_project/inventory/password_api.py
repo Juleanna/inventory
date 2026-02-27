@@ -68,12 +68,20 @@ class SystemAccountSerializer(serializers.ModelSerializer):
             '_encrypted_password': {'write_only': True},
         }
     
+    def create(self, validated_data):
+        new_password = validated_data.pop('new_password', None)
+        instance = super().create(validated_data)
+        if new_password:
+            instance.set_password(new_password)
+            instance.save()
+        return instance
+
     def update(self, instance, validated_data):
         # Обробка зміни пароля
         new_password = validated_data.pop('new_password', None)
         if new_password:
             instance.set_password(new_password)
-            
+
             # Логування зміни пароля
             request = self.context.get('request')
             if request:
@@ -81,7 +89,7 @@ class SystemAccountSerializer(serializers.ModelSerializer):
                     instance, request.user, 'edit', request,
                     'Пароль змінено через API'
                 )
-        
+
         return super().update(instance, validated_data)
 
 
@@ -160,7 +168,10 @@ class SystemAccountViewSet(viewsets.ModelViewSet):
         return PasswordManagementService.get_user_accessible_accounts(
             self.request.user
         ).select_related('system', 'assigned_to', 'created_by')
-    
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
     @action(detail=True, methods=['post'])
     def get_password(self, request, pk=None):
         """Отримати пароль (з логуванням)"""

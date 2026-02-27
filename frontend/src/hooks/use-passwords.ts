@@ -47,6 +47,53 @@ export function useCreatePasswordAccount() {
   })
 }
 
+export function useUpdatePasswordSystem() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<PasswordSystem> }) =>
+      passwordsApi.updateSystem(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['password-systems'] })
+      toast.success('Систему оновлено')
+    },
+    onError: () => {
+      toast.error('Помилка оновлення системи')
+    },
+  })
+}
+
+export function useDeletePasswordSystem() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => passwordsApi.deleteSystem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['password-systems'] })
+      toast.success('Систему видалено')
+    },
+    onError: () => {
+      toast.error('Помилка видалення системи')
+    },
+  })
+}
+
+export function useUpdatePasswordAccount() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<PasswordAccount> }) =>
+      passwordsApi.updateAccount(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['password-accounts'] })
+      toast.success('Обліковий запис оновлено')
+    },
+    onError: () => {
+      toast.error('Помилка оновлення облікового запису')
+    },
+  })
+}
+
 export function useDeletePasswordAccount() {
   const queryClient = useQueryClient()
 

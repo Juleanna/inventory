@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Shuffle } from 'lucide-react'
 import { CATEGORY_OPTIONS, STATUS_OPTIONS, PRIORITY_OPTIONS } from '@/lib/constants'
 import type { Equipment } from '@/types'
 
@@ -185,7 +185,25 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
                   </div>
                   <div className="space-y-1.5">
                     <Label>Інвентарний номер</Label>
-                    <Input value={form.inventory_number} onChange={(e) => update('inventory_number', e.target.value)} />
+                    <div className="flex gap-1.5">
+                      <Input value={form.inventory_number} onChange={(e) => update('inventory_number', e.target.value)} />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0"
+                        title="Згенерувати інвентарний номер"
+                        onClick={() => {
+                          const hex = Array.from(crypto.getRandomValues(new Uint8Array(5)))
+                            .map((b) => b.toString(16).padStart(2, '0'))
+                            .join('')
+                            .toUpperCase()
+                          update('inventory_number', `INV-${hex}`)
+                        }}
+                      >
+                        <Shuffle className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3">

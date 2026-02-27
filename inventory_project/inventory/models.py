@@ -421,28 +421,29 @@ class Equipment(models.Model):
         super().save(*args, **kwargs)
     
     def generate_barcode(self):
-        """Генерація штрих-коду"""
-        if self.serial_number:
+        """Генерація штрих-коду з інвентарного номера"""
+        code = self.inventory_number or self.serial_number
+        if code:
             try:
-                barcode_format = barcode.get('code128', self.serial_number, writer=ImageWriter())
+                barcode_format = barcode.get('code128', code, writer=ImageWriter())
                 buffer = BytesIO()
                 barcode_format.write(buffer)
                 self.barcode_image.save(
-                    f"{self.serial_number}_barcode.png", 
-                    ContentFile(buffer.getvalue()), 
+                    f"{code}_barcode.png",
+                    ContentFile(buffer.getvalue()),
                     save=False
                 )
                 buffer.close()
             except Exception as e:
-                logger.error(f"Помилка генерації штрих-коду для {self.serial_number}: {e}")
+                logger.error(f"Помилка генерації штрих-коду для {code}: {e}")
 
     def generate_qrcode(self):
-        """Генерація QR-коду"""
-        if self.serial_number:
+        """Генерація QR-коду з інвентарного номера"""
+        code = self.inventory_number or self.serial_number
+        if code:
             try:
-                # Додаємо більше інформації в QR-код
-                qr_data = f"Equipment: {self.name}\nSerial: {self.serial_number}\nLocation: {self.location}"
-                
+                qr_data = f"Equipment: {self.name}\nInventory: {code}\nLocation: {self.location}"
+
                 qr = qrcode.QRCode(
                     version=1,
                     error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -451,18 +452,18 @@ class Equipment(models.Model):
                 )
                 qr.add_data(qr_data)
                 qr.make(fit=True)
-                
+
                 img = qr.make_image(fill_color="black", back_color="white")
                 buffer = BytesIO()
                 img.save(buffer, format="PNG")
                 self.qrcode_image.save(
-                    f"{self.serial_number}_qrcode.png", 
-                    ContentFile(buffer.getvalue()), 
+                    f"{code}_qrcode.png",
+                    ContentFile(buffer.getvalue()),
                     save=False
                 )
                 buffer.close()
             except Exception as e:
-                logger.error(f"Помилка генерації QR-коду для {self.serial_number}: {e}")
+                logger.error(f"Помилка генерації QR-коду для {code}: {e}")
     
     def get_depreciation_value(self):
         """Розрахунок амортизаційної вартості"""

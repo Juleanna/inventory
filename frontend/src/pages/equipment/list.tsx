@@ -46,6 +46,7 @@ function TableSkeleton() {
             <TableHead>Назва</TableHead>
             <TableHead className="hidden md:table-cell">Категорія</TableHead>
             <TableHead className="hidden sm:table-cell">Серійний номер</TableHead>
+            <TableHead className="hidden xl:table-cell">Інв. номер</TableHead>
             <TableHead>Статус</TableHead>
             <TableHead className="hidden lg:table-cell">Місцезнаходження</TableHead>
             <TableHead className="w-12" />
@@ -61,6 +62,7 @@ function TableSkeleton() {
               </TableCell>
               <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
               <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-28" /></TableCell>
+              <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
               <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
               <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
               <TableCell><Skeleton className="h-8 w-8 rounded" /></TableCell>
@@ -184,7 +186,7 @@ export default function EquipmentListPage() {
     const cards = items.map((item) => `
       <div class="card">
         <h3>${item.name}</h3>
-        <p>${item.serial_number}</p>
+        <p>${item.inventory_number || item.serial_number}</p>
         ${item.qrcode_image ? `<img src="${item.qrcode_image}" class="qr"/>` : '<p class="empty">QR не згенеровано</p>'}
         ${item.barcode_image ? `<img src="${item.barcode_image}" class="barcode"/>` : '<p class="empty">Штрих-код не згенеровано</p>'}
       </div>
@@ -258,7 +260,7 @@ export default function EquipmentListPage() {
       />
 
       {/* Фільтри */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <div className="mb-4 flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-center">
         <SearchInput
           value={search}
           onChange={setSearch}
@@ -296,7 +298,7 @@ export default function EquipmentListPage() {
       </div>
 
       {/* Фільтри по даті */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+      <div className="mb-4 flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:items-end">
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Покупка від</Label>
           <Input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1) }} className="w-full sm:w-40" />
@@ -363,6 +365,7 @@ export default function EquipmentListPage() {
                     </span>
                   </TableHead>
                   <TableHead className="hidden sm:table-cell">Серійний номер</TableHead>
+                  <TableHead className="hidden xl:table-cell">Інв. номер</TableHead>
                   <TableHead
                     className="cursor-pointer select-none"
                     onClick={() => handleSort('status')}
@@ -389,13 +392,21 @@ export default function EquipmentListPage() {
                       <Link to={`/equipment/${item.id}`} className="font-medium hover:underline">
                         {item.name}
                       </Link>
-                      <p className="text-xs text-muted-foreground">{item.manufacturer} {item.model}</p>
+                      {(() => {
+                        const sub = [item.manufacturer, item.model].filter(Boolean).join(' ')
+                        return sub && sub !== item.name ? (
+                          <p className="text-xs text-muted-foreground">{sub}</p>
+                        ) : null
+                      })()}
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       {CATEGORY_LABELS[item.category] || item.category}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell font-mono text-sm">
                       {item.serial_number}
+                    </TableCell>
+                    <TableCell className="hidden xl:table-cell font-mono text-sm">
+                      {item.inventory_number || '—'}
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className={cn('text-xs', STATUS_COLORS[item.status])}>
@@ -444,9 +455,9 @@ export default function EquipmentListPage() {
           </div>
 
           {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between">
+            <div className="mt-4 flex items-center justify-between rounded-lg border bg-card px-4 py-3">
               <p className="text-sm text-muted-foreground">
-                Сторінка {page} з {totalPages}
+                Сторінка <span className="font-medium text-foreground">{page}</span> з <span className="font-medium text-foreground">{totalPages}</span>
               </p>
               <div className="flex gap-2">
                 <Button
@@ -501,7 +512,7 @@ export default function EquipmentListPage() {
           {codesItem && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                {codesItem.name} — {codesItem.serial_number}
+                {codesItem.name} — {codesItem.inventory_number || codesItem.serial_number}
               </p>
 
               <div className="flex flex-col items-center gap-6">
@@ -553,7 +564,7 @@ export default function EquipmentListPage() {
                         @media print{button{display:none}}</style></head>
                         <body>
                         <h2>${codesItem.name}</h2>
-                        <p>${codesItem.serial_number}</p>
+                        <p>${codesItem.inventory_number || codesItem.serial_number}</p>
                         ${codesItem.qrcode_image ? `<img src="${codesItem.qrcode_image}" style="width:200px"/>` : ''}
                         ${codesItem.barcode_image ? `<img src="${codesItem.barcode_image}" style="height:80px"/>` : ''}
                         <br/><button onclick="window.print()">Друк</button>
