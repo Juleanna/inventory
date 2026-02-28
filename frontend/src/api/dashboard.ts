@@ -1,9 +1,9 @@
 import apiClient from './client'
-import type { DashboardStats } from '@/types'
+import type { DashboardData } from '@/types'
 
 export const dashboardApi = {
   getStats: () =>
-    apiClient.get<DashboardStats>('/dashboard/'),
+    apiClient.get<DashboardData>('/dashboard/'),
 
   getPersonalized: () =>
     apiClient.get('/personalized-dashboard/'),

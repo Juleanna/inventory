@@ -4,6 +4,44 @@ import type { SparePart, Supplier, PurchaseOrder } from '@/types'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
 
+export function useSparePartsAnalytics() {
+  return useQuery({
+    queryKey: ['spare-parts-analytics'],
+    queryFn: () => sparePartsApi.analytics().then((r) => r.data.analytics),
+  })
+}
+
+export function useSparePartMovements(params?: { page?: number; page_size?: number; spare_part_id?: string }) {
+  return useQuery({
+    queryKey: ['spare-part-movements', params],
+    queryFn: () => sparePartsApi.getMovements(params).then((r) => r.data),
+  })
+}
+
+export function useCreateMovement() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: {
+      spare_part_id: string
+      movement_type: string
+      quantity: number
+      equipment_id?: number
+      unit_cost?: string
+      reference_number?: string
+      notes?: string
+    }) => sparePartsApi.createMovement(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['spare-part-movements'] })
+      queryClient.invalidateQueries({ queryKey: ['spare-parts'] })
+      toast.success('Рух запчастини зареєстровано')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка реєстрації руху'))
+    },
+  })
+}
+
 export function useSparePartsList(params?: { page?: number; search?: string; category?: number }) {
   return useQuery({
     queryKey: ['spare-parts', params],

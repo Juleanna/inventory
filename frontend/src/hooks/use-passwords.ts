@@ -3,6 +3,13 @@ import { passwordsApi } from '@/api/passwords'
 import type { PasswordSystem, PasswordAccount } from '@/types'
 import { toast } from 'sonner'
 
+export function usePasswordAuditLogs(params?: { page?: number; action?: string }) {
+  return useQuery({
+    queryKey: ['password-audit-logs', params],
+    queryFn: () => passwordsApi.listAuditLogs(params).then((r) => r.data),
+  })
+}
+
 export function usePasswordSystems(params?: { page?: number; search?: string; category?: number }) {
   return useQuery({
     queryKey: ['password-systems', params],

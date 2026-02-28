@@ -1,12 +1,12 @@
 import apiClient from './client'
-import type { AnalyticsData } from '@/types'
+import type { AnalyticsData, FinancialAnalyticsData } from '@/types'
 
 export const analyticsApi = {
   getEquipmentAnalytics: () =>
     apiClient.get<AnalyticsData>('/analytics/equipment/'),
 
   getFinancialAnalytics: () =>
-    apiClient.get('/analytics/financial/'),
+    apiClient.get<FinancialAnalyticsData>('/analytics/financial/'),
 
   getMaintenanceAnalytics: () =>
     apiClient.get('/analytics/maintenance/'),

@@ -29,11 +29,11 @@ export const equipmentApi = {
   delete: (id: number) =>
     apiClient.delete(`/equipment/${id}/`),
 
-  exportCSV: (filters?: EquipmentFilters) =>
-    apiClient.get('/export/', { params: { ...filters, format: 'csv' }, responseType: 'blob' }),
-
   exportExcel: (filters?: EquipmentFilters) =>
-    apiClient.get('/export/', { params: { ...filters, format: 'xlsx' }, responseType: 'blob' }),
+    apiClient.get('/export/', { params: { ...filters, format: 'excel' }, responseType: 'blob' }),
+
+  exportPDF: (filters?: EquipmentFilters) =>
+    apiClient.get('/export/', { params: { ...filters, format: 'pdf' }, responseType: 'blob' }),
 
   regenerateCodes: (id: number) =>
     apiClient.post<Equipment>(`/equipment/${id}/regenerate-codes/`),

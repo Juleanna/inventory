@@ -17,6 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { MovementsTable } from '@/components/spare-parts/movements-table'
+import { SparePartsAnalyticsSection } from '@/components/spare-parts/analytics-section'
 import { Package, Truck, ShoppingCart, Plus, Loader2 } from 'lucide-react'
 import { SPARE_PART_CONDITION_LABELS } from '@/lib/constants'
 
@@ -58,6 +61,14 @@ export default function SparePartsListPage() {
         }
       />
 
+      <Tabs defaultValue="list" className="mt-2">
+        <TabsList>
+          <TabsTrigger value="list">Список</TabsTrigger>
+          <TabsTrigger value="movements">Рух</TabsTrigger>
+          <TabsTrigger value="analytics">Аналітика</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="list">
       <div className="mb-4">
         <SearchInput
           value={search}
@@ -130,6 +141,17 @@ export default function SparePartsListPage() {
           )}
         </>
       )}
+
+        </TabsContent>
+
+        <TabsContent value="movements">
+          <MovementsTable />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <SparePartsAnalyticsSection />
+        </TabsContent>
+      </Tabs>
 
       <CreateSparePartDialog open={showCreate} onOpenChange={setShowCreate} />
     </div>

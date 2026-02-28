@@ -1,20 +1,23 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { useEquipment } from '@/hooks/use-equipment'
+import { useEquipment, useEquipmentPeripherals, useEquipmentSoftware } from '@/hooks/use-equipment'
 import { PageHeader } from '@/components/shared/page-header'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, Pencil } from 'lucide-react'
-import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/lib/constants'
+import { ArrowLeft, Pencil, Monitor as MonitorIcon, Cpu } from 'lucide-react'
+import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS, PERIPHERAL_TYPE_LABELS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { EquipmentFormDialog } from '@/components/equipment/equipment-form'
 
 export default function EquipmentDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { data: equipment, isLoading } = useEquipment(Number(id))
+  const equipmentId = Number(id)
+  const { data: equipment, isLoading } = useEquipment(equipmentId)
+  const { data: peripherals } = useEquipmentPeripherals(equipmentId)
+  const { data: software } = useEquipmentSoftware(equipmentId)
   const [editOpen, setEditOpen] = useState(false)
 
   if (isLoading) return <LoadingSpinner size="lg" />
@@ -146,6 +149,59 @@ export default function EquipmentDetailPage() {
           </Card>
         )}
       </div>
+
+      {/* Connected peripherals */}
+      {peripherals?.results && peripherals.results.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MonitorIcon className="h-4 w-4" />
+              Підключена периферія
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {peripherals.results.map((p) => (
+                <div key={p.id} className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/50">
+                  <div>
+                    <p className="text-sm font-medium">{p.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {PERIPHERAL_TYPE_LABELS[p.type] || p.type}
+                      {p.serial_number && ` · ${p.serial_number}`}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Installed software */}
+      {software?.results && software.results.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Cpu className="h-4 w-4" />
+              Встановлене ПЗ
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {software.results.map((s) => (
+                <div key={s.id} className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-muted/50">
+                  <div>
+                    <p className="text-sm font-medium">{s.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {s.vendor && `${s.vendor} · `}{s.version}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Separator className="my-6" />
 

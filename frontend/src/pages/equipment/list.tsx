@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Plus, MoreHorizontal, Eye, Pencil, Trash2, Monitor, Download, FileSpreadsheet, ArrowUpDown, ArrowUp, ArrowDown, QrCode, Printer, RefreshCw } from 'lucide-react'
+import { Plus, MoreHorizontal, Eye, Pencil, Trash2, Monitor, Download, FileSpreadsheet, FileText, ArrowUpDown, ArrowUp, ArrowDown, QrCode, Printer, RefreshCw } from 'lucide-react'
 import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS, CATEGORY_OPTIONS, STATUS_OPTIONS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { EquipmentFormDialog } from '@/components/equipment/equipment-form'
@@ -131,17 +131,18 @@ export default function EquipmentListPage() {
     setPage(1)
   }
 
-  const handleExport = async (format: 'csv' | 'xlsx') => {
+  const handleExport = async (format: 'excel' | 'pdf') => {
     try {
-      const exportFn = format === 'csv' ? equipmentApi.exportCSV : equipmentApi.exportExcel
+      const exportFn = format === 'excel' ? equipmentApi.exportExcel : equipmentApi.exportPDF
       const response = await exportFn(filters)
+      const ext = format === 'excel' ? 'xlsx' : 'pdf'
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
-      link.download = `equipment.${format}`
+      link.download = `equipment.${ext}`
       link.click()
       window.URL.revokeObjectURL(url)
-      toast.success(`Експорт ${format.toUpperCase()} завершено`)
+      toast.success(`Експорт ${format === 'excel' ? 'Excel' : 'PDF'} завершено`)
     } catch {
       toast.error('Помилка експорту')
     }
@@ -241,13 +242,13 @@ export default function EquipmentListPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleExport('csv')}>
-                  <Download className="mr-2 h-4 w-4" />
-                  CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('xlsx')}>
+                <DropdownMenuItem onClick={() => handleExport('excel')}>
                   <FileSpreadsheet className="mr-2 h-4 w-4" />
                   Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  PDF
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

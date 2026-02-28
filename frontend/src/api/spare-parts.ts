@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { SparePart, Supplier, PurchaseOrder, SparePartCategory, PaginatedResponse } from '@/types'
+import type { SparePart, Supplier, PurchaseOrder, SparePartCategory, SparePartsAnalytics, SparePartMovementsResponse, PaginatedResponse } from '@/types'
 
 export const sparePartsApi = {
   listParts: (params?: { page?: number; search?: string; category?: number }) =>
@@ -48,5 +48,19 @@ export const sparePartsApi = {
     apiClient.post<PurchaseOrder>('/spare-parts/create-purchase-order/', data),
 
   analytics: () =>
-    apiClient.get('/spare-parts/analytics/'),
+    apiClient.get<{ success: boolean; analytics: SparePartsAnalytics }>('/spare-parts/analytics/'),
+
+  getMovements: (params?: { page?: number; page_size?: number; spare_part_id?: string }) =>
+    apiClient.get<SparePartMovementsResponse>('/spare-parts/movements/', { params }),
+
+  createMovement: (data: {
+    spare_part_id: string
+    movement_type: string
+    quantity: number
+    equipment_id?: number
+    unit_cost?: string
+    reference_number?: string
+    notes?: string
+  }) =>
+    apiClient.post<{ success: boolean }>('/spare-parts/movements/', data),
 }

@@ -18,6 +18,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AuditLogTable } from '@/components/passwords/audit-log-table'
 import { KeyRound, Plus, Copy, Eye, EyeOff, Trash2, Globe, Loader2, Pencil, MoreHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { SYSTEM_TYPE_LABELS, CRITICALITY_LABELS, ACCOUNT_TYPE_LABELS, ACCOUNT_STATUS_LABELS } from '@/lib/constants'
@@ -213,6 +215,14 @@ export default function PasswordVaultPage() {
         description="Безпечне зберігання облікових даних"
       />
 
+      <Tabs defaultValue="vault" className="mt-2">
+        <TabsList>
+          <TabsTrigger value="vault">Сховище</TabsTrigger>
+          <TabsTrigger value="audit">Журнал доступу</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="vault">
+
       <div className="mb-4">
         <SearchInput
           value={search}
@@ -365,6 +375,13 @@ export default function PasswordVaultPage() {
           )}
         </div>
       </div>
+
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <AuditLogTable />
+        </TabsContent>
+      </Tabs>
 
       {/* System Dialog (Add/Edit) */}
       <Dialog open={systemDialogOpen} onOpenChange={setSystemDialogOpen}>

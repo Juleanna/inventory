@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Loader2, Sun, Moon, Monitor, ShieldCheck, KeyRound } from 'lucide-react'
@@ -37,7 +37,6 @@ export default function SettingsPage() {
     room_number: '',
   })
 
-  // Оновити форму коли профіль завантажено з API
   useEffect(() => {
     if (profile) {
       setForm({
@@ -126,88 +125,70 @@ export default function SettingsPage() {
     <div>
       <PageHeader title="Налаштування" description="Управління профілем та налаштуваннями" />
 
-      <div className="space-y-6 max-w-2xl">
+      <div className="grid gap-6 lg:grid-cols-[1fr,380px]">
+        {/* Left column: Profile + Work info combined */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Профіль</CardTitle>
-            <CardDescription>Ваші персональні дані</CardDescription>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base">Профіль та робоча інформація</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSaveProfile} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Ім'я</Label>
+            <form onSubmit={handleSaveProfile} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Ім'я</Label>
                   <Input
                     value={form.first_name}
                     onChange={(e) => setForm((prev) => ({ ...prev, first_name: e.target.value }))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Прізвище</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs">Прізвище</Label>
                   <Input
                     value={form.last_name}
                     onChange={(e) => setForm((prev) => ({ ...prev, last_name: e.target.value }))}
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Email</Label>
+                  <Input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Ім'я користувача</Label>
+                  <Input value={user?.username || ''} disabled />
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Телефон</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Телефон</Label>
                   <Input
                     value={form.phone}
                     onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
                     placeholder="+380..."
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Мобільний телефон</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs">Мобільний</Label>
                   <Input
                     value={form.mobile_phone}
                     onChange={(e) => setForm((prev) => ({ ...prev, mobile_phone: e.target.value }))}
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Про себе</Label>
-                <Textarea
-                  value={form.bio}
-                  onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Ім'я користувача</Label>
-                <Input value={user?.username || ''} disabled />
-              </div>
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Зберегти
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Робоча інформація</CardTitle>
-            <CardDescription>Відділ, посада та розташування</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSaveProfile} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Відділ</Label>
+              <Separator />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Відділ</Label>
                   <Select value={form.department} onValueChange={(v) => setForm((prev) => ({ ...prev, department: v }))}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Оберіть відділ" />
+                      <SelectValue placeholder="Оберіть" />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(DEPARTMENT_LABELS).map(([value, label]) => (
@@ -216,11 +197,11 @@ export default function SettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Посада</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs">Посада</Label>
                   <Select value={form.position} onValueChange={(v) => setForm((prev) => ({ ...prev, position: v }))}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Оберіть посаду" />
+                      <SelectValue placeholder="Оберіть" />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(POSITION_LABELS).map(([value, label]) => (
@@ -230,52 +211,60 @@ export default function SettingsPage() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Офіс / Локація</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Офіс / Локація</Label>
                   <Input
                     value={form.office_location}
                     onChange={(e) => setForm((prev) => ({ ...prev, office_location: e.target.value }))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Номер кімнати</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs">Кімната</Label>
                   <Input
                     value={form.room_number}
                     onChange={(e) => setForm((prev) => ({ ...prev, room_number: e.target.value }))}
                   />
                 </div>
               </div>
-              <Button type="submit" disabled={saving}>
+              <div className="space-y-1">
+                <Label className="text-xs">Про себе</Label>
+                <Textarea
+                  value={form.bio}
+                  onChange={(e) => setForm((prev) => ({ ...prev, bio: e.target.value }))}
+                  rows={2}
+                />
+              </div>
+              <Button type="submit" size="sm" disabled={saving}>
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Зберегти
+                Зберегти профіль
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <KeyRound className="h-5 w-5" />
-              Зміна пароля
-            </CardTitle>
-            <CardDescription>Оновіть пароль для захисту облікового запису</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Поточний пароль</Label>
-                <Input
-                  type="password"
-                  value={passwordForm.old_password}
-                  onChange={(e) => setPasswordForm((prev) => ({ ...prev, old_password: e.target.value }))}
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Новий пароль</Label>
+        {/* Right column: Password, Theme, 2FA */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <KeyRound className="h-4 w-4" />
+                Зміна пароля
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleChangePassword} className="space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Поточний пароль</Label>
+                  <Input
+                    type="password"
+                    value={passwordForm.old_password}
+                    onChange={(e) => setPasswordForm((prev) => ({ ...prev, old_password: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Новий пароль</Label>
                   <Input
                     type="password"
                     value={passwordForm.new_password}
@@ -284,8 +273,8 @@ export default function SettingsPage() {
                     minLength={8}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Підтвердження</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs">Підтвердження</Label>
                   <Input
                     type="password"
                     value={passwordForm.confirm_password}
@@ -294,82 +283,81 @@ export default function SettingsPage() {
                     minLength={8}
                   />
                 </div>
-              </div>
-              <Button type="submit" disabled={changingPassword}>
-                {changingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Змінити пароль
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Тема оформлення</CardTitle>
-            <CardDescription>Оберіть тему для інтерфейсу</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-3">
-              {[
-                { value: 'light' as const, label: 'Світла', icon: Sun },
-                { value: 'dark' as const, label: 'Темна', icon: Moon },
-                { value: 'system' as const, label: 'Системна', icon: Monitor },
-              ].map((option) => (
-                <Button
-                  key={option.value}
-                  variant={theme === option.value ? 'default' : 'outline'}
-                  onClick={() => setTheme(option.value)}
-                  className="flex-1"
-                >
-                  <option.icon className="mr-2 h-4 w-4" />
-                  {option.label}
+                <Button type="submit" size="sm" disabled={changingPassword}>
+                  {changingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Змінити пароль
                 </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </form>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5" />
-              Двофакторна аутентифікація
-            </CardTitle>
-            <CardDescription>Додатковий рівень захисту вашого облікового запису</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!twoFASetup ? (
-              <Button onClick={handleSetup2FA} variant="outline">
-                Налаштувати 2FA
-              </Button>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Скануйте QR-код за допомогою додатку аутентифікації (Google Authenticator, Authy тощо):
-                </p>
-                <div className="flex justify-center">
-                  <img src={twoFASetup.qr_code} alt="2FA QR Code" className="h-48 w-48" />
-                </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  Або введіть ключ вручну: <code className="font-mono bg-muted px-1 rounded">{twoFASetup.secret}</code>
-                </p>
-                <Separator />
-                <div className="flex items-end gap-2">
-                  <div className="flex-1 space-y-2">
-                    <Label>Код підтвердження</Label>
-                    <Input
-                      value={twoFAToken}
-                      onChange={(e) => setTwoFAToken(e.target.value)}
-                      placeholder="000000"
-                      maxLength={6}
-                    />
-                  </div>
-                  <Button onClick={handleVerify2FA}>Підтвердити</Button>
-                </div>
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base">Тема оформлення</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                {[
+                  { value: 'light' as const, label: 'Світла', icon: Sun },
+                  { value: 'dark' as const, label: 'Темна', icon: Moon },
+                  { value: 'system' as const, label: 'Системна', icon: Monitor },
+                ].map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={theme === option.value ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setTheme(option.value)}
+                    className="flex-1"
+                  >
+                    <option.icon className="mr-1.5 h-3.5 w-3.5" />
+                    {option.label}
+                  </Button>
+                ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                2FA
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!twoFASetup ? (
+                <Button onClick={handleSetup2FA} variant="outline" size="sm">
+                  Налаштувати 2FA
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Скануйте QR-код додатком аутентифікації:
+                  </p>
+                  <div className="flex justify-center">
+                    <img src={twoFASetup.qr_code} alt="2FA QR Code" className="h-36 w-36" />
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Ключ: <code className="font-mono bg-muted px-1 rounded text-[10px]">{twoFASetup.secret}</code>
+                  </p>
+                  <Separator />
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-xs">Код підтвердження</Label>
+                      <Input
+                        value={twoFAToken}
+                        onChange={(e) => setTwoFAToken(e.target.value)}
+                        placeholder="000000"
+                        maxLength={6}
+                      />
+                    </div>
+                    <Button onClick={handleVerify2FA} size="sm">Підтвердити</Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )

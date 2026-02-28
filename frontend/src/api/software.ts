@@ -2,7 +2,7 @@ import apiClient from './client'
 import type { Software, PaginatedResponse } from '@/types'
 
 export const softwareApi = {
-  list: (params?: { page?: number; search?: string }) =>
+  list: (params?: { page?: number; search?: string; installed_on?: number }) =>
     apiClient.get<PaginatedResponse<Software>>('/software/', { params }),
 
   get: (id: number) =>

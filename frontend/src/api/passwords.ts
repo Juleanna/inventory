@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { PasswordSystem, PasswordCategory, PasswordAccount, PaginatedResponse } from '@/types'
+import type { PasswordSystem, PasswordCategory, PasswordAccount, PasswordAuditLog, PaginatedResponse } from '@/types'
 
 export const passwordsApi = {
   listSystems: (params?: { page?: number; search?: string; category?: number }) =>
@@ -37,4 +37,10 @@ export const passwordsApi = {
 
   getDecryptedPassword: (accountId: number) =>
     apiClient.post<{ password: string }>(`/password-accounts/${accountId}/get_password/`),
+
+  listAuditLogs: (params?: { page?: number; action?: string; user?: number }) =>
+    apiClient.get<PaginatedResponse<PasswordAuditLog>>('/password-logs/', { params }),
+
+  myActivity: () =>
+    apiClient.get<PasswordAuditLog[]>('/password-logs/my_activity/'),
 }

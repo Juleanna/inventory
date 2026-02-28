@@ -2,7 +2,7 @@ import apiClient from './client'
 import type { PeripheralDevice, PaginatedResponse } from '@/types'
 
 export const peripheralsApi = {
-  list: (params?: { page?: number; search?: string }) =>
+  list: (params?: { page?: number; search?: string; connected_to?: number }) =>
     apiClient.get<PaginatedResponse<PeripheralDevice>>('/peripherals/', { params }),
 
   get: (id: number) =>

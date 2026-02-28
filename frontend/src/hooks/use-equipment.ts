@@ -1,8 +1,26 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { equipmentApi, type EquipmentFilters } from '@/api/equipment'
+import { peripheralsApi } from '@/api/peripherals'
+import { softwareApi } from '@/api/software'
 import type { Equipment } from '@/types'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
+
+export function useEquipmentPeripherals(equipmentId: number) {
+  return useQuery({
+    queryKey: ['peripherals', { connected_to: equipmentId }],
+    queryFn: () => peripheralsApi.list({ connected_to: equipmentId }).then((r) => r.data),
+    enabled: !!equipmentId,
+  })
+}
+
+export function useEquipmentSoftware(equipmentId: number) {
+  return useQuery({
+    queryKey: ['software', { installed_on: equipmentId }],
+    queryFn: () => softwareApi.list({ installed_on: equipmentId }).then((r) => r.data),
+    enabled: !!equipmentId,
+  })
+}
 
 export function useEquipmentList(filters?: EquipmentFilters) {
   return useQuery({

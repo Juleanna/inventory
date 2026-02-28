@@ -59,11 +59,17 @@ class LicenseSerializer(serializers.ModelSerializer):
 
 class SoftwareSerializer(serializers.ModelSerializer):
     license = LicenseSerializer(read_only=True)
+    license_id = serializers.PrimaryKeyRelatedField(
+        queryset=License.objects.all(), source='license', write_only=True, required=False, allow_null=True
+    )
     installed_on = EquipmentSerializer(many=True, read_only=True)
+    installed_on_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Equipment.objects.all(), source='installed_on', many=True, write_only=True, required=False
+    )
 
     class Meta:
         model = Software
-        fields = ['id', 'name', 'version', 'vendor', 'license', 'installed_on']
+        fields = ['id', 'name', 'version', 'vendor', 'license', 'license_id', 'installed_on', 'installed_on_ids']
 
 
 class PeripheralDeviceSerializer(serializers.ModelSerializer):

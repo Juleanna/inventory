@@ -188,6 +188,23 @@ export const PERIPHERAL_TYPE_LABELS: Record<string, string> = {
   other: 'Інше',
 }
 
+export const PASSWORD_ACTION_LABELS: Record<string, string> = {
+  view: 'Перегляд',
+  edit: 'Редагування',
+  generate: 'Генерація',
+  create: 'Створення',
+  delete: 'Видалення',
+}
+
+export const MOVEMENT_TYPE_LABELS: Record<string, string> = {
+  RECEIPT: 'Надходження',
+  ISSUE: 'Видача',
+  RETURN: 'Повернення',
+  ADJUSTMENT: 'Коригування',
+  TRANSFER: 'Переміщення',
+  WRITE_OFF: 'Списання',
+}
+
 export const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({
   value,
   label,

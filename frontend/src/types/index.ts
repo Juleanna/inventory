@@ -342,6 +342,128 @@ export interface DashboardStats {
   needs_maintenance: number
 }
 
+export interface DashboardData {
+  equipment_overview: {
+    total_equipment: number
+    working_equipment: number
+    in_repair: number
+    in_maintenance: number
+    working_percentage: number
+  }
+  financial_overview: {
+    total_purchase_value: number
+    current_depreciated_value: number
+    depreciation_amount: number
+    category_breakdown: Array<{ category: string; total_value: number; count: number }>
+  }
+  department_statistics: Array<{
+    department_code: string
+    department_name: string
+    equipment_count: number
+    equipment_value: number
+    user_count: number
+  }>
+  location_statistics: Array<{
+    location: string
+    equipment_count: number
+    total_value: number
+    working_count: number
+    repair_count: number
+  }>
+  maintenance_alerts: {
+    needs_maintenance_count: number
+    needs_maintenance: Array<{
+      id: number
+      name: string
+      serial_number: string
+      location: string
+      days_overdue: number
+      last_maintenance: string | null
+    }>
+    warranty_expiring_count: number
+    warranty_expiring: Array<{
+      id: number
+      name: string
+      serial_number: string
+      location: string
+      warranty_until: string
+    }>
+  }
+  notification_summary: {
+    unread_count: number
+    high_priority_count: number
+    urgent_count: number
+    this_week_count: number
+  }
+  equipment_age_distribution: Record<string, number>
+  last_updated: string
+}
+
+export interface FinancialAnalyticsData {
+  summary: {
+    total_purchase_value: number
+    current_value: number
+    depreciation_amount: number
+    depreciation_percentage: number
+  }
+  yearly_expenses: Array<{ year: number; total_spent: number; equipment_count: number }>
+  category_expenses: Array<{ category: string; total_spent: number; count: number; avg_price: number }>
+  expensive_equipment: Array<{ name: string; purchase_price: number; purchase_date: string; category: string }>
+  generated_at: string
+}
+
+export interface PasswordAuditLog {
+  id: number
+  account: number
+  account_name: string
+  system_name: string
+  user: number
+  user_name: string
+  action: string
+  action_display: string
+  ip_address: string
+  timestamp: string
+  notes: string
+}
+
+export interface SparePartsAnalytics {
+  overview: {
+    total_parts: number
+    total_value: string
+    low_stock_count: number
+    out_of_stock_count: number
+  }
+  status_distribution: Array<{ status: string; count: number }>
+  expensive_parts: Array<{ name: string; part_number: string; unit_cost: string; quantity_in_stock: number }>
+  movement_stats: Array<{ movement_type: string; count: number; total_quantity: number }>
+  top_suppliers: Array<{ name: string; parts_count: number; rating: string }>
+}
+
+export interface SparePartMovementDetail {
+  id: string
+  spare_part: { id: string; name: string; part_number: string }
+  movement_type: string
+  movement_type_display: string
+  quantity: number
+  unit_cost: string
+  reference_number: string
+  equipment: { id: number; name: string } | null
+  notes: string
+  performed_by: string | null
+  performed_at: string
+}
+
+export interface SparePartMovementsResponse {
+  success: boolean
+  movements: SparePartMovementDetail[]
+  pagination: {
+    page: number
+    page_size: number
+    total: number
+    has_next: boolean
+  }
+}
+
 export interface AnalyticsData {
   equipment_by_category: Array<{ name: string; value: number }>
   equipment_by_status: Array<{ name: string; value: number }>

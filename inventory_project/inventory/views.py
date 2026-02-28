@@ -151,12 +151,18 @@ class SoftwareViewSet(ModelViewSet):
     queryset = Software.objects.select_related('license').prefetch_related('installed_on').all()
     serializer_class = SoftwareSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['installed_on']
+    search_fields = ['name', 'vendor']
 
 
 class PeripheralDeviceViewSet(ModelViewSet):
     queryset = PeripheralDevice.objects.select_related('connected_to').all()
     serializer_class = PeripheralDeviceSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['connected_to']
+    search_fields = ['name', 'serial_number']
 
 
 # ============ AGENT REPORT ENDPOINT ============

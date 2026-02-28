@@ -239,7 +239,7 @@ QMenu::separator {{
 # ---------------------------------------------------------------------------
 class ScanWorker(QThread):
     """Збирає дані в окремому потоці."""
-    finished = Signal(dict)
+    result_ready = Signal(object)
     error = Signal(str)
     progress = Signal(str)
 
@@ -248,14 +248,14 @@ class ScanWorker(QThread):
             self.progress.emit("Збір даних про систему...")
             collector = SystemCollector()
             data = collector.collect_all()
-            self.finished.emit(data)
+            self.result_ready.emit(data)
         except Exception as e:
             self.error.emit(str(e))
 
 
 class SendWorker(QThread):
     """Відправляє звіт на сервер в окремому потоці."""
-    finished = Signal(dict)
+    result_ready = Signal(object)
     error = Signal(str)
 
     def __init__(self, client: AgentClient, data: dict, parent=None):
@@ -266,14 +266,14 @@ class SendWorker(QThread):
     def run(self):
         try:
             result = self.client.send_report(self.data)
-            self.finished.emit(result)
+            self.result_ready.emit(result or {})
         except Exception as e:
             self.error.emit(str(e))
 
 
 class AuthWorker(QThread):
     """Аутентифікація в окремому потоці."""
-    finished = Signal()
+    authenticated = Signal()
     error = Signal(str)
 
     def __init__(self, client: AgentClient, parent=None):
@@ -283,7 +283,7 @@ class AuthWorker(QThread):
     def run(self):
         try:
             self.client.authenticate()
-            self.finished.emit()
+            self.authenticated.emit()
         except Exception as e:
             self.error.emit(str(e))
 
@@ -697,7 +697,7 @@ class MainWindow(QMainWindow):
         self._log("Починаю збір даних...")
 
         self._scan_worker = ScanWorker()
-        self._scan_worker.finished.connect(self._on_scan_finished)
+        self._scan_worker.result_ready.connect(self._on_scan_finished)
         self._scan_worker.error.connect(self._on_scan_error)
         self._scan_worker.start()
 
@@ -724,71 +724,87 @@ class MainWindow(QMainWindow):
 
     def on_send(self):
         """Відправити дані на сервер."""
-        if not self.report_data:
-            self._log("Немає даних для відправки. Спочатку виконайте збір.")
-            return
+        try:
+            if not self.report_data:
+                self._log("Немає даних для відправки. Спочатку виконайте збір.")
+                return
 
-        api_url = self.set_api_url.text()
-        username = self.set_username.text()
-        password = self.set_password.text()
+            api_url = self.set_api_url.text()
+            username = self.set_username.text()
+            password = self.set_password.text()
 
-        if not all([api_url, username, password]):
-            self._log("ПОМИЛКА: Вкажіть API URL, логін та пароль у налаштуваннях.")
-            self.tabs.setCurrentIndex(3)
-            return
+            if not all([api_url, username, password]):
+                self._log("ПОМИЛКА: Вкажіть API URL, логін та пароль у налаштуваннях.")
+                self.tabs.setCurrentIndex(3)
+                return
 
-        self.btn_send.setEnabled(False)
-        self.btn_send.setText("  Відправка...")
-        self.statusBar().showMessage("Відправка звіту на сервер...")
-        self._log(f"Відправка на {api_url}...")
+            self.btn_send.setEnabled(False)
+            self.btn_send.setText("  Відправка...")
+            self.statusBar().showMessage("Відправка звіту на сервер...")
+            self._log(f"Відправка на {api_url}...")
 
-        if not self.client or self.client.api_url != api_url.rstrip("/"):
-            self.client = AgentClient(api_url, username, password)
+            if not self.client or self.client.api_url != api_url.rstrip("/"):
+                self.client = AgentClient(api_url, username, password)
 
-        # Auth first, then send
-        if not self.client.access_token:
-            self._auth_then_send()
-        else:
-            self._do_send()
+            # Auth first, then send
+            if not self.client.access_token:
+                self._auth_then_send()
+            else:
+                self._do_send()
+        except Exception as e:
+            self.btn_send.setEnabled(True)
+            self.btn_send.setText("  Відправити на сервер")
+            self._log(f"ПОМИЛКА: {e}")
 
     def _auth_then_send(self):
         self._auth_worker = AuthWorker(self.client)
-        self._auth_worker.finished.connect(self._do_send)
+        self._auth_worker.authenticated.connect(self._do_send)
         self._auth_worker.error.connect(self._on_send_error)
         self._auth_worker.start()
 
     def _do_send(self):
         self._send_worker = SendWorker(self.client, self.report_data)
-        self._send_worker.finished.connect(self._on_send_finished)
+        self._send_worker.result_ready.connect(self._on_send_finished)
         self._send_worker.error.connect(self._on_send_error)
         self._send_worker.start()
 
-    def _on_send_finished(self, result: dict):
-        self.btn_send.setEnabled(True)
-        self.btn_send.setText("  Відправити на сервер")
-        self._set_connected(True)
+    def _on_send_finished(self, result):
+        try:
+            self.btn_send.setEnabled(True)
+            self.btn_send.setText("  Відправити на сервер")
+            self._set_connected(True)
 
-        action = "Створено" if result.get("created") else "Оновлено"
-        eq_id = result.get("equipment_id", "?")
-        sw = result.get("software_synced", 0)
-        per = result.get("peripherals_synced", 0)
-        msg = f"{action} #{eq_id} | ПЗ: {sw} | Периферія: {per}"
-        self.statusBar().showMessage(f"Успішно: {msg}")
-        self._log(f"УСПІХ: {msg}")
+            if not isinstance(result, dict):
+                result = {}
+            action = "Створено" if result.get("created") else "Оновлено"
+            eq_id = result.get("equipment_id", "?")
+            sw = result.get("software_synced", 0)
+            per = result.get("peripherals_synced", 0)
+            msg = f"{action} #{eq_id} | ПЗ: {sw} | Периферія: {per}"
+            self.statusBar().showMessage(f"Успішно: {msg}")
+            self._log(f"УСПІХ: {msg}")
 
-        self.tray.showMessage(
-            APP_NAME,
-            f"{action} обладнання #{eq_id}",
-            QSystemTrayIcon.Information,
-            3000,
-        )
+            try:
+                self.tray.showMessage(
+                    APP_NAME,
+                    f"{action} обладнання #{eq_id}",
+                    QSystemTrayIcon.Information,
+                    3000,
+                )
+            except Exception:
+                pass
+        except Exception as e:
+            self._log(f"ПОМИЛКА обробки відповіді: {e}")
 
     def _on_send_error(self, error: str):
-        self.btn_send.setEnabled(True)
-        self.btn_send.setText("  Відправити на сервер")
-        self._set_connected(False)
-        self.statusBar().showMessage(f"Помилка відправки: {error}")
-        self._log(f"ПОМИЛКА відправки: {error}")
+        try:
+            self.btn_send.setEnabled(True)
+            self.btn_send.setText("  Відправити на сервер")
+            self._set_connected(False)
+            self.statusBar().showMessage(f"Помилка відправки: {error}")
+            self._log(f"ПОМИЛКА відправки: {error}")
+        except Exception:
+            pass
 
     def on_save_json(self):
         """Зберегти звіт у JSON файл."""
@@ -814,7 +830,7 @@ class MainWindow(QMainWindow):
         self._log("Автозбір: починаю...")
 
         self._auto_scan_worker = ScanWorker()
-        self._auto_scan_worker.finished.connect(self._on_auto_scan_finished)
+        self._auto_scan_worker.result_ready.connect(self._on_auto_scan_finished)
         self._auto_scan_worker.error.connect(self._on_scan_error)
         self._auto_scan_worker.start()
 
@@ -839,7 +855,7 @@ class MainWindow(QMainWindow):
 
         client = AgentClient(api_url, username, password)
         self._test_worker = AuthWorker(client)
-        self._test_worker.finished.connect(self._on_test_success)
+        self._test_worker.authenticated.connect(self._on_test_success)
         self._test_worker.error.connect(self._on_test_error)
         self._test_worker.start()
 
@@ -1095,6 +1111,14 @@ def main():
     parser = argparse.ArgumentParser(description=f"{APP_NAME} GUI")
     parser.add_argument("--tray", action="store_true", help="Запустити згорнутим у трей")
     args = parser.parse_args()
+
+    # Global exception hook to prevent silent crashes
+    def _exception_hook(exc_type, exc_value, exc_tb):
+        import traceback, logging
+        traceback.print_exception(exc_type, exc_value, exc_tb)
+        logging.error(f"Unhandled exception: {exc_value}")
+
+    sys.excepthook = _exception_hook
 
     app = QApplication(sys.argv)
     app.setStyle("Fusion")

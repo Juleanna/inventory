@@ -26,6 +26,22 @@ export function useCreateSoftware() {
   })
 }
 
+export function useUpdateSoftware() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Software> }) =>
+      softwareApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['software'] })
+      toast.success('Програму оновлено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка оновлення програми'))
+    },
+  })
+}
+
 export function useDeleteSoftware() {
   const queryClient = useQueryClient()
 
