@@ -472,11 +472,19 @@ def change_password(request):
 @permission_classes([IsAuthenticated])
 def users_list(request):
     """Список користувачів з пагінацією та пошуком."""
-    queryset = User.objects.all().order_by('-date_joined')
+    # Сортування
+    ordering = request.query_params.get('ordering', '-date_joined')
+    allowed_ordering = ['username', '-username', 'first_name', '-first_name', 'last_name', '-last_name',
+                        'department', '-department', 'position', '-position', 'date_joined', '-date_joined',
+                        'is_active', '-is_active']
+    if ordering not in allowed_ordering:
+        ordering = '-date_joined'
+    queryset = User.objects.all().order_by(ordering)
 
     # Фільтри
     search = request.query_params.get('search', '').strip()
     department = request.query_params.get('department', '')
+    position = request.query_params.get('position', '')
     is_active = request.query_params.get('is_active', '')
 
     if search:
@@ -489,6 +497,8 @@ def users_list(request):
         )
     if department:
         queryset = queryset.filter(department=department)
+    if position:
+        queryset = queryset.filter(position=position)
     if is_active == 'true':
         queryset = queryset.filter(is_active=True)
     elif is_active == 'false':

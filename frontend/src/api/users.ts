@@ -5,7 +5,9 @@ export interface UserFilters {
   page?: number
   search?: string
   department?: string
+  position?: string
   is_active?: string
+  ordering?: string
 }
 
 export const usersApi = {

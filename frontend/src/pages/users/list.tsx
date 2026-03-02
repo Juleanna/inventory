@@ -17,13 +17,18 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Users, Mail, Phone, Plus, MoreHorizontal, Pencil, UserX, Trash2 } from 'lucide-react'
+import { Users, Mail, Phone, Plus, MoreHorizontal, Pencil, UserX, Trash2, ArrowUp, ArrowDown, ArrowUpDown, X } from 'lucide-react'
 import { DEPARTMENT_LABELS, POSITION_LABELS } from '@/lib/constants'
 import type { User } from '@/types'
+
+type SortField = 'first_name' | 'department' | 'position' | 'is_active'
 
 export default function UsersListPage() {
   const [search, setSearch] = useState('')
   const [department, setDepartment] = useState('')
+  const [position, setPosition] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [ordering, setOrdering] = useState('')
   const [page, setPage] = useState(1)
   const [formOpen, setFormOpen] = useState(false)
   const [editUser, setEditUser] = useState<User | null>(null)
@@ -35,10 +40,35 @@ export default function UsersListPage() {
     page,
     search: debouncedSearch || undefined,
     department: department || undefined,
+    position: position || undefined,
+    is_active: statusFilter || undefined,
+    ordering: ordering || undefined,
   })
   const deactivateUser = useDeactivateUser()
   const deleteUser = useDeleteUser()
   const totalPages = data ? Math.ceil(data.count / 25) : 0
+
+  const hasFilters = department || position || statusFilter
+
+  const clearFilters = () => {
+    setDepartment('')
+    setPosition('')
+    setStatusFilter('')
+    setPage(1)
+  }
+
+  const toggleOrdering = (field: SortField) => {
+    if (ordering === field) setOrdering(`-${field}`)
+    else if (ordering === `-${field}`) setOrdering('')
+    else setOrdering(field)
+    setPage(1)
+  }
+
+  const getSortIcon = (field: SortField) => {
+    if (ordering === field) return <ArrowUp className="ml-1 h-3 w-3 inline" />
+    if (ordering === `-${field}`) return <ArrowDown className="ml-1 h-3 w-3 inline" />
+    return <ArrowUpDown className="ml-1 h-3 w-3 inline opacity-40" />
+  }
 
   const handleEdit = (user: User) => {
     setEditUser(user)
@@ -63,7 +93,7 @@ export default function UsersListPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <SearchInput
           value={search}
           onChange={setSearch}
@@ -81,6 +111,33 @@ export default function UsersListPage() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={position} onValueChange={(v) => { setPosition(v === 'all' ? '' : v); setPage(1) }}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Всі посади" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Всі посади</SelectItem>
+            {Object.entries(POSITION_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>{label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v === 'all' ? '' : v); setPage(1) }}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Всі статуси" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Всі статуси</SelectItem>
+            <SelectItem value="true">Активний</SelectItem>
+            <SelectItem value="false">Неактивний</SelectItem>
+          </SelectContent>
+        </Select>
+        {hasFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            <X className="mr-1 h-4 w-4" />
+            Скинути
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -103,12 +160,20 @@ export default function UsersListPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Користувач</TableHead>
-                  <TableHead className="hidden md:table-cell">Відділ</TableHead>
-                  <TableHead className="hidden md:table-cell">Посада</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleOrdering('first_name')}>
+                    Користувач{getSortIcon('first_name')}
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => toggleOrdering('department')}>
+                    Відділ{getSortIcon('department')}
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => toggleOrdering('position')}>
+                    Посада{getSortIcon('position')}
+                  </TableHead>
                   <TableHead className="hidden lg:table-cell">Контакти</TableHead>
                   <TableHead className="hidden lg:table-cell">Локація</TableHead>
-                  <TableHead className="w-24">Статус</TableHead>
+                  <TableHead className="w-24 cursor-pointer select-none" onClick={() => toggleOrdering('is_active')}>
+                    Статус{getSortIcon('is_active')}
+                  </TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
