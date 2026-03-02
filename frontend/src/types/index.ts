@@ -279,10 +279,8 @@ export interface Software {
   name: string
   version: string
   vendor: string
-  license: number | null
-  license_details?: License
-  installed_on: number[]
-  installed_on_details?: Equipment[]
+  license: License | null
+  installed_on: Equipment[]
 }
 
 export interface PeripheralDevice {
@@ -290,8 +288,10 @@ export interface PeripheralDevice {
   name: string
   type: string
   serial_number: string
-  connected_to: number | null
-  connected_to_details?: Equipment
+  inventory_number: string | null
+  connected_to: Equipment | null
+  barcode_image: string | null
+  qrcode_image: string | null
 }
 
 export interface License {
@@ -302,10 +302,10 @@ export interface License {
   activations: number
   start_date: string
   end_date: string
-  device: number | null
-  device_details?: Equipment
+  software: number | null
+  software_name: string
   user: number | null
-  user_details?: User
+  user_name: string
 }
 
 export interface EquipmentDocument {

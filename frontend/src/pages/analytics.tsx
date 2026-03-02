@@ -8,6 +8,9 @@ import { StatusChart } from '@/components/analytics/charts/status-chart'
 import { TrendChart } from '@/components/analytics/charts/trend-chart'
 import { FinancialChart } from '@/components/analytics/charts/financial-chart'
 import { FinancialSection } from '@/components/analytics/financial-section'
+import { MaintenanceSection } from '@/components/analytics/maintenance-section'
+import { UsersSection } from '@/components/analytics/users-section'
+import { ReportsSection } from '@/components/analytics/reports-section'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DollarSign, Monitor, Clock, Wrench } from 'lucide-react'
 
@@ -25,6 +28,9 @@ export default function AnalyticsPage() {
         <TabsList>
           <TabsTrigger value="equipment">Обладнання</TabsTrigger>
           <TabsTrigger value="financial">Фінанси</TabsTrigger>
+          <TabsTrigger value="maintenance">ТО</TabsTrigger>
+          <TabsTrigger value="users">Користувачі</TabsTrigger>
+          <TabsTrigger value="reports">Звіти</TabsTrigger>
         </TabsList>
 
         <TabsContent value="equipment">
@@ -92,6 +98,18 @@ export default function AnalyticsPage() {
 
         <TabsContent value="financial">
           <FinancialSection />
+        </TabsContent>
+
+        <TabsContent value="maintenance">
+          <MaintenanceSection />
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UsersSection />
+        </TabsContent>
+
+        <TabsContent value="reports">
+          <ReportsSection />
         </TabsContent>
       </Tabs>
     </div>

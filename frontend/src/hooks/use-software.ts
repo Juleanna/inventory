@@ -4,7 +4,7 @@ import type { Software } from '@/types'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
 
-export function useSoftwareList(params?: { page?: number; search?: string }) {
+export function useSoftwareList(params?: { page?: number; page_size?: number; search?: string; ordering?: string }) {
   return useQuery({
     queryKey: ['software', params],
     queryFn: () => softwareApi.list(params).then((r) => r.data),
@@ -53,6 +53,21 @@ export function useDeleteSoftware() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Помилка видалення'))
+    },
+  })
+}
+
+export function useBulkDeleteSoftware() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (ids: number[]) => Promise.all(ids.map((id) => softwareApi.delete(id))),
+    onSuccess: (_data, ids) => {
+      queryClient.invalidateQueries({ queryKey: ['software'] })
+      toast.success(`Видалено ${ids.length} програм`)
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка масового видалення'))
     },
   })
 }

@@ -37,4 +37,24 @@ export const equipmentApi = {
 
   regenerateCodes: (id: number) =>
     apiClient.post<Equipment>(`/equipment/${id}/regenerate-codes/`),
+
+  getHistory: (id: number) =>
+    apiClient.get(`/equipment/${id}/history/`),
+
+  listDocuments: (equipmentId: number) =>
+    apiClient.get(`/equipment/${equipmentId}/documents/`),
+
+  uploadDocument: (equipmentId: number, formData: FormData) =>
+    apiClient.post(`/equipment/${equipmentId}/documents/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  deleteDocument: (equipmentId: number, docId: number) =>
+    apiClient.delete(`/equipment/${equipmentId}/documents/${docId}/`),
+
+  bulkUpdateStatus: (ids: number[], status: string) =>
+    apiClient.post('/equipment/bulk-update/', { ids, status }),
+
+  bulkDelete: (ids: number[]) =>
+    apiClient.post('/equipment/bulk-delete/', { ids }),
 }

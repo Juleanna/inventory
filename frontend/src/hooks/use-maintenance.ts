@@ -47,6 +47,60 @@ export function useCreateMaintenanceSchedule() {
   })
 }
 
+export function useUpdateMaintenanceSchedule() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
+      maintenanceApi.updateSchedule(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] })
+      toast.success('Розклад оновлено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка оновлення розкладу'))
+    },
+  })
+}
+
+export function useDeleteMaintenanceSchedule() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => maintenanceApi.deleteSchedule(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] })
+      toast.success('Розклад видалено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка видалення розкладу'))
+    },
+  })
+}
+
+export function useAssignTechnician() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ requestId, technicianId }: { requestId: number | string; technicianId: number }) =>
+      maintenanceApi.assignTechnician(requestId, technicianId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] })
+      toast.success('Технічника призначено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка призначення'))
+    },
+  })
+}
+
+export function useTechnicians() {
+  return useQuery({
+    queryKey: ['maintenance', 'technicians'],
+    queryFn: () => maintenanceApi.getTechnicians().then((r) => r.data),
+  })
+}
+
 export function useMaintenanceDashboard() {
   return useQuery({
     queryKey: ['maintenance', 'dashboard'],

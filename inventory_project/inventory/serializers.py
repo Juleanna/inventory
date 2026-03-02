@@ -39,7 +39,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 
 class LicenseSerializer(serializers.ModelSerializer):
-    device_name = serializers.CharField(source='device.name', read_only=True, default='')
+    software_name = serializers.CharField(source='software.name', read_only=True, default='')
     user_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -47,7 +47,7 @@ class LicenseSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'license_type', 'key', 'description',
             'activations', 'start_date', 'end_date',
-            'device', 'device_name', 'user', 'user_name',
+            'software', 'software_name', 'user', 'user_name',
         ]
 
     def get_user_name(self, obj):
@@ -74,7 +74,14 @@ class SoftwareSerializer(serializers.ModelSerializer):
 
 class PeripheralDeviceSerializer(serializers.ModelSerializer):
     connected_to = EquipmentSerializer(read_only=True)
+    connected_to_id = serializers.PrimaryKeyRelatedField(
+        queryset=Equipment.objects.all(), source='connected_to', write_only=True, required=False, allow_null=True
+    )
 
     class Meta:
         model = PeripheralDevice
-        fields = ['id', 'name', 'type', 'serial_number', 'connected_to']
+        fields = [
+            'id', 'name', 'type', 'serial_number', 'inventory_number',
+            'connected_to', 'connected_to_id',
+            'barcode_image', 'qrcode_image',
+        ]

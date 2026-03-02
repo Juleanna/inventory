@@ -14,7 +14,7 @@ class LicenseAdmin(ModelAdmin):
     """Адмін для ліцензій"""
     list_display = (
         'license_type', 'key_preview', 'activations', 'start_date', 'end_date', 
-        'device', 'user', 'license_status', 'days_remaining'
+        'software', 'user', 'license_status', 'days_remaining'
     )
     list_filter = (
         'license_type',
@@ -70,6 +70,6 @@ class LicenseAdmin(ModelAdmin):
             'fields': ('start_date', 'end_date')
         }),
         ('Прив\'язка', {
-            'fields': ('device', 'user')
+            'fields': ('software', 'user')
         })
     )

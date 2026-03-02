@@ -2,7 +2,7 @@ import apiClient from './client'
 import type { License, PaginatedResponse } from '@/types'
 
 export const licensesApi = {
-  list: (params?: { page?: number; search?: string }) =>
+  list: (params?: { page?: number; page_size?: number; search?: string }) =>
     apiClient.get<PaginatedResponse<License>>('/licenses/', { params }),
 
   get: (id: number) =>

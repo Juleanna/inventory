@@ -83,6 +83,85 @@ export function useDeleteEquipment() {
   })
 }
 
+export function useEquipmentHistory(equipmentId: number) {
+  return useQuery({
+    queryKey: ['equipment', equipmentId, 'history'],
+    queryFn: () => equipmentApi.getHistory(equipmentId).then((r) => r.data),
+    enabled: !!equipmentId,
+  })
+}
+
+export function useEquipmentDocuments(equipmentId: number) {
+  return useQuery({
+    queryKey: ['equipment', equipmentId, 'documents'],
+    queryFn: () => equipmentApi.listDocuments(equipmentId).then((r) => r.data),
+    enabled: !!equipmentId,
+  })
+}
+
+export function useUploadDocument() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ equipmentId, formData }: { equipmentId: number; formData: FormData }) =>
+      equipmentApi.uploadDocument(equipmentId, formData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipment'] })
+      toast.success('Документ завантажено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка завантаження документу'))
+    },
+  })
+}
+
+export function useDeleteDocument() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ equipmentId, docId }: { equipmentId: number; docId: number }) =>
+      equipmentApi.deleteDocument(equipmentId, docId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipment'] })
+      toast.success('Документ видалено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка видалення документу'))
+    },
+  })
+}
+
+export function useBulkUpdateStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ ids, status }: { ids: number[]; status: string }) =>
+      equipmentApi.bulkUpdateStatus(ids, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipment'] })
+      toast.success('Статус оновлено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка масового оновлення'))
+    },
+  })
+}
+
+export function useBulkDelete() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (ids: number[]) => equipmentApi.bulkDelete(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipment'] })
+      toast.success('Обладнання видалено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка масового видалення'))
+    },
+  })
+}
+
 export function useRegenerateCodes() {
   const queryClient = useQueryClient()
 

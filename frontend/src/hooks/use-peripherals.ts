@@ -4,7 +4,7 @@ import type { PeripheralDevice } from '@/types'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
 
-export function usePeripheralsList(params?: { page?: number; search?: string }) {
+export function usePeripheralsList(params?: { page?: number; page_size?: number; search?: string; connected_to?: number; type?: string; ordering?: string }) {
   return useQuery({
     queryKey: ['peripherals', params],
     queryFn: () => peripheralsApi.list(params).then((r) => r.data),
@@ -26,6 +26,22 @@ export function useCreatePeripheral() {
   })
 }
 
+export function useUpdatePeripheral() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<PeripheralDevice> }) =>
+      peripheralsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['peripherals'] })
+      toast.success('Пристрій оновлено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка оновлення пристрою'))
+    },
+  })
+}
+
 export function useDeletePeripheral() {
   const queryClient = useQueryClient()
 
@@ -37,6 +53,21 @@ export function useDeletePeripheral() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Помилка видалення'))
+    },
+  })
+}
+
+export function useRegeneratePeripheralCodes() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => peripheralsApi.regenerateCodes(id).then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['peripherals'] })
+      toast.success('QR-код та штрих-код згенеровано')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка генерації кодів'))
     },
   })
 }

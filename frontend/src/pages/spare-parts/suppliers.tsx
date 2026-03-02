@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { useSuppliersList, useCreateSupplier } from '@/hooks/use-spare-parts'
+import { useState, useEffect } from 'react'
+import { useSuppliersList, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '@/hooks/use-spare-parts'
 import { PageHeader } from '@/components/shared/page-header'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { EmptyState } from '@/components/shared/empty-state'
+import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -11,11 +12,15 @@ import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Truck, Mail, Phone, Globe, Plus, Loader2 } from 'lucide-react'
+import { ArrowLeft, Truck, Mail, Phone, Globe, Plus, Loader2, Pencil, Trash2 } from 'lucide-react'
+import type { Supplier } from '@/types'
 
 export default function SuppliersPage() {
   const { data, isLoading } = useSuppliersList()
+  const deleteSupplier = useDeleteSupplier()
   const [showCreate, setShowCreate] = useState(false)
+  const [editSupplier, setEditSupplier] = useState<Supplier | null>(null)
+  const [deleteId, setDeleteId] = useState<number | null>(null)
 
   return (
     <div>
@@ -52,9 +57,27 @@ export default function SuppliersPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">{supplier.name}</CardTitle>
-                  <Badge variant={supplier.is_active ? 'default' : 'secondary'}>
-                    {supplier.is_active ? 'Активний' : 'Неактивний'}
-                  </Badge>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setEditSupplier(supplier)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive"
+                      onClick={() => setDeleteId(supplier.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Badge variant={supplier.is_active ? 'default' : 'secondary'}>
+                      {supplier.is_active ? 'Активний' : 'Неактивний'}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
@@ -90,13 +113,44 @@ export default function SuppliersPage() {
         </div>
       )}
 
-      <CreateSupplierDialog open={showCreate} onOpenChange={setShowCreate} />
+      <SupplierFormDialog open={showCreate} onOpenChange={setShowCreate} />
+
+      <SupplierFormDialog
+        open={!!editSupplier}
+        onOpenChange={(v) => { if (!v) setEditSupplier(null) }}
+        supplier={editSupplier}
+      />
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(v) => { if (!v) setDeleteId(null) }}
+        title="Видалити постачальника"
+        description="Ви впевнені, що хочете видалити цього постачальника? Цю дію неможливо скасувати."
+        confirmLabel="Видалити"
+        variant="destructive"
+        onConfirm={() => {
+          if (deleteId !== null) {
+            deleteSupplier.mutate(deleteId, {
+              onSuccess: () => setDeleteId(null),
+            })
+          }
+        }}
+      />
     </div>
   )
 }
 
-function CreateSupplierDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+function SupplierFormDialog({
+  open,
+  onOpenChange,
+  supplier,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  supplier?: Supplier | null
+}) {
   const createSupplier = useCreateSupplier()
+  const updateSupplier = useUpdateSupplier()
 
   const [form, setForm] = useState({
     name: '',
@@ -110,37 +164,67 @@ function CreateSupplierDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     notes: '',
   })
 
+  useEffect(() => {
+    if (supplier) {
+      setForm({
+        name: supplier.name || '',
+        contact_person: supplier.contact_person || '',
+        email: supplier.email || '',
+        phone: supplier.phone || '',
+        address: supplier.address || '',
+        website: supplier.website || '',
+        tax_id: supplier.tax_id || '',
+        rating: supplier.rating || '',
+        notes: supplier.notes || '',
+      })
+    } else {
+      setForm({ name: '', contact_person: '', email: '', phone: '', address: '', website: '', tax_id: '', rating: '', notes: '' })
+    }
+  }, [supplier])
+
   const update = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }))
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    createSupplier.mutate(
-      {
-        name: form.name,
-        contact_person: form.contact_person || undefined,
-        email: form.email || undefined,
-        phone: form.phone || undefined,
-        address: form.address || undefined,
-        website: form.website || undefined,
-        tax_id: form.tax_id || undefined,
-        rating: form.rating || undefined,
-        notes: form.notes || undefined,
-      },
-      {
+    const payload = {
+      name: form.name,
+      contact_person: form.contact_person || undefined,
+      email: form.email || undefined,
+      phone: form.phone || undefined,
+      address: form.address || undefined,
+      website: form.website || undefined,
+      tax_id: form.tax_id || undefined,
+      rating: form.rating || undefined,
+      notes: form.notes || undefined,
+    }
+
+    if (supplier) {
+      updateSupplier.mutate(
+        { id: supplier.id, data: payload },
+        {
+          onSuccess: () => {
+            onOpenChange(false)
+          },
+        }
+      )
+    } else {
+      createSupplier.mutate(payload, {
         onSuccess: () => {
           onOpenChange(false)
           setForm({ name: '', contact_person: '', email: '', phone: '', address: '', website: '', tax_id: '', rating: '', notes: '' })
         },
-      }
-    )
+      })
+    }
   }
+
+  const isPending = supplier ? updateSupplier.isPending : createSupplier.isPending
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Додати постачальника</DialogTitle>
+          <DialogTitle>{supplier ? 'Редагувати постачальника' : 'Додати постачальника'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -187,9 +271,9 @@ function CreateSupplierDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Скасувати</Button>
-            <Button type="submit" disabled={createSupplier.isPending}>
-              {createSupplier.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Додати
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {supplier ? 'Зберегти' : 'Додати'}
             </Button>
           </div>
         </form>

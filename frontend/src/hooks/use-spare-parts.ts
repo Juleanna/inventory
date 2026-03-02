@@ -108,6 +108,68 @@ export function useCreatePurchaseOrder() {
   })
 }
 
+export function useUpdateSparePart() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<SparePart> }) =>
+      sparePartsApi.updatePart(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['spare-parts'] })
+      toast.success('Запчастину оновлено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка оновлення запчастини'))
+    },
+  })
+}
+
+export function useDeleteSparePart() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => sparePartsApi.deletePart(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['spare-parts'] })
+      toast.success('Запчастину видалено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка видалення запчастини'))
+    },
+  })
+}
+
+export function useUpdateSupplier() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Supplier> }) =>
+      sparePartsApi.updateSupplier(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] })
+      toast.success('Постачальника оновлено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка оновлення постачальника'))
+    },
+  })
+}
+
+export function useDeleteSupplier() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => sparePartsApi.deleteSupplier(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] })
+      toast.success('Постачальника видалено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка видалення постачальника'))
+    },
+  })
+}
+
 export function useIssueSparePart() {
   const queryClient = useQueryClient()
 

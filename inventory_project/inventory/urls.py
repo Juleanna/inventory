@@ -132,6 +132,9 @@ urlpatterns = [
     path('api/spare-parts/equipment/<str:equipment_id>/', views.get_spare_parts_for_equipment, name='spare-parts-for-equipment'),
     path('api/spare-parts/analytics/', views.spare_parts_analytics, name='spare-parts-analytics'),
     
+    # ============ ДОКУМЕНТИ ОБЛАДНАННЯ ============
+    path('api/equipment/<int:equipment_id>/documents/<int:doc_id>/', views.delete_equipment_document, name='delete-equipment-document'),
+
     # ============ AGENT ============
     path('api/agent/report/', views.agent_report, name='agent-report'),
 

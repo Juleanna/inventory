@@ -581,7 +581,7 @@ class Software(models.Model):
     name = models.CharField(max_length=255, verbose_name="Назва ПЗ")
     version = models.CharField(max_length=50, verbose_name="Версія")
     vendor = models.CharField(max_length=255, verbose_name="Виробник")
-    license = models.ForeignKey(License, null=True, blank=True, on_delete=models.SET_NULL, verbose_name="Лицензія")
+    license = models.ForeignKey(License, null=True, blank=True, on_delete=models.SET_NULL, verbose_name="Лицензія", related_name='licensed_software')
     installed_on = models.ManyToManyField(Equipment, blank=True, verbose_name="Встановлено на")
 
     class Meta:
@@ -597,7 +597,14 @@ class PeripheralDevice(models.Model):
     name = models.CharField(max_length=255, verbose_name="Назва пристрою")
     type = models.CharField(max_length=255, verbose_name="Тип пристрою")
     serial_number = models.CharField(max_length=255, unique=True, verbose_name="Серійний номер")
+    inventory_number = models.CharField(
+        max_length=100, unique=True, null=True, blank=True,
+        verbose_name="Інвентарний номер",
+        help_text="Внутрішній номер організації"
+    )
     connected_to = models.ForeignKey(Equipment, null=True, blank=True, on_delete=models.SET_NULL, verbose_name="Підключено до")
+    barcode_image = models.ImageField(upload_to='barcodes/', blank=True, null=True, verbose_name="Штрих-код")
+    qrcode_image = models.ImageField(upload_to='qrcodes/', blank=True, null=True, verbose_name="QR-код")
 
     class Meta:
         verbose_name = "Периферійний пристрій"
@@ -606,6 +613,39 @@ class PeripheralDevice(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.serial_number})"
+
+    def save(self, *args, **kwargs):
+        self.generate_barcode()
+        self.generate_qrcode()
+        super().save(*args, **kwargs)
+
+    def generate_barcode(self):
+        code = self.inventory_number or self.serial_number
+        if code:
+            try:
+                barcode_format = barcode.get('code128', code, writer=ImageWriter())
+                buffer = BytesIO()
+                barcode_format.write(buffer)
+                self.barcode_image.save(f"{code}_barcode.png", ContentFile(buffer.getvalue()), save=False)
+                buffer.close()
+            except Exception as e:
+                logger.error(f"Помилка генерації штрих-коду для периферії {code}: {e}")
+
+    def generate_qrcode(self):
+        code = self.inventory_number or self.serial_number
+        if code:
+            try:
+                qr_data = f"Peripheral: {self.name}\nInventory: {code}\nType: {self.type}"
+                qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+                qr.add_data(qr_data)
+                qr.make(fit=True)
+                img = qr.make_image(fill_color="black", back_color="white")
+                buffer = BytesIO()
+                img.save(buffer, format="PNG")
+                self.qrcode_image.save(f"{code}_qrcode.png", ContentFile(buffer.getvalue()), save=False)
+                buffer.close()
+            except Exception as e:
+                logger.error(f"Помилка генерації QR-коду для периферії {code}: {e}")
 
 
 class EquipmentDocument(models.Model):

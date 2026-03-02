@@ -38,6 +38,9 @@ export const sparePartsApi = {
   updateSupplier: (id: number, data: Partial<Supplier>) =>
     apiClient.patch<Supplier>(`/suppliers/${id}/`, data),
 
+  deleteSupplier: (id: number) =>
+    apiClient.delete(`/suppliers/${id}/`),
+
   listOrders: (params?: { page?: number; status?: string }) =>
     apiClient.get<PaginatedResponse<PurchaseOrder>>('/purchase-orders/', { params }),
 

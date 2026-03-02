@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { SearchableSelect } from '@/components/shared/searchable-select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Loader2, Shuffle } from 'lucide-react'
@@ -256,31 +257,31 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
                   </div>
                   <div className="space-y-2">
                     <Label>Поточний користувач</Label>
-                    <Select value={form.current_user} onValueChange={(v) => update('current_user', v === '_none' ? '' : v)}>
-                      <SelectTrigger><SelectValue placeholder="Не призначено" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="_none">Не призначено</SelectItem>
-                        {users?.map((u) => (
-                          <SelectItem key={u.id} value={String(u.id)}>
-                            {u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <SearchableSelect
+                      value={form.current_user}
+                      onValueChange={(v) => update('current_user', v)}
+                      placeholder="Не призначено"
+                      searchPlaceholder="Введіть ім'я..."
+                      emptyText="Користувача не знайдено"
+                      options={users?.map((u) => ({
+                        value: String(u.id),
+                        label: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username,
+                      })) || []}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Відповідальна особа</Label>
-                    <Select value={form.responsible_person} onValueChange={(v) => update('responsible_person', v === '_none' ? '' : v)}>
-                      <SelectTrigger><SelectValue placeholder="Не призначено" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="_none">Не призначено</SelectItem>
-                        {users?.map((u) => (
-                          <SelectItem key={u.id} value={String(u.id)}>
-                            {u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <SearchableSelect
+                      value={form.responsible_person}
+                      onValueChange={(v) => update('responsible_person', v)}
+                      placeholder="Не призначено"
+                      searchPlaceholder="Введіть ім'я..."
+                      emptyText="Користувача не знайдено"
+                      options={users?.map((u) => ({
+                        value: String(u.id),
+                        label: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username,
+                      })) || []}
+                    />
                   </div>
                 </div>
               </TabsContent>

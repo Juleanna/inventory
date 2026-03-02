@@ -19,4 +19,7 @@ export const analyticsApi = {
 
   quickReport: () =>
     apiClient.get('/quick-report/'),
+
+  generateExportReport: (params: { type: string; format: string; date_from?: string; date_to?: string; department?: string; category?: string; status?: string }) =>
+    apiClient.get('/reports/', { params, responseType: 'blob' }),
 }

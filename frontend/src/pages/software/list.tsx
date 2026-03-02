@@ -1,22 +1,26 @@
 import { useState, useMemo } from 'react'
-import { useSoftwareList, useCreateSoftware, useUpdateSoftware, useDeleteSoftware } from '@/hooks/use-software'
+import { useSoftwareList, useCreateSoftware, useUpdateSoftware, useDeleteSoftware, useBulkDeleteSoftware } from '@/hooks/use-software'
 import { useEquipmentList } from '@/hooks/use-equipment'
+import { useLicensesList } from '@/hooks/use-licenses'
 import { useDebounce } from '@/hooks/use-debounce'
 import { PageHeader } from '@/components/shared/page-header'
 import { SearchInput } from '@/components/shared/search-input'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { EmptyState } from '@/components/shared/empty-state'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import { ListPagination } from '@/components/shared/list-pagination'
+import { SearchableSelect } from '@/components/shared/searchable-select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { AppWindow, Plus, Trash2, Pencil, Loader2, ChevronRight, ChevronDown, Monitor } from 'lucide-react'
+import { AppWindow, Plus, Trash2, Pencil, Loader2, ChevronRight, ChevronDown, Monitor, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react'
 import type { Software, Equipment } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -27,23 +31,43 @@ export default function SoftwareListPage() {
   const [editSoftware, setEditSoftware] = useState<Software | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [expanded, setExpanded] = useState<Set<number | 'unlinked'>>(new Set())
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [ordering, setOrdering] = useState('name')
 
   const debouncedSearch = useDebounce(search)
+  const pageSize = 500
   const { data, isLoading } = useSoftwareList({
     page,
+    page_size: pageSize,
     search: debouncedSearch || undefined,
+    ordering,
   })
-  const deleteSoftware = useDeleteSoftware()
-  const totalPages = data ? Math.ceil(data.count / 25) : 0
 
-  // Group software by equipment
+  const toggleOrdering = (field: string) => {
+    setOrdering((prev) => {
+      if (prev === field) return `-${field}`
+      if (prev === `-${field}`) return field
+      return field
+    })
+  }
+
+  const getSortIcon = (field: string) => {
+    if (ordering === field) return <ArrowUp className="h-3.5 w-3.5" />
+    if (ordering === `-${field}`) return <ArrowDown className="h-3.5 w-3.5" />
+    return <ArrowUpDown className="h-3.5 w-3.5 opacity-30" />
+  }
+  const deleteSoftware = useDeleteSoftware()
+  const bulkDelete = useBulkDeleteSoftware()
+  const totalPages = data ? Math.ceil(data.count / pageSize) : 0
+
   const { equipmentMap, unlinkedSoftware } = useMemo(() => {
     const eqMap = new Map<number, { equipment: Equipment; software: Software[] }>()
     const unlinked: Software[] = []
 
     data?.results?.forEach((sw) => {
-      if (sw.installed_on_details && sw.installed_on_details.length > 0) {
-        sw.installed_on_details.forEach((eq) => {
+      if (sw.installed_on && sw.installed_on.length > 0) {
+        sw.installed_on.forEach((eq) => {
           if (!eqMap.has(eq.id)) {
             eqMap.set(eq.id, { equipment: eq, software: [] })
           }
@@ -66,19 +90,60 @@ export default function SoftwareListPage() {
     })
   }
 
-  const handleEdit = (sw: Software) => {
-    setEditSoftware(sw)
-    setShowDialog(true)
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
-  const handleAdd = () => {
-    setEditSoftware(null)
-    setShowDialog(true)
+  const toggleGroupSelect = (swList: Software[]) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      const groupIds = swList.map((s) => s.id)
+      const allSelected = groupIds.every((id) => next.has(id))
+      if (allSelected) {
+        groupIds.forEach((id) => next.delete(id))
+      } else {
+        groupIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
   }
 
-  const handleCloseDialog = (open: boolean) => {
-    setShowDialog(open)
-    if (!open) setEditSoftware(null)
+  const selectGroupAndDelete = (swList: Software[]) => {
+    const ids = new Set(selectedIds)
+    swList.forEach((s) => ids.add(s.id))
+    setSelectedIds(ids)
+    setBulkDeleteOpen(true)
+  }
+
+  const toggleSelectAll = () => {
+    if (!data?.results) return
+    const allIds = data.results.map((s) => s.id)
+    const allSelected = allIds.every((id) => selectedIds.has(id))
+    setSelectedIds(new Set(allSelected ? [] : allIds))
+  }
+
+  const isGroupAllSelected = (swList: Software[]) =>
+    swList.length > 0 && swList.every((s) => selectedIds.has(s.id))
+
+  const isGroupPartial = (swList: Software[]) =>
+    swList.some((s) => selectedIds.has(s.id)) && !isGroupAllSelected(swList)
+
+  const allPageIds = data?.results?.map((s) => s.id) ?? []
+  const allSelected = allPageIds.length > 0 && allPageIds.every((id) => selectedIds.has(id))
+
+  const handleEdit = (sw: Software) => { setEditSoftware(sw); setShowDialog(true) }
+  const handleAdd = () => { setEditSoftware(null); setShowDialog(true) }
+  const handleCloseDialog = (open: boolean) => { setShowDialog(open); if (!open) setEditSoftware(null) }
+
+  const handleBulkDelete = () => {
+    bulkDelete.mutate([...selectedIds], {
+      onSuccess: () => { setSelectedIds(new Set()); setBulkDeleteOpen(false) },
+    })
   }
 
   const sortedEquipment = useMemo(() => {
@@ -93,20 +158,23 @@ export default function SoftwareListPage() {
         title="Програмне забезпечення"
         description={`Всього: ${data?.count || 0} програм`}
         actions={
-          <Button onClick={handleAdd}>
-            <Plus className="mr-2 h-4 w-4" />
-            Додати
-          </Button>
+          <div className="flex gap-2">
+            {selectedIds.size > 0 && (
+              <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Видалити ({selectedIds.size})
+              </Button>
+            )}
+            <Button onClick={handleAdd}>
+              <Plus className="mr-2 h-4 w-4" />
+              Додати
+            </Button>
+          </div>
         }
       />
 
       <div className="mb-4">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Пошук програм..."
-          className="sm:w-72"
-        />
+        <SearchInput value={search} onChange={setSearch} placeholder="Пошук програм..." className="sm:w-72" />
       </div>
 
       {isLoading ? (
@@ -115,12 +183,7 @@ export default function SoftwareListPage() {
         <EmptyState
           icon={<AppWindow className="h-12 w-12" />}
           title="Програм не знайдено"
-          action={
-            <Button size="sm" onClick={handleAdd}>
-              <Plus className="mr-2 h-3 w-3" />
-              Додати програму
-            </Button>
-          }
+          action={<Button size="sm" onClick={handleAdd}><Plus className="mr-2 h-3 w-3" />Додати програму</Button>}
         />
       ) : (
         <>
@@ -128,47 +191,67 @@ export default function SoftwareListPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                  </TableHead>
                   <TableHead className="w-8" />
-                  <TableHead>Назва</TableHead>
-                  <TableHead className="hidden sm:table-cell">Версія</TableHead>
-                  <TableHead className="hidden md:table-cell">Виробник</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleOrdering('name')}>
+                    <div className="flex items-center gap-1">Назва {getSortIcon('name')}</div>
+                  </TableHead>
+                  <TableHead className="hidden sm:table-cell cursor-pointer select-none" onClick={() => toggleOrdering('version')}>
+                    <div className="flex items-center gap-1">Версія {getSortIcon('version')}</div>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => toggleOrdering('vendor')}>
+                    <div className="flex items-center gap-1">Виробник {getSortIcon('vendor')}</div>
+                  </TableHead>
                   <TableHead className="hidden lg:table-cell">Ліцензія</TableHead>
                   <TableHead className="w-20" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* Equipment groups */}
                 {sortedEquipment.map(({ equipment: eq, software: swList }) => (
                   <>
-                    <TableRow
-                      key={`eq-${eq.id}`}
-                      className="bg-muted/30 cursor-pointer hover:bg-muted/50"
-                      onClick={() => toggleExpand(eq.id)}
-                    >
+                    <TableRow key={`eq-${eq.id}`} className="bg-muted/30 hover:bg-muted/50">
                       <TableCell className="py-2">
+                        <Checkbox
+                          checked={isGroupAllSelected(swList) ? true : isGroupPartial(swList) ? 'indeterminate' : false}
+                          onCheckedChange={() => toggleGroupSelect(swList)}
+                        />
+                      </TableCell>
+                      <TableCell className="py-2 cursor-pointer" onClick={() => toggleExpand(eq.id)}>
                         {expanded.has(eq.id)
                           ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                       </TableCell>
-                      <TableCell colSpan={4} className="py-2">
+                      <TableCell colSpan={4} className="py-2 cursor-pointer" onClick={() => toggleExpand(eq.id)}>
                         <div className="flex items-center gap-2">
                           <Monitor className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">{eq.name}</span>
-                          <Badge variant="secondary" className="text-xs">{swList.length} програм</Badge>
+                          <Badge variant="secondary" className="text-xs">{swList.length}</Badge>
                         </div>
                       </TableCell>
-                      <TableCell />
+                      <TableCell className="py-2">
+                        <Button
+                          size="icon" variant="ghost"
+                          className="h-7 w-7 text-destructive"
+                          title={`Видалити всі програми з ${eq.name}`}
+                          onClick={() => selectGroupAndDelete(swList)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                     {expanded.has(eq.id) && swList.map((sw) => (
                       <TableRow key={`eq-${eq.id}-sw-${sw.id}`}>
-                        <TableCell />
-                        <TableCell className="pl-10">
-                          <span className="text-sm">{sw.name}</span>
+                        <TableCell>
+                          <Checkbox checked={selectedIds.has(sw.id)} onCheckedChange={() => toggleSelect(sw.id)} />
                         </TableCell>
+                        <TableCell />
+                        <TableCell className="pl-10"><span className="text-sm">{sw.name}</span></TableCell>
                         <TableCell className="hidden sm:table-cell font-mono text-sm">{sw.version}</TableCell>
                         <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{sw.vendor}</TableCell>
                         <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                          {sw.license_details?.license_type || '—'}
+                          {sw.license?.license_type || '—'}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
@@ -185,37 +268,49 @@ export default function SoftwareListPage() {
                   </>
                 ))}
 
-                {/* Unlinked software */}
                 {unlinkedSoftware.length > 0 && (
                   <>
-                    <TableRow
-                      className="bg-muted/30 cursor-pointer hover:bg-muted/50"
-                      onClick={() => toggleExpand('unlinked')}
-                    >
+                    <TableRow className="bg-muted/30 hover:bg-muted/50">
                       <TableCell className="py-2">
+                        <Checkbox
+                          checked={isGroupAllSelected(unlinkedSoftware) ? true : isGroupPartial(unlinkedSoftware) ? 'indeterminate' : false}
+                          onCheckedChange={() => toggleGroupSelect(unlinkedSoftware)}
+                        />
+                      </TableCell>
+                      <TableCell className="py-2 cursor-pointer" onClick={() => toggleExpand('unlinked')}>
                         {expanded.has('unlinked')
                           ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                       </TableCell>
-                      <TableCell colSpan={4} className="py-2">
+                      <TableCell colSpan={4} className="py-2 cursor-pointer" onClick={() => toggleExpand('unlinked')}>
                         <div className="flex items-center gap-2">
                           <AppWindow className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium text-muted-foreground">Не прив'язано до обладнання</span>
                           <Badge variant="outline" className="text-xs">{unlinkedSoftware.length}</Badge>
                         </div>
                       </TableCell>
-                      <TableCell />
+                      <TableCell className="py-2">
+                        <Button
+                          size="icon" variant="ghost"
+                          className="h-7 w-7 text-destructive"
+                          title="Видалити всі непривʼязані програми"
+                          onClick={() => selectGroupAndDelete(unlinkedSoftware)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                     {expanded.has('unlinked') && unlinkedSoftware.map((sw) => (
                       <TableRow key={`unlinked-${sw.id}`}>
-                        <TableCell />
-                        <TableCell className="pl-10">
-                          <span className="text-sm">{sw.name}</span>
+                        <TableCell>
+                          <Checkbox checked={selectedIds.has(sw.id)} onCheckedChange={() => toggleSelect(sw.id)} />
                         </TableCell>
+                        <TableCell />
+                        <TableCell className="pl-10"><span className="text-sm">{sw.name}</span></TableCell>
                         <TableCell className="hidden sm:table-cell font-mono text-sm">{sw.version}</TableCell>
                         <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{sw.vendor}</TableCell>
                         <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                          {sw.license_details?.license_type || '—'}
+                          {sw.license?.license_type || '—'}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
@@ -235,23 +330,11 @@ export default function SoftwareListPage() {
             </Table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between rounded-lg border bg-card px-4 py-3">
-              <p className="text-sm text-muted-foreground">Сторінка {page} з {totalPages}</p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Попередня</Button>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Наступна</Button>
-              </div>
-            </div>
-          )}
+          <ListPagination page={page} totalPages={totalPages} totalItems={data?.count} onPageChange={setPage} />
         </>
       )}
 
-      <SoftwareFormDialog
-        open={showDialog}
-        onOpenChange={handleCloseDialog}
-        software={editSoftware}
-      />
+      <SoftwareFormDialog open={showDialog} onOpenChange={handleCloseDialog} software={editSoftware} />
 
       <ConfirmDialog
         open={deleteId !== null}
@@ -259,12 +342,17 @@ export default function SoftwareListPage() {
         title="Видалити програму?"
         description="Програму буде видалено назавжди."
         confirmLabel="Видалити"
-        onConfirm={() => {
-          if (deleteId) {
-            deleteSoftware.mutate(deleteId)
-            setDeleteId(null)
-          }
-        }}
+        onConfirm={() => { if (deleteId) { deleteSoftware.mutate(deleteId); setDeleteId(null) } }}
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={(v) => { if (!v) setBulkDeleteOpen(false) }}
+        title={`Видалити ${selectedIds.size} програм?`}
+        description="Обрані програми буде видалено назавжди. Цю дію не можна скасувати."
+        confirmLabel={`Видалити (${selectedIds.size})`}
+        onConfirm={handleBulkDelete}
         variant="destructive"
       />
     </div>
@@ -283,43 +371,31 @@ function SoftwareFormDialog({
   const createSoftware = useCreateSoftware()
   const updateSoftware = useUpdateSoftware()
   const { data: equipmentData } = useEquipmentList({ page_size: 200 })
+  const { data: licensesData } = useLicensesList({ page_size: 200 })
   const isEditing = !!software
 
-  const [form, setForm] = useState({
+  const emptyForm = {
     name: '',
     version: '',
     vendor: '',
+    license_id: '',
     installed_on_ids: [] as number[],
+  }
+
+  const [form, setForm] = useState(emptyForm)
+
+  const buildForm = (sw: Software) => ({
+    name: sw.name,
+    version: sw.version,
+    vendor: sw.vendor || '',
+    license_id: sw.license ? String(sw.license.id) : '',
+    installed_on_ids: sw.installed_on?.map((eq) => eq.id) || [],
   })
 
-  // Reset form when dialog opens/software changes
-  useState(() => {
-    if (software) {
-      setForm({
-        name: software.name,
-        version: software.version,
-        vendor: software.vendor || '',
-        installed_on_ids: software.installed_on || [],
-      })
-    } else {
-      setForm({ name: '', version: '', vendor: '', installed_on_ids: [] })
-    }
-  })
-
-  // Sync form when software prop changes
   const [prevSoftwareId, setPrevSoftwareId] = useState<number | null>(null)
   if ((software?.id ?? null) !== prevSoftwareId) {
     setPrevSoftwareId(software?.id ?? null)
-    if (software) {
-      setForm({
-        name: software.name,
-        version: software.version,
-        vendor: software.vendor || '',
-        installed_on_ids: software.installed_on || [],
-      })
-    } else {
-      setForm({ name: '', version: '', vendor: '', installed_on_ids: [] })
-    }
+    setForm(software ? buildForm(software) : emptyForm)
   }
 
   const update = (field: string, value: string | number[]) =>
@@ -333,6 +409,7 @@ function SoftwareFormDialog({
       name: form.name,
       version: form.version,
       vendor: form.vendor || undefined,
+      license_id: form.license_id ? Number(form.license_id) : null,
       installed_on_ids: form.installed_on_ids,
     }
 
@@ -345,7 +422,7 @@ function SoftwareFormDialog({
       createSoftware.mutate(payload as Partial<Software>, {
         onSuccess: () => {
           onOpenChange(false)
-          setForm({ name: '', version: '', vendor: '', installed_on_ids: [] })
+          setForm(emptyForm)
         },
       })
     }
@@ -381,6 +458,21 @@ function SoftwareFormDialog({
                 <Label className="text-xs">Виробник</Label>
                 <Input value={form.vendor} onChange={(e) => update('vendor', e.target.value)} placeholder="Microsoft" />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Ліцензія</Label>
+              <SearchableSelect
+                options={licensesData?.results?.map((lic) => ({
+                  value: String(lic.id),
+                  label: `${lic.license_type} — ${lic.key.length > 16 ? lic.key.slice(0, 8) + '...' + lic.key.slice(-4) : lic.key}`,
+                })) || []}
+                value={form.license_id}
+                onValueChange={(v) => update('license_id', v)}
+                placeholder="Не призначено"
+                searchPlaceholder="Пошук ліцензії..."
+                emptyText="Ліцензій не знайдено"
+              />
             </div>
 
             <div className="space-y-1.5">

@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useEquipmentList, useDeleteEquipment, useRegenerateCodes } from '@/hooks/use-equipment'
+import { useEquipmentList, useDeleteEquipment, useRegenerateCodes, useBulkUpdateStatus, useBulkDelete } from '@/hooks/use-equipment'
 import { useDebounce } from '@/hooks/use-debounce'
 import { equipmentApi, type EquipmentFilters } from '@/api/equipment'
 import { PageHeader } from '@/components/shared/page-header'
 import { SearchInput } from '@/components/shared/search-input'
 import { EmptyState } from '@/components/shared/empty-state'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import { ListPagination } from '@/components/shared/list-pagination'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -118,6 +119,10 @@ export default function EquipmentListPage() {
   const { data, isLoading } = useEquipmentList(filters)
   const deleteEquipment = useDeleteEquipment()
   const regenerateCodes = useRegenerateCodes()
+  const bulkUpdateStatus = useBulkUpdateStatus()
+  const bulkDelete = useBulkDelete()
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
   const totalPages = data ? Math.ceil(data.count / 25) : 0
 
@@ -229,10 +234,42 @@ export default function EquipmentListPage() {
         actions={
           <div className="flex gap-2">
             {selectedIds.size > 0 && (
-              <Button variant="outline" size="sm" onClick={handleMassPrint}>
-                <Printer className="mr-2 h-4 w-4" />
-                Друк кодів ({selectedIds.size})
-              </Button>
+              <>
+                <Button variant="outline" size="sm" onClick={handleMassPrint}>
+                  <Printer className="mr-2 h-4 w-4" />
+                  Друк ({selectedIds.size})
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      Змінити статус ({selectedIds.size})
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {STATUS_OPTIONS.map((opt) => (
+                      <DropdownMenuItem
+                        key={opt.value}
+                        onClick={() => {
+                          bulkUpdateStatus.mutate(
+                            { ids: Array.from(selectedIds), status: opt.value },
+                            { onSuccess: () => setSelectedIds(new Set()) }
+                          )
+                        }}
+                      >
+                        {opt.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setBulkDeleteOpen(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Видалити ({selectedIds.size})
+                </Button>
+              </>
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -455,31 +492,7 @@ export default function EquipmentListPage() {
             </Table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between rounded-lg border bg-card px-4 py-3">
-              <p className="text-sm text-muted-foreground">
-                Сторінка <span className="font-medium text-foreground">{page}</span> з <span className="font-medium text-foreground">{totalPages}</span>
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
-                >
-                  Попередня
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(page + 1)}
-                >
-                  Наступна
-                </Button>
-              </div>
-            </div>
-          )}
+          <ListPagination page={page} totalPages={totalPages} totalItems={data?.count} onPageChange={setPage} />
         </>
       )}
 
@@ -583,6 +596,23 @@ export default function EquipmentListPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={() => setBulkDeleteOpen(false)}
+        title={`Видалити ${selectedIds.size} обладнання?`}
+        description="Ця дія є незворотною. Обране обладнання буде видалено назавжди."
+        confirmLabel="Видалити все"
+        onConfirm={() => {
+          bulkDelete.mutate(Array.from(selectedIds), {
+            onSuccess: () => {
+              setSelectedIds(new Set())
+              setBulkDeleteOpen(false)
+            },
+          })
+        }}
+        variant="destructive"
+      />
     </div>
   )
 }

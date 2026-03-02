@@ -11,7 +11,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { Loader2, Sun, Moon, Monitor, ShieldCheck, KeyRound } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Badge } from '@/components/ui/badge'
+import { Loader2, Sun, Moon, Monitor, ShieldCheck, KeyRound, CheckCircle, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { DEPARTMENT_LABELS, POSITION_LABELS } from '@/lib/constants'
@@ -23,6 +25,10 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [twoFASetup, setTwoFASetup] = useState<{ qr_code: string; secret: string } | null>(null)
   const [twoFAToken, setTwoFAToken] = useState('')
+  const { data: twoFAStatus } = useQuery({
+    queryKey: ['2fa-status'],
+    queryFn: () => authApi.get2FAStatus().then((r) => r.data),
+  })
 
   const [form, setForm] = useState({
     first_name: user?.first_name || '',
@@ -325,9 +331,24 @@ export default function SettingsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {twoFAStatus && (
+                <div className="mb-3 flex items-center gap-2">
+                  {twoFAStatus.enabled ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Активовано</Badge>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4 text-muted-foreground" />
+                      <Badge variant="secondary">Не активовано</Badge>
+                    </>
+                  )}
+                </div>
+              )}
               {!twoFASetup ? (
                 <Button onClick={handleSetup2FA} variant="outline" size="sm">
-                  Налаштувати 2FA
+                  {twoFAStatus?.enabled ? 'Перенастроїти 2FA' : 'Налаштувати 2FA'}
                 </Button>
               ) : (
                 <div className="space-y-3">

@@ -5,11 +5,14 @@ import {
   useCreateMaintenanceRequest,
   useStartMaintenance,
   useCompleteMaintenance,
+  useAssignTechnician,
+  useTechnicians,
 } from '@/hooks/use-maintenance'
 import { useEquipmentList } from '@/hooks/use-equipment'
 import { PageHeader } from '@/components/shared/page-header'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { EmptyState } from '@/components/shared/empty-state'
+import { ListPagination } from '@/components/shared/list-pagination'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -20,7 +23,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { Wrench, Calendar, Play, CheckCircle, Plus, Loader2 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Wrench, Calendar, Play, CheckCircle, Plus, Loader2, UserPlus } from 'lucide-react'
 import { MAINTENANCE_STATUS_LABELS, PRIORITY_LABELS, PRIORITY_COLORS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
@@ -43,6 +52,8 @@ export default function MaintenanceListPage() {
   })
   const startMaintenance = useStartMaintenance()
   const completeMaintenance = useCompleteMaintenance()
+  const assignTechnician = useAssignTechnician()
+  const { data: technicians } = useTechnicians()
 
   const totalPages = data ? Math.ceil(data.count / 25) : 0
 
@@ -128,6 +139,25 @@ export default function MaintenanceListPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
+                        {(request.status === 'PENDING' || request.status === 'APPROVED') && Array.isArray(technicians) && technicians.length > 0 && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="icon" variant="ghost" className="h-8 w-8" title="Призначити технічника">
+                                <UserPlus className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              {technicians.map((tech: { id: number; username: string; first_name: string; last_name: string }) => (
+                                <DropdownMenuItem
+                                  key={tech.id}
+                                  onClick={() => assignTechnician.mutate({ requestId: request.id, technicianId: tech.id })}
+                                >
+                                  {tech.first_name && tech.last_name ? `${tech.first_name} ${tech.last_name}` : tech.username}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                         {request.status === 'PENDING' && (
                           <Button
                             size="icon"
@@ -158,19 +188,7 @@ export default function MaintenanceListPage() {
             </Table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Сторінка {page} з {totalPages}</p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-                  Попередня
-                </Button>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
-                  Наступна
-                </Button>
-              </div>
-            </div>
-          )}
+          <ListPagination page={page} totalPages={totalPages} totalItems={data?.count} onPageChange={setPage} />
         </>
       )}
 

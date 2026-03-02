@@ -11,8 +11,8 @@ class License(models.Model):
     activations = models.IntegerField(default=1, verbose_name="Доступно активаций")
     start_date = models.DateField(verbose_name="Начало действия")
     end_date = models.DateField(verbose_name="Окончание действия")
-    device = models.ForeignKey('inventory.Equipment', on_delete=models.SET_NULL,
-                               null=True, blank=True, verbose_name="Устройство")
+    software = models.ForeignKey('inventory.Software', on_delete=models.SET_NULL,
+                               null=True, blank=True, verbose_name="Програма", related_name='licenses')
     user = models.ForeignKey(User, on_delete=models.SET_NULL,
                                null=True, blank=True, verbose_name="Пользователь (по желанию)")
     history = HistoricalRecords()

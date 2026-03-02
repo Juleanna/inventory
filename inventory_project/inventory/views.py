@@ -25,7 +25,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
-from .models import Equipment, Notification, License, Software, PeripheralDevice
+from .models import Equipment, Notification, License, Software, PeripheralDevice, EquipmentDocument
 from .serializers import (
     EquipmentSerializer, NotificationSerializer,
     LicenseSerializer, SoftwareSerializer, PeripheralDeviceSerializer
@@ -106,7 +106,100 @@ class EquipmentViewSet(ModelViewSet):
         equipment.save(update_fields=['barcode_image', 'qrcode_image'])
         serializer = self.get_serializer(equipment)
         return Response(serializer.data)
-    
+
+    @action(detail=True, methods=['get'], url_path='history')
+    def history(self, request, pk=None):
+        """Отримати історію змін обладнання."""
+        equipment = self.get_object()
+        history_records = equipment.history.all()[:50]
+        result = []
+        prev = None
+        for record in reversed(list(history_records)):
+            entry = {
+                'history_id': record.history_id,
+                'history_date': record.history_date.isoformat(),
+                'history_user': str(record.history_user) if record.history_user else None,
+                'history_type': record.history_type,
+                'changes': [],
+            }
+            if prev and record.history_type == '~':
+                delta = record.diff_against(prev)
+                for change in delta.changes:
+                    entry['changes'].append({
+                        'field': change.field,
+                        'old': str(change.old) if change.old is not None else '',
+                        'new': str(change.new) if change.new is not None else '',
+                    })
+            prev = record
+            result.append(entry)
+        result.reverse()
+        return Response(result)
+
+    @action(detail=True, methods=['get', 'post'], url_path='documents')
+    def documents(self, request, pk=None):
+        """Список або завантаження документів обладнання."""
+        equipment = self.get_object()
+        if request.method == 'GET':
+            docs = EquipmentDocument.objects.filter(equipment=equipment).order_by('-uploaded_at')
+            data = [
+                {
+                    'id': d.id,
+                    'file': request.build_absolute_uri(d.file.url) if d.file else '',
+                    'description': d.description,
+                    'uploaded_at': d.uploaded_at.isoformat(),
+                }
+                for d in docs
+            ]
+            return Response(data)
+        else:
+            file = request.FILES.get('file')
+            if not file:
+                return Response({'error': 'Файл не надано'}, status=status.HTTP_400_BAD_REQUEST)
+            doc = EquipmentDocument.objects.create(
+                equipment=equipment,
+                file=file,
+                description=request.data.get('description', file.name),
+            )
+            return Response({
+                'id': doc.id,
+                'file': request.build_absolute_uri(doc.file.url),
+                'description': doc.description,
+                'uploaded_at': doc.uploaded_at.isoformat(),
+            }, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['post'], url_path='bulk-update')
+    def bulk_update(self, request):
+        """Масова зміна статусу обладнання."""
+        ids = request.data.get('ids', [])
+        new_status = request.data.get('status', '')
+        if not ids or not new_status:
+            return Response({'error': 'ids та status обовʼязкові'}, status=status.HTTP_400_BAD_REQUEST)
+        updated = Equipment.objects.filter(id__in=ids).update(status=new_status)
+        return Response({'updated': updated})
+
+    @action(detail=False, methods=['post'], url_path='bulk-delete')
+    def bulk_delete(self, request):
+        """Масове видалення обладнання."""
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'error': 'ids обовʼязкові'}, status=status.HTTP_400_BAD_REQUEST)
+        deleted, _ = Equipment.objects.filter(id__in=ids).delete()
+        return Response({'deleted': deleted})
+
+
+# Endpoint для видалення документа обладнання
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_equipment_document(request, equipment_id, doc_id):
+    """Видалити документ обладнання."""
+    try:
+        doc = EquipmentDocument.objects.get(id=doc_id, equipment_id=equipment_id)
+        doc.file.delete(save=False)
+        doc.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except EquipmentDocument.DoesNotExist:
+        return Response({'error': 'Документ не знайдено'}, status=status.HTTP_404_NOT_FOUND)
+
 
 # Серіалізатори для авторизації
 class LoginSerializer(Serializer):
@@ -142,7 +235,7 @@ class NotificationViewSet(ModelViewSet):
 
 
 class LicenseViewSet(ModelViewSet):
-    queryset = License.objects.select_related('device', 'user').order_by('-id')
+    queryset = License.objects.select_related('software', 'user').order_by('-id')
     serializer_class = LicenseSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -151,18 +244,31 @@ class SoftwareViewSet(ModelViewSet):
     queryset = Software.objects.select_related('license').prefetch_related('installed_on').all()
     serializer_class = SoftwareSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['installed_on']
     search_fields = ['name', 'vendor']
+    ordering_fields = ['name', 'version', 'vendor']
+    ordering = ['name']
 
 
 class PeripheralDeviceViewSet(ModelViewSet):
     queryset = PeripheralDevice.objects.select_related('connected_to').all()
     serializer_class = PeripheralDeviceSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ['connected_to']
-    search_fields = ['name', 'serial_number']
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['connected_to', 'type']
+    search_fields = ['name', 'serial_number', 'inventory_number']
+    ordering_fields = ['name', 'type', 'serial_number']
+    ordering = ['name']
+
+    @action(detail=True, methods=['post'], url_path='regenerate-codes')
+    def regenerate_codes(self, request, pk=None):
+        device = self.get_object()
+        device.generate_barcode()
+        device.generate_qrcode()
+        device.save(update_fields=['barcode_image', 'qrcode_image'])
+        serializer = self.get_serializer(device)
+        return Response(serializer.data)
 
 
 # ============ AGENT REPORT ENDPOINT ============

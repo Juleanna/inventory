@@ -16,6 +16,12 @@ export const maintenanceApi = {
   createSchedule: (data: Record<string, unknown>) =>
     apiClient.post('/maintenance/schedules/', data),
 
+  updateSchedule: (id: number, data: Record<string, unknown>) =>
+    apiClient.patch(`/maintenance/schedules/${id}/`, data),
+
+  deleteSchedule: (id: number) =>
+    apiClient.delete(`/maintenance/schedules/${id}/`),
+
   // Дії
   startMaintenance: (requestId: number | string) =>
     apiClient.post('/maintenance/start/', { request_id: requestId }),

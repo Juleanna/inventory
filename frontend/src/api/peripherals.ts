@@ -2,7 +2,7 @@ import apiClient from './client'
 import type { PeripheralDevice, PaginatedResponse } from '@/types'
 
 export const peripheralsApi = {
-  list: (params?: { page?: number; search?: string; connected_to?: number }) =>
+  list: (params?: { page?: number; page_size?: number; search?: string; connected_to?: number; type?: string; ordering?: string }) =>
     apiClient.get<PaginatedResponse<PeripheralDevice>>('/peripherals/', { params }),
 
   get: (id: number) =>
@@ -16,4 +16,7 @@ export const peripheralsApi = {
 
   delete: (id: number) =>
     apiClient.delete(`/peripherals/${id}/`),
+
+  regenerateCodes: (id: number) =>
+    apiClient.post<PeripheralDevice>(`/peripherals/${id}/regenerate-codes/`),
 }

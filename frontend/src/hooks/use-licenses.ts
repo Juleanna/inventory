@@ -4,7 +4,7 @@ import type { License } from '@/types'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
 
-export function useLicensesList(params?: { page?: number; search?: string }) {
+export function useLicensesList(params?: { page?: number; page_size?: number; search?: string }) {
   return useQuery({
     queryKey: ['licenses', params],
     queryFn: () => licensesApi.list(params).then((r) => r.data),
@@ -22,6 +22,22 @@ export function useCreateLicense() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Помилка додавання ліцензії'))
+    },
+  })
+}
+
+export function useUpdateLicense() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<License> }) =>
+      licensesApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['licenses'] })
+      toast.success('Ліцензію оновлено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка оновлення ліцензії'))
     },
   })
 }

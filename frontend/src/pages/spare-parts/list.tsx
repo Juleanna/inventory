@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { SearchInput } from '@/components/shared/search-input'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { EmptyState } from '@/components/shared/empty-state'
+import { ListPagination } from '@/components/shared/list-pagination'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -130,15 +131,7 @@ export default function SparePartsListPage() {
             </Table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Сторінка {page} з {totalPages}</p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Попередня</Button>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Наступна</Button>
-              </div>
-            </div>
-          )}
+          <ListPagination page={page} totalPages={totalPages} totalItems={data?.count} onPageChange={setPage} />
         </>
       )}
 
