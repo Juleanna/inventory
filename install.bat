@@ -9,7 +9,16 @@ echo.
 set "ROOT=%~dp0"
 set "ROOT=%ROOT:~0,-1%"
 
-echo [1/5] Встановлення Python залежностей...
+echo [1/5] Створення та активацiя venv...
+if not exist "%ROOT%\venv" (
+    echo   Створення вiртуального середовища...
+    python -m venv "%ROOT%\venv"
+)
+call "%ROOT%\venv\Scripts\activate.bat"
+echo   venv активовано.
+echo.
+
+echo [1.5/5] Встановлення Python залежностей...
 pip install -r "%ROOT%\requirements.txt"
 if errorlevel 1 (
     echo.

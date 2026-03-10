@@ -78,6 +78,11 @@ qrcode[pil]
 # Rate limiting
 django-ratelimit
 
+# Google Drive API
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+
 # WSGI сервер для продакшену
 gunicorn
 whitenoise

@@ -375,37 +375,54 @@ def update_equipment_metrics():
 
 @shared_task
 def backup_critical_data():
-    """Резервне копіювання критичних даних"""
+    """Автоматичне резервне копіювання критичних даних з підтримкою Google Drive."""
     try:
+        from .backup_service import create_full_backup, cleanup_old_backups, upload_to_gdrive, is_gdrive_authorized
         import json
-        from django.core import serializers
-        from django.conf import settings
         import os
-        
-        backup_dir = os.path.join(settings.BASE_DIR, 'backups')
-        os.makedirs(backup_dir, exist_ok=True)
-        
-        today = timezone.now().strftime('%Y%m%d')
-        backup_file = os.path.join(backup_dir, f'equipment_backup_{today}.json')
-        
-        # Серіалізувати критичні дані
-        equipment_data = serializers.serialize('json', Equipment.objects.all())
-        
-        with open(backup_file, 'w', encoding='utf-8') as f:
-            f.write(equipment_data)
-        
-        # Видалити старі резервні копії (старше 30 днів)
-        cutoff_date = timezone.now() - timedelta(days=30)
-        for filename in os.listdir(backup_dir):
-            if filename.startswith('equipment_backup_') and filename.endswith('.json'):
-                file_path = os.path.join(backup_dir, filename)
-                file_time = datetime.fromtimestamp(os.path.getctime(file_path))
-                if file_time < cutoff_date.replace(tzinfo=None):
-                    os.remove(file_path)
-        
-        logger.info(f"Створено резервну копію: {backup_file}")
-        return f"Створено резервну копію: {backup_file}"
-        
+
+        # Завантажити налаштування
+        from django.conf import settings as dj_settings
+        settings_path = os.path.join(dj_settings.BASE_DIR, 'backup_settings.json')
+        backup_settings = {
+            'auto_backup': True,
+            'auto_upload_gdrive': False,
+            'max_local_backups': 30,
+            'max_age_days': 30,
+        }
+        if os.path.exists(settings_path):
+            try:
+                with open(settings_path, 'r') as f:
+                    backup_settings.update(json.load(f))
+            except Exception:
+                pass
+
+        if not backup_settings.get('auto_backup', True):
+            logger.info("Автобекап вимкнено в налаштуваннях")
+            return "Автобекап вимкнено"
+
+        # Створити повний бекап
+        result = create_full_backup(created_by='celery-auto')
+
+        # Завантажити на Google Drive якщо налаштовано
+        if backup_settings.get('auto_upload_gdrive') and is_gdrive_authorized():
+            try:
+                gdrive_result = upload_to_gdrive(result['filepath'])
+                logger.info(f"Бекап завантажено на Google Drive: {gdrive_result.get('name')}")
+            except Exception as e:
+                logger.error(f"Помилка завантаження на Google Drive: {e}")
+
+        # Очистити старі бекапи
+        removed = cleanup_old_backups(
+            max_age_days=backup_settings.get('max_age_days', 30),
+            max_count=backup_settings.get('max_local_backups', 30),
+        )
+        if removed:
+            logger.info(f"Видалено {removed} старих бекапів")
+
+        logger.info(f"Створено резервну копію: {result['filename']}")
+        return f"Створено резервну копію: {result['filename']}"
+
     except Exception as e:
         logger.error(f"Помилка створення резервної копії: {e}")
         raise

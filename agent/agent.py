@@ -24,9 +24,17 @@ import requests
 _NO_WINDOW = subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0
 
 # ---------------------------------------------------------------------------
+# Базова директорія (працює і як .py, і як скомпільований .exe)
+# ---------------------------------------------------------------------------
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys.executable).parent
+else:
+    BASE_DIR = Path(__file__).parent
+
+# ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
-LOG_DIR = Path(__file__).parent / "logs"
+LOG_DIR = BASE_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 
 logging.basicConfig(
@@ -44,7 +52,7 @@ log = logging.getLogger("agent")
 # ---------------------------------------------------------------------------
 def load_config():
     """Зчитати конфігурацію з .env файлу або змінних оточення."""
-    env_file = Path(__file__).parent / ".env"
+    env_file = BASE_DIR / ".env"
     env = {}
     if env_file.exists():
         for line in env_file.read_text(encoding="utf-8").splitlines():
@@ -763,7 +771,7 @@ def main():
         # Режим: тільки зберегти локально
         data = collector.collect_all()
         data["location"] = cfg["location"]
-        out = Path(__file__).parent / "report.json"
+        out = BASE_DIR / "report.json"
         out.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
         log.info(f"Звіт збережено: {out}")
         return

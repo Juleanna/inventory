@@ -24,6 +24,12 @@ from .views import (
 from .password_api import (
     SystemCategoryViewSet, SystemViewSet, SystemAccountViewSet, PasswordAccessLogViewSet
 )
+from .backup_views import (
+    BackupListView, BackupCreateView, BackupDownloadView, BackupDeleteView,
+    BackupContentsView, BackupRestoreView,
+    BackupUploadGDriveView, GDriveDeleteView, GDriveStatusView, GDriveAuthorizeView,
+    GDriveUploadCredentialsView, BackupSettingsView,
+)
 
 # API роутер для ViewSets
 router = DefaultRouter()
@@ -146,6 +152,20 @@ urlpatterns = [
 
     # ============ AGENT ============
     path('api/agent/report/', views.agent_report, name='agent-report'),
+
+    # ============ BACKUP & GOOGLE DRIVE ============
+    path('api/backups/', BackupListView.as_view(), name='backup-list'),
+    path('api/backups/create/', BackupCreateView.as_view(), name='backup-create'),
+    path('api/backups/settings/', BackupSettingsView.as_view(), name='backup-settings'),
+    path('api/backups/download/<str:filename>/', BackupDownloadView.as_view(), name='backup-download'),
+    path('api/backups/delete/<str:filename>/', BackupDeleteView.as_view(), name='backup-delete'),
+    path('api/backups/contents/<str:filename>/', BackupContentsView.as_view(), name='backup-contents'),
+    path('api/backups/restore/<str:filename>/', BackupRestoreView.as_view(), name='backup-restore'),
+    path('api/backups/upload-gdrive/', BackupUploadGDriveView.as_view(), name='backup-upload-gdrive'),
+    path('api/backups/gdrive/status/', GDriveStatusView.as_view(), name='gdrive-status'),
+    path('api/backups/gdrive/authorize/', GDriveAuthorizeView.as_view(), name='gdrive-authorize'),
+    path('api/backups/gdrive/credentials/', GDriveUploadCredentialsView.as_view(), name='gdrive-credentials'),
+    path('api/backups/gdrive/delete/<str:file_id>/', GDriveDeleteView.as_view(), name='gdrive-delete'),
 
     # ============ PWA SUPPORT ============
     path('api/csrf-token/', views.csrf_token, name='csrf-token'),

@@ -9,6 +9,15 @@ echo.
 set "ROOT=%~dp0"
 set "ROOT=%ROOT:~0,-1%"
 
+echo [0/2] Активацiя вiртуального середовища...
+if exist "%ROOT%\venv\Scripts\activate.bat" (
+    call "%ROOT%\venv\Scripts\activate.bat"
+    echo   venv активовано.
+) else (
+    echo   УВАГА: venv не знайдено! Використовується системний Python.
+)
+echo.
+
 cd /d "%ROOT%\inventory_project"
 
 echo [1/2] Застосування мiграцiй...

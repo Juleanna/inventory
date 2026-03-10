@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Inventory Agent — Збірка EXE</title>
+    <style>
+        :root {
+            --bg: #0b1120;
+            --bg-card: #131c31;
+            --bg-code: #0a0f1e;
+            --border: #1e2d4a;
+            --border-light: #263554;
+            --text: #c9d6e8;
+            --text-dim: #6b7fa0;
+            --text-bright: #e8edf5;
+            --blue: #4d9cf6;
+            --blue-dim: #2a6cc4;
+            --cyan: #56d4e0;
+            --green: #3dd68c;
+            --yellow: #f0c746;
+            --orange: #e8944a;
+            --red: #e85454;
+            --purple: #a78bfa;
+            --teal: #2dd4bf;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .hero {
+            background: linear-gradient(135deg, #0d1a30 0%, #132044 50%, #0d1a30 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 56px 20px 48px;
+            text-align: center;
+        }
+        .hero-icon {
+            font-size: 52px;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .hero h1 {
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--text-bright);
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+        }
+        .hero p {
+            color: var(--text-dim);
+            font-size: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+        }
+
+        /* Sections */
+        .section {
+            margin-top: 48px;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .section-icon.blue { background: rgba(77,156,246,0.15); }
+        .section-icon.green { background: rgba(61,214,140,0.15); }
+        .section-icon.yellow { background: rgba(240,199,70,0.15); }
+        .section-icon.red { background: rgba(232,84,84,0.15); }
+        .section-icon.purple { background: rgba(167,139,250,0.15); }
+        .section-icon.cyan { background: rgba(86,212,224,0.15); }
+        .section-icon.teal { background: rgba(45,212,191,0.15); }
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .card p { margin-bottom: 8px; }
+        .card p:last-child { margin-bottom: 0; }
+
+        /* Alert cards */
+        .alert {
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            font-size: 14px;
+        }
+        .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+        .alert-warn { background: rgba(240,199,70,0.08); border: 1px solid rgba(240,199,70,0.2); }
+        .alert-danger { background: rgba(232,84,84,0.08); border: 1px solid rgba(232,84,84,0.2); }
+        .alert-info { background: rgba(77,156,246,0.08); border: 1px solid rgba(77,156,246,0.2); }
+        .alert strong { color: var(--text-bright); }
+
+        /* Code blocks */
+        .code-block {
+            position: relative;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin: 14px 0;
+            overflow: hidden;
+        }
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px 8px 16px;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid var(--border);
+        }
+        .code-lang {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            letter-spacing: 0.5px;
+        }
+        .copy-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 5px 12px;
+            color: var(--text-dim);
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-bright);
+            border-color: var(--blue-dim);
+        }
+        .copy-btn.copied {
+            background: rgba(61,214,140,0.15);
+            color: var(--green);
+            border-color: rgba(61,214,140,0.3);
+        }
+        .copy-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+        .code-body {
+            padding: 16px 20px;
+            overflow-x: auto;
+        }
+        .code-body pre {
+            font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+            font-size: 13.5px;
+            line-height: 1.65;
+            color: var(--cyan);
+            margin: 0;
+            white-space: pre;
+        }
+        .code-body .cm { color: #4a6080; }
+        .code-body .hl { color: var(--yellow); }
+        .code-body .kw { color: var(--purple); }
+        .code-body .str { color: var(--green); }
+
+        /* Inline code */
+        code {
+            font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+            background: rgba(77,156,246,0.1);
+            border: 1px solid rgba(77,156,246,0.15);
+            padding: 1px 7px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: var(--blue);
+        }
+
+        /* Steps */
+        .steps { counter-reset: step; }
+        .step {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+        .step:last-child { margin-bottom: 0; }
+        .step-dot {
+            counter-increment: step;
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--blue), var(--blue-dim));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: #fff;
+            margin-top: 2px;
+        }
+        .step-dot::after { content: counter(step); }
+        .step-body { flex: 1; }
+        .step-body p { margin-bottom: 6px; }
+
+        /* File tree */
+        .file-tree {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 22px 26px;
+            margin: 14px 0;
+        }
+        .file-tree table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .file-tree td {
+            padding: 6px 0;
+            vertical-align: top;
+            white-space: nowrap;
+        }
+        .file-tree .tree-branch {
+            font-family: 'Cascadia Code', Consolas, monospace;
+            color: var(--border-light);
+            padding-right: 8px;
+            font-size: 13px;
+            width: 30px;
+        }
+        .file-tree .tree-icon {
+            padding-right: 10px;
+            font-size: 16px;
+        }
+        .file-tree .tree-name {
+            font-family: 'Cascadia Code', Consolas, monospace;
+            font-size: 13.5px;
+            font-weight: 600;
+            padding-right: 20px;
+        }
+        .file-tree .tree-desc {
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+        .tree-name.exe { color: var(--green); }
+        .tree-name.cfg { color: var(--yellow); }
+        .tree-name.ico { color: var(--purple); }
+        .tree-name.opt { color: var(--text-dim); }
+        .tree-name.folder { color: var(--blue); }
+
+        /* Tables */
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        table.data-table th {
+            text-align: left;
+            padding: 11px 16px;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid var(--border);
+            color: var(--text-dim);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        table.data-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+        table.data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .badge-req { background: rgba(232,84,84,0.15); color: var(--red); }
+        .badge-opt { background: rgba(107,127,160,0.15); color: var(--text-dim); }
+        .badge-auto { background: rgba(45,212,191,0.15); color: var(--teal); }
+
+        /* Divider */
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 48px 0 0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 13px;
+            margin-top: 32px;
+            padding-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hero -->
+    <div class="hero">
+        <span class="hero-icon">&#128421;</span>
+        <h1>IT Inventory Agent</h1>
+        <p>Покрокова інструкція для компіляції агента у виконуваний файл .exe та підготовки до розповсюдження</p>
+    </div>
+
+    <div class="container">
+
+        <!-- ======== Prerequisites ======== -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon blue">&#128203;</div>
+                <h2 class="section-title">Передумови</h2>
+            </div>
+            <div class="card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Компонент</th>
+                            <th>Версія</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>&#128013; Python</td>
+                            <td>3.10 — 3.12</td>
+                            <td><span class="badge badge-req">&#9679; Обов'язково</span></td>
+                        </tr>
+                        <tr>
+                            <td>&#128230; pip</td>
+                            <td>Актуальна</td>
+                            <td><span class="badge badge-req">&#9679; Обов'язково</span></td>
+                        </tr>
+                        <tr>
+                            <td>&#128295; PyInstaller</td>
+                            <td>&ge; 6.0</td>
+                            <td><span class="badge badge-req">&#9679; Обов'язково</span></td>
+                        </tr>
+                        <tr>
+                            <td>&#127912; icon.ico</td>
+                            <td>&mdash;</td>
+                            <td><span class="badge badge-opt">&#9675; Опціонально</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ======== Step 1 ======== -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon cyan">&#9889;</div>
+                <h2 class="section-title">Крок 1 &mdash; Створення віртуального оточення</h2>
+            </div>
+            <div class="card">
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-dot"></div>
+                        <div class="step-body">
+                            <p>Відкрийте <strong>cmd.exe</strong> у каталозі <code>agent/</code> та створіть віртуальне оточення:</p>
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span class="code-lang">cmd</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                                        <span>Копіювати</span>
+                                    </button>
+                                </div>
+                                <div class="code-body"><pre>python -m venv venv</pre></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-dot"></div>
+                        <div class="step-body">
+                            <p>Активуйте віртуальне оточення:</p>
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span class="code-lang">cmd</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                                        <span>Копіювати</span>
+                                    </button>
+                                </div>
+                                <div class="code-body"><pre>venv\Scripts\activate</pre></div>
+                            </div>
+                            <div class="alert alert-info" style="margin-top: 10px; margin-bottom: 0;">
+                                <span class="alert-icon">&#128204;</span>
+                                <div>Після активації на початку рядка з'явиться <code>(venv)</code>. <strong>Всі наступні команди</strong> виконуйте тільки з активованим оточенням.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-dot"></div>
+                        <div class="step-body">
+                            <p>Встановіть залежності проєкту та PyInstaller:</p>
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span class="code-lang">cmd</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                                        <span>Копіювати</span>
+                                    </button>
+                                </div>
+                                <div class="code-body"><pre>pip install -r requirements.txt
+pip install pyinstaller</pre></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-dot"></div>
+                        <div class="step-body">
+                            <p>Перевірте, що PyInstaller встановлений коректно:</p>
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span class="code-lang">cmd</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                                        <span>Копіювати</span>
+                                    </button>
+                                </div>
+                                <div class="code-body"><pre>pyinstaller --version</pre></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-warn">
+                <span class="alert-icon">&#9888;&#65039;</span>
+                <div>
+                    <strong>PowerShell:</strong> Якщо використовуєте PowerShell замість cmd, команда активації інша:
+                    <code>venv\Scripts\Activate.ps1</code><br>
+                    Може знадобитись дозвіл: <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======== Step 2 ======== -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon yellow">&#128296;</div>
+                <h2 class="section-title">Крок 2 &mdash; Компіляція</h2>
+            </div>
+            <div class="card">
+                <p>Відкрийте <strong>cmd.exe</strong> у каталозі <code>agent/</code> та виконайте:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">cmd</span>
+                        <button class="copy-btn" onclick="copyCode(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            <span>Копіювати</span>
+                        </button>
+                    </div>
+                    <div class="code-body"><pre>pyinstaller --name "ITInventoryAgent" --onefile --windowed --icon=icon.ico --add-data "agent.py;." --hidden-import=psutil --hidden-import=requests --hidden-import=win32api --hidden-import=win32com --hidden-import=wmi agent_gui.py</pre></div>
+                </div>
+            </div>
+
+            <div class="alert alert-warn">
+                <span class="alert-icon">&#9888;&#65039;</span>
+                <div>
+                    <strong>Важливо:</strong> Команда призначена для <strong>cmd.exe</strong>.
+                    У PowerShell працюватиме так само, якщо все в одному рядку (без символу <code>^</code>).
+                </div>
+            </div>
+
+            <div class="card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Параметр</th>
+                            <th>Що робить</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>--name</code></td>
+                            <td>Ім'я вихідного .exe файлу</td>
+                        </tr>
+                        <tr>
+                            <td><code>--onefile</code></td>
+                            <td>Все пакується в один файл (без папки з DLL)</td>
+                        </tr>
+                        <tr>
+                            <td><code>--windowed</code></td>
+                            <td>Без чорного вікна консолі (GUI-додаток)</td>
+                        </tr>
+                        <tr>
+                            <td><code>--icon</code></td>
+                            <td>Іконка для .exe файлу (формат .ico)</td>
+                        </tr>
+                        <tr>
+                            <td><code>--add-data</code></td>
+                            <td>Включає <code>agent.py</code> як ресурс (GUI імпортує його)</td>
+                        </tr>
+                        <tr>
+                            <td><code>--hidden-import</code></td>
+                            <td>Примусово додає модулі, які PyInstaller не знаходить автоматично</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ======== Step 3 ======== -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon green">&#9203;</div>
+                <h2 class="section-title">Крок 3 &mdash; Результат</h2>
+            </div>
+            <div class="card">
+                <p>Компіляція займе <strong>1&ndash;3 хвилини</strong>. Готовий файл буде в папці:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">шлях</span>
+                        <button class="copy-btn" onclick="copyCode(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            <span>Копіювати</span>
+                        </button>
+                    </div>
+                    <div class="code-body"><pre>agent\dist\ITInventoryAgent.exe</pre></div>
+                </div>
+                <p style="color: var(--text-dim); font-size: 13px; margin-top: 4px;">
+                    Також будуть створені папки <code>build/</code> та файл <code>.spec</code> &mdash; їх можна видалити.
+                </p>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ======== File structure ======== -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon purple">&#128193;</div>
+                <h2 class="section-title">Структура каталогу для запуску</h2>
+            </div>
+            <div class="card">
+                <p style="margin-bottom: 16px;">Скопіюйте ці файли в одну папку на цільовому комп'ютері:</p>
+                <div class="file-tree">
+                    <table>
+                        <tr>
+                            <td class="tree-branch"></td>
+                            <td class="tree-icon">&#128194;</td>
+                            <td class="tree-name folder">ITInventoryAgent/</td>
+                            <td class="tree-desc"></td>
+                        </tr>
+                        <tr>
+                            <td class="tree-branch">&#9500;&#9472;&#9472;</td>
+                            <td class="tree-icon">&#9989;</td>
+                            <td class="tree-name exe">ITInventoryAgent.exe</td>
+                            <td class="tree-desc">Скомпільований агент</td>
+                        </tr>
+                        <tr>
+                            <td class="tree-branch">&#9500;&#9472;&#9472;</td>
+                            <td class="tree-icon">&#9881;&#65039;</td>
+                            <td class="tree-name cfg">.env</td>
+                            <td class="tree-desc">Конфігурація підключення до сервера</td>
+                        </tr>
+                        <tr>
+                            <td class="tree-branch">&#9500;&#9472;&#9472;</td>
+                            <td class="tree-icon">&#9881;&#65039;</td>
+                            <td class="tree-name cfg">gui_settings.json</td>
+                            <td class="tree-desc">Налаштування GUI (авто при першому запуску)</td>
+                        </tr>
+                        <tr>
+                            <td class="tree-branch">&#9500;&#9472;&#9472;</td>
+                            <td class="tree-icon">&#127912;</td>
+                            <td class="tree-name ico">icon.ico</td>
+                            <td class="tree-desc">Іконка для системного трею</td>
+                        </tr>
+                        <tr>
+                            <td class="tree-branch">&#9492;&#9472;&#9472;</td>
+                            <td class="tree-icon">&#128196;</td>
+                            <td class="tree-name opt">.env.example</td>
+                            <td class="tree-desc">Шаблон конфігурації (опціонально)</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Файл</th>
+                            <th>Статус</th>
+                            <th>Опис</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ITInventoryAgent.exe</code></td>
+                            <td><span class="badge badge-req">&#9679; Обов'язково</span></td>
+                            <td>Головний виконуваний файл з GUI та збором даних</td>
+                        </tr>
+                        <tr>
+                            <td><code>.env</code></td>
+                            <td><span class="badge badge-req">&#9679; Обов'язково</span></td>
+                            <td>Адреса сервера, логін, пароль, розташування ПК</td>
+                        </tr>
+                        <tr>
+                            <td><code>gui_settings.json</code></td>
+                            <td><span class="badge badge-auto">&#9675; Авто</span></td>
+                            <td>Створюється автоматично. Автозапуск, трей, авто-сканування</td>
+                        </tr>
+                        <tr>
+                            <td><code>icon.ico</code></td>
+                            <td><span class="badge badge-opt">&#9675; Опціонально</span></td>
+                            <td>Іконка для трею. Без неї &mdash; стандартна іконка</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ======== Step 4: .env ======== -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon yellow">&#9881;&#65039;</div>
+                <h2 class="section-title">Крок 4 &mdash; Налаштування .env</h2>
+            </div>
+            <div class="card">
+                <p>Відредагуйте файл <code>.env</code> на кожному комп'ютері:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">.env</span>
+                        <button class="copy-btn" onclick="copyCode(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            <span>Копіювати</span>
+                        </button>
+                    </div>
+                    <div class="code-body"><pre><span class="cm"># URL серверу інвентаризації (без / на кінці)</span>
+API_URL=<span class="hl">http://192.168.1.100:8000</span>
+
+<span class="cm"># Логін та пароль користувача</span>
+USERNAME=<span class="hl">agent</span>
+PASSWORD=<span class="hl">agent_password</span>
+
+<span class="cm"># Розташування цього комп'ютера</span>
+LOCATION=<span class="hl">Офіс, кімната 101</span>
+
+<span class="cm"># Інтервал збору в секундах (для автоматичного режиму)</span>
+INTERVAL=<span class="hl">3600</span></pre></div>
+                </div>
+            </div>
+
+            <div class="alert alert-danger">
+                <span class="alert-icon">&#128308;</span>
+                <div>
+                    <strong>Без файлу .env агент не зможе підключитися до сервера!</strong><br>
+                    Переконайтесь, що <code>.env</code> знаходиться в тій самій папці, що й <code>ITInventoryAgent.exe</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======== Step 5: Launch ======== -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon green">&#128640;</div>
+                <h2 class="section-title">Крок 5 &mdash; Запуск</h2>
+            </div>
+            <div class="card">
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-dot"></div>
+                        <div class="step-body">
+                            <p>Запустіть <code>ITInventoryAgent.exe</code> подвійним кліком.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-dot"></div>
+                        <div class="step-body">
+                            <p>Агент з'явиться у <strong>системному треї</strong> (біля годинника).</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-dot"></div>
+                        <div class="step-body">
+                            <p>Відкрийте головне вікно кліком по іконці в треї.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-warn">
+                <span class="alert-icon">&#9888;&#65039;</span>
+                <div>
+                    <strong>Перший запуск</strong> може бути повільнішим &mdash; Windows SmartScreen перевіряє файл.
+                    Натисніть <em>&laquo;Додаткові відомості&raquo; &rarr; &laquo;Виконати все одно&raquo;</em>.
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ======== Troubleshooting ======== -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon red">&#128295;</div>
+                <h2 class="section-title">Усунення проблем</h2>
+            </div>
+            <div class="card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Проблема</th>
+                            <th>Рішення</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>&#10060; Антивірус блокує EXE</td>
+                            <td>Додайте папку агента у виключення антивірусу. PyInstaller-збірки часто хибно детектуються</td>
+                        </tr>
+                        <tr>
+                            <td>&#10060; <code>Failed to execute script</code></td>
+                            <td>Запустіть з консолі &mdash; побачите помилку. Зазвичай це відсутній <code>.env</code></td>
+                        </tr>
+                        <tr>
+                            <td>&#10060; Не збирає дані WMI</td>
+                            <td>Запустіть від імені <strong>Адміністратора</strong> (ПКМ &rarr; &laquo;Запустити як адміністратор&raquo;)</td>
+                        </tr>
+                        <tr>
+                            <td>&#10060; <code>ModuleNotFoundError</code></td>
+                            <td>Додайте <code>--hidden-import=назва</code> та перезберіть</td>
+                        </tr>
+                        <tr>
+                            <td>&#10060; Великий розмір (&gt;100 МБ)</td>
+                            <td>PySide6 включає багато Qt-бібліотек. Див. оптимізовану збірку нижче</td>
+                        </tr>
+                        <tr>
+                            <td>&#10060; Папка <code>logs/</code> не створюється</td>
+                            <td>Переконайтесь, що агент має права на запис у свою папку</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ======== Optimized build ======== -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon teal">&#128161;</div>
+                <h2 class="section-title">Оптимізована збірка (менший розмір)</h2>
+            </div>
+            <div class="card">
+                <p>Для зменшення розміру EXE виключіть зайві Qt-модулі:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">cmd</span>
+                        <button class="copy-btn" onclick="copyCode(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            <span>Копіювати</span>
+                        </button>
+                    </div>
+                    <div class="code-body"><pre>pyinstaller --name "ITInventoryAgent" --onefile --windowed --icon=icon.ico --add-data "agent.py;." --hidden-import=psutil --hidden-import=requests --hidden-import=win32api --hidden-import=win32com --hidden-import=wmi --exclude-module=QtWebEngine --exclude-module=QtWebEngineCore --exclude-module=Qt3D --exclude-module=QtCharts --exclude-module=QtDataVisualization --exclude-module=QtMultimedia --exclude-module=QtQuick --exclude-module=QtQml agent_gui.py</pre></div>
+                </div>
+                <p style="color: var(--text-dim); font-size: 13px; margin-top: 4px;">
+                    Це може зменшити файл з ~120 МБ до ~60&ndash;80 МБ.
+                </p>
+            </div>
+        </div>
+
+        <!-- ======== Distribution ======== -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon blue">&#128230;</div>
+                <h2 class="section-title">Швидке розповсюдження</h2>
+            </div>
+            <div class="card">
+                <p style="margin-bottom: 14px;">Для масового розгортання створіть ZIP-архів з усіма необхідними файлами:</p>
+                <div class="file-tree">
+                    <table>
+                        <tr>
+                            <td class="tree-branch"></td>
+                            <td class="tree-icon">&#128230;</td>
+                            <td class="tree-name folder">ITInventoryAgent.zip</td>
+                            <td class="tree-desc"></td>
+                        </tr>
+                        <tr>
+                            <td class="tree-branch">&#9500;&#9472;&#9472;</td>
+                            <td class="tree-icon">&#9989;</td>
+                            <td class="tree-name exe">ITInventoryAgent.exe</td>
+                            <td class="tree-desc"></td>
+                        </tr>
+                        <tr>
+                            <td class="tree-branch">&#9500;&#9472;&#9472;</td>
+                            <td class="tree-icon">&#9881;&#65039;</td>
+                            <td class="tree-name cfg">.env</td>
+                            <td class="tree-desc">заповнити перед архівацією</td>
+                        </tr>
+                        <tr>
+                            <td class="tree-branch">&#9500;&#9472;&#9472;</td>
+                            <td class="tree-icon">&#9881;&#65039;</td>
+                            <td class="tree-name cfg">gui_settings.json</td>
+                            <td class="tree-desc"></td>
+                        </tr>
+                        <tr>
+                            <td class="tree-branch">&#9492;&#9472;&#9472;</td>
+                            <td class="tree-icon">&#127912;</td>
+                            <td class="tree-name ico">icon.ico</td>
+                            <td class="tree-desc"></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="alert alert-info" style="margin-top: 16px; margin-bottom: 0;">
+                    <span class="alert-icon">&#128204;</span>
+                    <div>На кожному ПК: <strong>розархівувати</strong> &rarr; відредагувати <code>.env</code> (якщо потрібно) &rarr; <strong>запустити EXE</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider">
+        <div class="footer">
+            IT Inventory Agent &mdash; Build Guide v1.0 &nbsp;&bull;&nbsp; 2026
+        </div>
+
+    </div>
+
+    <script>
+    function copyCode(btn) {
+        const codeBlock = btn.closest('.code-block');
+        const pre = codeBlock.querySelector('pre');
+        const text = pre.textContent;
+
+        navigator.clipboard.writeText(text).then(function() {
+            btn.classList.add('copied');
+            btn.querySelector('span').textContent = 'Скопійовано!';
+            btn.querySelector('svg').innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+
+            setTimeout(function() {
+                btn.classList.remove('copied');
+                btn.querySelector('span').textContent = 'Копіювати';
+                btn.querySelector('svg').innerHTML = '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>';
+            }, 2000);
+        });
+    }
+    </script>
+
+</body>
+</html>

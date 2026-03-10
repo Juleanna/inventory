@@ -28,6 +28,7 @@ const PasswordVaultPage = lazy(() => import('@/pages/passwords/vault'))
 const AnalyticsPage = lazy(() => import('@/pages/analytics'))
 const NotificationsPage = lazy(() => import('@/pages/notifications'))
 const SettingsPage = lazy(() => import('@/pages/settings'))
+const BackupsPage = lazy(() => import('@/pages/backups'))
 const NotFoundPage = lazy(() => import('@/pages/not-found'))
 
 const queryClient = new QueryClient({
@@ -90,6 +91,7 @@ export default function App() {
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="backups" element={<BackupsPage />} />
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />

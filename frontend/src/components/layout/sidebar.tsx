@@ -13,6 +13,7 @@ import {
   BarChart3,
   Bell,
   Settings,
+  HardDriveDownload,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -38,6 +39,7 @@ const systemNav = [
   { path: '/passwords', label: 'Паролі', icon: KeyRound },
   { path: '/analytics', label: 'Аналітика', icon: BarChart3 },
   { path: '/notifications', label: 'Сповіщення', icon: Bell },
+  { path: '/backups', label: 'Бекапи', icon: HardDriveDownload },
   { path: '/settings', label: 'Налаштування', icon: Settings },
 ]
 

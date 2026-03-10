@@ -23,6 +23,14 @@ from PySide6.QtGui import (
     QIcon, QPixmap, QPainter, QColor, QFont, QPalette, QAction,
 )
 
+# ---------------------------------------------------------------------------
+# Базова директорія (працює і як .py, і як скомпільований .exe)
+# ---------------------------------------------------------------------------
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys.executable).parent
+else:
+    BASE_DIR = Path(__file__).parent
+
 # Windows: встановити AppUserModelID ДО створення QApplication
 # Це дозволяє Windows показувати власну іконку та назву замість Python
 APP_ID = "ITInventory.Agent.GUI.4"
@@ -349,7 +357,7 @@ class AuthWorker(QThread):
 # ---------------------------------------------------------------------------
 def _load_app_icon() -> QIcon | None:
     """Завантажити іконку з файлу icon.ico."""
-    icon_path = str(Path(__file__).parent / "icon.ico")
+    icon_path = str(BASE_DIR / "icon.ico")
     if os.path.exists(icon_path):
         return QIcon(icon_path)
     return None
@@ -965,7 +973,7 @@ class MainWindow(QMainWindow):
         """Зберегти звіт у JSON файл."""
         if not self.report_data:
             return
-        default_path = str(Path(__file__).parent / "report.json")
+        default_path = str(BASE_DIR / "report.json")
         path, _ = QFileDialog.getSaveFileName(
             self, "Зберегти звіт", default_path, "JSON (*.json)"
         )
@@ -1030,7 +1038,7 @@ class MainWindow(QMainWindow):
 
     def on_save_settings(self):
         """Зберегти налаштування у .env файл."""
-        env_path = Path(__file__).parent / ".env"
+        env_path = BASE_DIR / ".env"
         lines = [
             f"API_URL={self.set_api_url.text()}",
             f"USERNAME={self.set_username.text()}",
@@ -1147,7 +1155,7 @@ class MainWindow(QMainWindow):
     # ===================== SETTINGS PERSISTENCE =====================
 
     def _settings_path(self) -> Path:
-        return Path(__file__).parent / "gui_settings.json"
+        return BASE_DIR / "gui_settings.json"
 
     def _load_settings_to_ui(self):
         """Завантажити .env та GUI налаштування в поля."""
@@ -1308,7 +1316,7 @@ def main():
     start_tray = args.tray
     if not start_tray:
         # Check GUI settings
-        settings_path = Path(__file__).parent / "gui_settings.json"
+        settings_path = BASE_DIR / "gui_settings.json"
         if settings_path.exists():
             try:
                 gui = json.loads(settings_path.read_text(encoding="utf-8"))
