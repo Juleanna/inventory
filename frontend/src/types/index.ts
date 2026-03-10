@@ -15,6 +15,7 @@ export interface User {
   manager: number | null
   hire_date: string | null
   birth_date: string | null
+  avatar: string | null
   bio: string
   skills: string
   employment_type: string
@@ -205,6 +206,8 @@ export interface PurchaseOrder {
   order_date: string
   expected_delivery_date: string | null
   actual_delivery_date: string | null
+  delivery_method: string
+  tracking_number: string
   total_amount: string
   tax_amount: string
   shipping_cost: string
@@ -224,6 +227,7 @@ export interface PurchaseOrderItem {
   quantity_received: number
   unit_price: string
   total_price: string
+  add_to_inventory: boolean
   notes: string
 }
 

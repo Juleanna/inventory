@@ -608,11 +608,35 @@ class PurchaseOrder(models.Model):
         verbose_name="Вартість доставки"
     )
     
+    DELIVERY_METHOD_CHOICES = [
+        ('nova_poshta', 'Нова Пошта'),
+        ('ukrposhta', 'Укрпошта'),
+        ('meest', 'Meest'),
+        ('self_pickup', 'Самовивіз'),
+        ('courier', 'Кур\'єр'),
+        ('other', 'Інше'),
+    ]
+
+    delivery_method = models.CharField(
+        max_length=20,
+        choices=DELIVERY_METHOD_CHOICES,
+        blank=True,
+        default='',
+        verbose_name="Спосіб доставки"
+    )
+
+    tracking_number = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name="ТТН / Трекінг номер"
+    )
+
     notes = models.TextField(
         blank=True,
         verbose_name="Примітки"
     )
-    
+
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -687,11 +711,16 @@ class PurchaseOrderItem(models.Model):
         verbose_name="Загальна ціна"
     )
     
+    add_to_inventory = models.BooleanField(
+        default=True,
+        verbose_name="Додати до запасів при отриманні"
+    )
+
     notes = models.TextField(
         blank=True,
         verbose_name="Примітки"
     )
-    
+
     class Meta:
         verbose_name = "Позиція замовлення"
         verbose_name_plural = "Позиції замовлення"
@@ -804,19 +833,26 @@ class SparePartsService:
         return suggestions
     
     @classmethod
-    def create_purchase_order(cls, supplier_id, items, created_by=None):
+    def create_purchase_order(cls, supplier_id, items, created_by=None, **kwargs):
         """Створити замовлення на закупівлю"""
         try:
             supplier = Supplier.objects.get(id=supplier_id)
-            
+
             # Генерувати номер замовлення
             order_number = cls._generate_order_number()
-            
+
+            # Додаткові поля
+            extra = {}
+            for field in ('expected_delivery_date', 'delivery_method', 'tracking_number', 'notes'):
+                if kwargs.get(field):
+                    extra[field] = kwargs[field]
+
             # Створити замовлення
             purchase_order = PurchaseOrder.objects.create(
                 order_number=order_number,
                 supplier=supplier,
-                created_by=created_by
+                created_by=created_by,
+                **extra
             )
             
             total_amount = Decimal('0.00')
@@ -826,12 +862,14 @@ class SparePartsService:
                 spare_part = SparePart.objects.get(id=item_data['spare_part_id'])
                 quantity = item_data['quantity']
                 unit_price = item_data.get('unit_price', spare_part.unit_cost)
-                
+                add_to_inventory = item_data.get('add_to_inventory', True)
+
                 order_item = PurchaseOrderItem.objects.create(
                     purchase_order=purchase_order,
                     spare_part=spare_part,
                     quantity_ordered=quantity,
-                    unit_price=unit_price
+                    unit_price=unit_price,
+                    add_to_inventory=add_to_inventory
                 )
                 
                 total_amount += order_item.total_price
@@ -859,15 +897,16 @@ class SparePartsService:
                 # Оновити кількість в позиції
                 order_item.quantity_received += quantity_received
                 order_item.save()
-                
-                # Створити рух запчастин
-                cls.receive_spare_part(
-                    spare_part_id=order_item.spare_part.id,
-                    quantity=quantity_received,
-                    unit_cost=order_item.unit_price,
-                    reference_number=purchase_order.order_number,
-                    performed_by=performed_by
-                )
+
+                # Створити рух запчастин тільки якщо позначено "додати до запасів"
+                if order_item.add_to_inventory:
+                    cls.receive_spare_part(
+                        spare_part_id=order_item.spare_part.id,
+                        quantity=quantity_received,
+                        unit_cost=order_item.unit_price,
+                        reference_number=purchase_order.order_number,
+                        performed_by=performed_by
+                    )
             
             # Оновити статус замовлення
             cls._update_purchase_order_status(purchase_order)

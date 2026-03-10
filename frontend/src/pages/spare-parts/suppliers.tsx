@@ -11,11 +11,12 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Truck, Mail, Phone, Globe, Plus, Loader2, Pencil, Trash2 } from 'lucide-react'
 import type { Supplier } from '@/types'
 
 export default function SuppliersPage() {
+  const navigate = useNavigate()
   const { data, isLoading } = useSuppliersList()
   const deleteSupplier = useDeleteSupplier()
   const [showCreate, setShowCreate] = useState(false)
@@ -53,7 +54,7 @@ export default function SuppliersPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {data.results.map((supplier) => (
-            <Card key={supplier.id}>
+            <Card key={supplier.id} className="cursor-pointer transition-colors hover:border-primary/50" onClick={() => navigate(`/spare-parts/suppliers/${supplier.id}`)}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1 mr-2">
@@ -71,7 +72,7 @@ export default function SuppliersPage() {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7"
-                      onClick={() => setEditSupplier(supplier)}
+                      onClick={(e) => { e.stopPropagation(); setEditSupplier(supplier) }}
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -79,7 +80,7 @@ export default function SuppliersPage() {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-destructive"
-                      onClick={() => setDeleteId(supplier.id)}
+                      onClick={(e) => { e.stopPropagation(); setDeleteId(supplier.id) }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>

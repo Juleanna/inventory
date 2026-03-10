@@ -2,7 +2,7 @@ import apiClient from './client'
 import type { SparePart, Supplier, PurchaseOrder, SparePartCategory, SparePartsAnalytics, SparePartMovementsResponse, PaginatedResponse } from '@/types'
 
 export const sparePartsApi = {
-  listParts: (params?: { page?: number; search?: string; category?: number }) =>
+  listParts: (params?: { page?: number; page_size?: number; search?: string; category?: number; primary_supplier?: number }) =>
     apiClient.get<PaginatedResponse<SparePart>>('/spare-parts/', { params }),
 
   getPart: (id: number) =>
@@ -26,7 +26,7 @@ export const sparePartsApi = {
   listCategories: () =>
     apiClient.get<PaginatedResponse<SparePartCategory>>('/spare-part-categories/'),
 
-  listSuppliers: (params?: { page?: number }) =>
+  listSuppliers: (params?: { page?: number; page_size?: number }) =>
     apiClient.get<PaginatedResponse<Supplier>>('/suppliers/', { params }),
 
   getSupplier: (id: number) =>
@@ -41,7 +41,7 @@ export const sparePartsApi = {
   deleteSupplier: (id: number) =>
     apiClient.delete(`/suppliers/${id}/`),
 
-  listOrders: (params?: { page?: number; status?: string }) =>
+  listOrders: (params?: { page?: number; status?: string; supplier_id?: number }) =>
     apiClient.get<PaginatedResponse<PurchaseOrder>>('/purchase-orders/', { params }),
 
   getOrder: (id: number) =>

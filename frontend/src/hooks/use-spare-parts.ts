@@ -73,7 +73,7 @@ export function useSparePart(id: string) {
   })
 }
 
-export function useSparePartsList(params?: { page?: number; search?: string; category?: number }) {
+export function useSparePartsList(params?: { page?: number; page_size?: number; search?: string; category?: number }) {
   return useQuery({
     queryKey: ['spare-parts', params],
     queryFn: () => sparePartsApi.listParts(params).then((r) => r.data),
@@ -95,10 +95,34 @@ export function useCreateSparePart() {
   })
 }
 
-export function useSuppliersList(params?: { page?: number }) {
+export function useSuppliersList(params?: { page?: number; page_size?: number }) {
   return useQuery({
     queryKey: ['suppliers', params],
     queryFn: () => sparePartsApi.listSuppliers(params).then((r) => r.data),
+  })
+}
+
+export function useSupplier(id: number) {
+  return useQuery({
+    queryKey: ['supplier', id],
+    queryFn: () => sparePartsApi.getSupplier(id).then((r) => r.data),
+    enabled: !!id,
+  })
+}
+
+export function useSupplierParts(supplierId: number) {
+  return useQuery({
+    queryKey: ['spare-parts', { primary_supplier: supplierId }],
+    queryFn: () => sparePartsApi.listParts({ primary_supplier: supplierId }).then((r) => r.data),
+    enabled: !!supplierId,
+  })
+}
+
+export function useSupplierOrders(supplierId: number) {
+  return useQuery({
+    queryKey: ['purchase-orders', { supplier_id: supplierId }],
+    queryFn: () => sparePartsApi.listOrders({ supplier_id: supplierId }).then((r) => r.data),
+    enabled: !!supplierId,
   })
 }
 

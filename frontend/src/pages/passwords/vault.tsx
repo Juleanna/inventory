@@ -398,13 +398,13 @@ export default function PasswordVaultPage() {
 
       {/* System Dialog (Add/Edit) */}
       <Dialog open={systemDialogOpen} onOpenChange={setSystemDialogOpen}>
-        <DialogContent className="max-w-md max-h-[90vh] flex flex-col p-0">
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0">
           <DialogHeader className="px-6 pt-6 pb-0">
             <DialogTitle>{editSystemId ? 'Редагувати систему' : 'Додати систему'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitSystem} className="flex flex-col overflow-hidden">
-            <ScrollArea className="max-h-[60vh]">
-              <div className="space-y-4 px-6">
+            <ScrollArea className="max-h-[65vh]">
+              <div className="space-y-4 px-6 py-4">
                 <div className="space-y-2">
                   <Label>Назва *</Label>
                   <Input
@@ -427,8 +427,8 @@ export default function PasswordVaultPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-2 col-span-2">
                     <Label>URL</Label>
                     <Input
                       value={systemForm.url}
@@ -437,22 +437,22 @@ export default function PasswordVaultPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>IP адреса</Label>
-                    <Input
-                      value={systemForm.ip_address}
-                      onChange={(e) => setSystemForm((prev) => ({ ...prev, ip_address: e.target.value }))}
-                      placeholder="192.168.1.1"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
                     <Label>Порт</Label>
                     <Input
                       type="number"
                       value={systemForm.port}
                       onChange={(e) => setSystemForm((prev) => ({ ...prev, port: e.target.value }))}
                       placeholder="8080"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>IP адреса</Label>
+                    <Input
+                      value={systemForm.ip_address}
+                      onChange={(e) => setSystemForm((prev) => ({ ...prev, ip_address: e.target.value }))}
+                      placeholder="192.168.1.1"
                     />
                   </div>
                   <div className="space-y-2">

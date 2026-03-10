@@ -160,6 +160,14 @@ class CustomUser(AbstractUser):
         help_text="Обладнання, призначене цьому користувачу"
     )
     
+    # Аватарка
+    avatar = models.ImageField(
+        upload_to='avatars/',
+        blank=True,
+        null=True,
+        verbose_name="Аватарка"
+    )
+
     # Додаткова інформація
     bio = models.TextField(
         blank=True,

@@ -11,9 +11,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, Sun, Moon, Monitor, ShieldCheck, KeyRound, CheckCircle, XCircle } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Loader2, Sun, Moon, Monitor, ShieldCheck, KeyRound, CheckCircle, XCircle, Camera, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { DEPARTMENT_LABELS, POSITION_LABELS } from '@/lib/constants'
@@ -21,6 +22,7 @@ import { DEPARTMENT_LABELS, POSITION_LABELS } from '@/lib/constants'
 export default function SettingsPage() {
   const { user, setUser } = useAuthStore()
   const { theme, setTheme } = useThemeStore()
+  const queryClient = useQueryClient()
   const { data: profile } = useProfile()
   const [saving, setSaving] = useState(false)
   const [twoFASetup, setTwoFASetup] = useState<{ qr_code: string; secret: string } | null>(null)
@@ -66,6 +68,38 @@ export default function SettingsPage() {
     confirm_password: '',
   })
   const [changingPassword, setChangingPassword] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingAvatar(true)
+    try {
+      const response = await authApi.uploadAvatar(file)
+      setUser(response.data)
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      toast.success('Аватар оновлено')
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Помилка завантаження аватара'))
+    } finally {
+      setUploadingAvatar(false)
+      e.target.value = ''
+    }
+  }
+
+  const handleRemoveAvatar = async () => {
+    setUploadingAvatar(true)
+    try {
+      const response = await authApi.removeAvatar()
+      setUser(response.data)
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      toast.success('Аватар видалено')
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Помилка видалення аватара'))
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -73,6 +107,7 @@ export default function SettingsPage() {
     try {
       const response = await authApi.updateProfile(form)
       setUser(response.data)
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
       toast.success('Профіль оновлено')
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Помилка оновлення профілю'))
@@ -139,6 +174,56 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSaveProfile} className="space-y-3">
+              {/* Avatar */}
+              <div className="flex items-center gap-4 pb-1">
+                <div className="relative group">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={profile?.avatar || undefined} alt={profile?.first_name} />
+                    <AvatarFallback className="text-lg">
+                      {(profile?.first_name?.[0] || '') + (profile?.last_name?.[0] || '')}
+                    </AvatarFallback>
+                  </Avatar>
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+                      <Loader2 className="h-5 w-5 animate-spin text-white" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={uploadingAvatar}
+                    onClick={() => document.getElementById('avatar-input')?.click()}
+                  >
+                    <Camera className="mr-1.5 h-3.5 w-3.5" />
+                    Змінити фото
+                  </Button>
+                  {profile?.avatar && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={uploadingAvatar}
+                      onClick={handleRemoveAvatar}
+                    >
+                      <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                      Видалити
+                    </Button>
+                  )}
+                  <input
+                    id="avatar-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Ім'я</Label>

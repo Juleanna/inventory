@@ -20,6 +20,9 @@ from datetime import datetime
 import psutil
 import requests
 
+# Прапорець для приховання вікон консолі/PowerShell на Windows
+_NO_WINDOW = subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0
+
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
@@ -303,6 +306,7 @@ class SystemCollector:
                     ["powershell", "-NoProfile", "-Command",
                      "Get-CimInstance Win32_DiskDrive | Select-Object Model, Size, MediaType | ConvertTo-Json -Compress"],
                     capture_output=True, text=True, timeout=10,
+                    creationflags=_NO_WINDOW,
                 )
                 if result.returncode == 0 and result.stdout.strip():
                     raw = json.loads(result.stdout)
@@ -376,6 +380,7 @@ class SystemCollector:
                      "Get-CimInstance Win32_NetworkAdapter | Where-Object { $_.NetConnectionStatus -eq 2 } | "
                      "Select-Object -First 1 -ExpandProperty Name"],
                     capture_output=True, text=True, timeout=10,
+                    creationflags=_NO_WINDOW,
                 )
                 val = result.stdout.strip()
                 if val:
@@ -403,6 +408,7 @@ class SystemCollector:
                     ["powershell", "-NoProfile", "-Command",
                      "Get-CimInstance Win32_Battery | Select-Object Name, DesignCapacity, FullChargeCapacity | ConvertTo-Json -Compress"],
                     capture_output=True, text=True, timeout=10,
+                    creationflags=_NO_WINDOW,
                 )
                 if result.returncode == 0 and result.stdout.strip():
                     raw = json.loads(result.stdout)
@@ -442,6 +448,7 @@ class SystemCollector:
                     ["powershell", "-NoProfile", "-Command",
                      "(Get-CimInstance Win32_BIOS).ReleaseDate.ToString('yyyy-MM-dd')"],
                     capture_output=True, text=True, timeout=10,
+                    creationflags=_NO_WINDOW,
                 )
                 date = result.stdout.strip() if result.returncode == 0 else ""
             except Exception:
@@ -621,6 +628,7 @@ class SystemCollector:
                     "Select-Object Name, DeviceID, Manufacturer | ConvertTo-Json -Compress",
                 ],
                 capture_output=True, text=True, timeout=15,
+                creationflags=_NO_WINDOW,
             )
             if result.returncode == 0 and result.stdout.strip():
                 raw = json.loads(result.stdout)
@@ -656,6 +664,7 @@ class SystemCollector:
                     f"(Get-CimInstance {wmi_class}).{prop}",
                 ],
                 capture_output=True, text=True, timeout=10,
+                creationflags=_NO_WINDOW,
             )
             val = result.stdout.strip()
             # Якщо кілька рядків (кілька процесорів/GPU) — беремо перший

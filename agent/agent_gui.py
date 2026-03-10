@@ -23,6 +23,62 @@ from PySide6.QtGui import (
     QIcon, QPixmap, QPainter, QColor, QFont, QPalette, QAction,
 )
 
+# Windows: встановити AppUserModelID ДО створення QApplication
+# Це дозволяє Windows показувати власну іконку та назву замість Python
+APP_ID = "ITInventory.Agent.GUI.4"
+if platform.system() == "Windows":
+    try:
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
+    except Exception:
+        pass
+
+
+def _ensure_start_menu_shortcut():
+    """Створити ярлик у Start Menu для правильного відображення повідомлень Windows."""
+    if platform.system() != "Windows":
+        return
+    try:
+        import win32com.client
+        from pathlib import Path as _P
+
+        appdata = os.environ.get("APPDATA", "")
+        shortcut_dir = _P(appdata) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
+        shortcut_path = str(shortcut_dir / "IT Inventory Agent.lnk")
+
+        # Якщо ярлик вже існує — не перезаписувати
+        if os.path.exists(shortcut_path):
+            return
+
+        shell = win32com.client.Dispatch("WScript.Shell")
+        shortcut = shell.CreateShortCut(shortcut_path)
+        shortcut.TargetPath = sys.executable.replace("python.exe", "pythonw.exe")
+        shortcut.Arguments = f'"{_P(__file__).resolve()}"'
+        shortcut.WorkingDirectory = str(_P(__file__).parent)
+        shortcut.Description = "IT Inventory Agent"
+
+        icon_path = str(_P(__file__).parent / "icon.ico")
+        if os.path.exists(icon_path):
+            shortcut.IconLocation = icon_path
+
+        shortcut.save()
+
+        # Встановити AppUserModelID на ярлику через PropertyStore
+        try:
+            from win32com.propsys import propsys, pscon
+            store = propsys.SHGetPropertyStoreFromParsingName(
+                shortcut_path, None, 0x2, propsys.IID_IPropertyStore
+            )
+            store.SetValue(
+                pscon.PKEY_AppUserModel_ID,
+                propsys.PROPVARIANTType(APP_ID),
+            )
+            store.Commit()
+        except Exception:
+            pass
+    except Exception:
+        pass
+
 # Імпортуємо збирач даних та клієнт з agent.py
 from agent import SystemCollector, AgentClient, load_config
 
@@ -105,7 +161,7 @@ QLabel[class="dim"] {{
 }}
 QLabel[class="value"] {{
     font-weight: bold;
-    font-size: 14px;
+    font-size: 13px;
 }}
 QLabel[class="title"] {{
     font-size: 22px;
@@ -291,8 +347,16 @@ class AuthWorker(QThread):
 # ---------------------------------------------------------------------------
 # Tray Icon Generator
 # ---------------------------------------------------------------------------
+def _load_app_icon() -> QIcon | None:
+    """Завантажити іконку з файлу icon.ico."""
+    icon_path = str(Path(__file__).parent / "icon.ico")
+    if os.path.exists(icon_path):
+        return QIcon(icon_path)
+    return None
+
+
 def create_tray_icon(color: str = "#4CAF50") -> QIcon:
-    """Створити просту кольорову іконку для трею."""
+    """Створити просту кольорову іконку для трею (fallback)."""
     pixmap = QPixmap(64, 64)
     pixmap.fill(Qt.transparent)
     painter = QPainter(pixmap)
@@ -312,6 +376,36 @@ def create_tray_icon(color: str = "#4CAF50") -> QIcon:
 # ---------------------------------------------------------------------------
 # Info Card Widget
 # ---------------------------------------------------------------------------
+class ElidedLabel(QLabel):
+    """Мітка з обрізанням тексту (…) замість переповнення."""
+
+    def __init__(self, text: str = "—", parent=None):
+        super().__init__(text, parent)
+        self._full_text = text
+
+    def setText(self, text: str):
+        self._full_text = text
+        self.setToolTip(text if len(text) > 40 else "")
+        super().setText(text)
+
+    def set_value(self, value: str):
+        self.setText(value or "—")
+
+    def paintEvent(self, event):
+        from PySide6.QtWidgets import QStyleOption
+        from PySide6.QtGui import QFontMetrics
+        opt = QStyleOption()
+        opt.initFrom(self)
+        fm = QFontMetrics(self.font())
+        available = self.width() - 2
+        elided = fm.elidedText(self._full_text, Qt.ElideRight, available)
+        painter = QPainter(self)
+        painter.setPen(self.palette().color(QPalette.WindowText))
+        painter.setFont(self.font())
+        painter.drawText(self.rect(), self.alignment() | Qt.AlignVCenter, elided)
+        painter.end()
+
+
 class InfoRow(QWidget):
     """Один рядок: мітка + значення."""
 
@@ -322,18 +416,18 @@ class InfoRow(QWidget):
 
         self.label_widget = QLabel(label)
         self.label_widget.setProperty("class", "dim")
-        self.label_widget.setFixedWidth(160)
+        self.label_widget.setFixedWidth(140)
 
-        self.value_widget = QLabel(value)
+        self.value_widget = ElidedLabel(value)
         self.value_widget.setProperty("class", "value")
         self.value_widget.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.value_widget.setWordWrap(True)
+        self.value_widget.setMinimumWidth(80)
 
         layout.addWidget(self.label_widget)
         layout.addWidget(self.value_widget, 1)
 
     def set_value(self, value: str):
-        self.value_widget.setText(value or "—")
+        self.value_widget.set_value(value)
 
 
 # ---------------------------------------------------------------------------
@@ -344,8 +438,8 @@ class MainWindow(QMainWindow):
     def __init__(self, start_in_tray: bool = False):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} v{APP_VERSION}")
-        self.setMinimumSize(780, 580)
-        self.resize(860, 640)
+        self.setMinimumSize(950, 640)
+        self.resize(1060, 720)
 
         self.report_data: dict | None = None
         self.config = load_config()
@@ -365,9 +459,8 @@ class MainWindow(QMainWindow):
         else:
             self.show()
 
-        # Автозбір при запуску
-        if self._get_setting("auto_scan_on_start", False):
-            QTimer.singleShot(500, self.on_scan)
+        # Завжди збираємо дані та відправляємо при запуску
+        QTimer.singleShot(500, self.on_scan)
 
     # ===================== UI BUILD =====================
 
@@ -414,6 +507,8 @@ class MainWindow(QMainWindow):
         grp_identity = QGroupBox("Ідентифікація")
         grid = QGridLayout(grp_identity)
         grid.setSpacing(4)
+        grid.setColumnStretch(0, 1)
+        grid.setColumnStretch(1, 1)
 
         self.info_hostname = InfoRow("Ім'я комп'ютера:")
         self.info_serial = InfoRow("Серійний номер:")
@@ -433,6 +528,8 @@ class MainWindow(QMainWindow):
         grp_specs = QGroupBox("Характеристики")
         grid2 = QGridLayout(grp_specs)
         grid2.setSpacing(4)
+        grid2.setColumnStretch(0, 1)
+        grid2.setColumnStretch(1, 1)
 
         self.info_os = InfoRow("Операційна система:")
         self.info_cpu = InfoRow("Процесор:")
@@ -452,6 +549,8 @@ class MainWindow(QMainWindow):
         grp_hw = QGroupBox("Комплектуючі")
         grid3 = QGridLayout(grp_hw)
         grid3.setSpacing(4)
+        grid3.setColumnStretch(0, 1)
+        grid3.setColumnStretch(1, 1)
 
         self.info_motherboard = InfoRow("Материнська плата:")
         self.info_mb_serial = InfoRow("S/N мат. плати:")
@@ -660,10 +759,13 @@ class MainWindow(QMainWindow):
     # ===================== TRAY =====================
 
     def _build_tray(self):
-        self.tray_icon_connected = create_tray_icon(COLORS["success"])
-        self.tray_icon_disconnected = create_tray_icon(COLORS["text_dim"])
+        # Використовуємо .ico файл для всіх іконок
+        self._app_icon = _load_app_icon() or create_tray_icon(COLORS["accent"])
+        # Для трею також використовуємо .ico — щоб Windows показував правильну іконку
+        self.tray_icon_connected = self._app_icon
+        self.tray_icon_disconnected = self._app_icon
 
-        self.tray = QSystemTrayIcon(self.tray_icon_disconnected, self)
+        self.tray = QSystemTrayIcon(self._app_icon, self)
 
         tray_menu = QMenu()
 
@@ -693,7 +795,7 @@ class MainWindow(QMainWindow):
         self.tray.show()
 
         # Set window icon
-        self.setWindowIcon(create_tray_icon(COLORS["accent"]))
+        self.setWindowIcon(self._app_icon)
 
     # ===================== SIGNALS =====================
 
@@ -738,6 +840,32 @@ class MainWindow(QMainWindow):
         msg = f"Збір завершено — {data.get('hostname', '?')}, ПЗ: {sw_count}, Периферія: {per_count}"
         self.statusBar().showMessage(msg)
         self._log(f"OK: {msg}")
+
+        # Автоматично відправити на сервер якщо є дані підключення
+        self._auto_send_after_scan()
+
+    def _auto_send_after_scan(self):
+        """Автоматично підключитися та відправити дані після збору."""
+        api_url = self.set_api_url.text() or self.config.get("api_url", "")
+        username = self.set_username.text() or self.config.get("username", "")
+        password = self.set_password.text() or self.config.get("password", "")
+
+        if not all([api_url, username, password]):
+            self._log("Автовідправка: немає даних підключення (налаштуйте в .env або Налаштуваннях)")
+            return
+
+        self._log(f"Автовідправка на {api_url}...")
+        self.btn_send.setEnabled(False)
+        self.btn_send.setText("  Відправка...")
+        self.statusBar().showMessage("Автовідправка на сервер...")
+
+        if not self.client or self.client.api_url != api_url.rstrip("/"):
+            self.client = AgentClient(api_url, username, password)
+
+        if not self.client.access_token:
+            self._auth_then_send()
+        else:
+            self._do_send()
 
     def _on_scan_error(self, error: str):
         self.btn_scan.setEnabled(True)
@@ -811,11 +939,15 @@ class MainWindow(QMainWindow):
                 self.tray.showMessage(
                     APP_NAME,
                     f"{action} обладнання #{eq_id}",
-                    QSystemTrayIcon.Information,
+                    self._app_icon,
                     3000,
                 )
             except Exception:
                 pass
+
+            # Запустити таймер автозбору після першої успішної відправки
+            if not self.auto_scan_timer.isActive():
+                self._restart_auto_timer()
         except Exception as e:
             self._log(f"ПОМИЛКА обробки відповіді: {e}")
 
@@ -1116,7 +1248,7 @@ class MainWindow(QMainWindow):
         self.tray.showMessage(
             APP_NAME,
             "Програма працює у фоновому режимі",
-            QSystemTrayIcon.Information,
+            self._app_icon,
             2000,
         )
 
@@ -1150,7 +1282,13 @@ def main():
 
     sys.excepthook = _exception_hook
 
+    # Створити ярлик в Start Menu для правильних toast-повідомлень
+    _ensure_start_menu_shortcut()
+
     app = QApplication(sys.argv)
+    app.setApplicationName(APP_NAME)
+    app.setApplicationDisplayName(APP_NAME)
+    app.setOrganizationName("ITInventory")
     app.setStyle("Fusion")
     app.setStyleSheet(STYLESHEET)
 

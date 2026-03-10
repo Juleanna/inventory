@@ -17,6 +17,17 @@ export const authApi = {
   updateProfile: (data: Partial<User>) =>
     apiClient.patch<User>('/profile/', data),
 
+  uploadAvatar: (file: File) => {
+    const formData = new FormData()
+    formData.append('avatar', file)
+    return apiClient.patch<User>('/profile/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
+
+  removeAvatar: () =>
+    apiClient.patch<User>('/profile/', { avatar: '' }),
+
   setup2FA: () =>
     apiClient.post<{ qr_code: string; secret: string }>('/auth/2fa-setup/'),
 

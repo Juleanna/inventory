@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useCreateEquipment, useUpdateEquipment } from '@/hooks/use-equipment'
 import { useUsersList } from '@/hooks/use-auth'
+import { useSuppliersList } from '@/hooks/use-spare-parts'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -64,6 +65,7 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
   const createEquipment = useCreateEquipment()
   const updateEquipment = useUpdateEquipment()
   const { data: users } = useUsersList()
+  const { data: suppliers } = useSuppliersList({ page_size: 500 })
   const isEdit = !!equipment
 
   const [form, setForm] = useState(emptyForm)
@@ -394,7 +396,17 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
                   </div>
                   <div className="space-y-2">
                     <Label>Постачальник</Label>
-                    <Input value={form.supplier} onChange={(e) => update('supplier', e.target.value)} />
+                    <SearchableSelect
+                      value={form.supplier}
+                      onValueChange={(v) => update('supplier', v)}
+                      placeholder="Оберіть постачальника"
+                      searchPlaceholder="Пошук постачальника..."
+                      emptyText="Постачальників не знайдено"
+                      options={suppliers?.results?.map((s) => ({
+                        value: s.name,
+                        label: s.short_name ? `${s.name} (${s.short_name})` : s.name,
+                      })) || []}
+                    />
                   </div>
                 </div>
               </TabsContent>

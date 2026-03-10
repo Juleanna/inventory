@@ -431,213 +431,169 @@ function LicenseFormDialog({ open, onOpenChange, license }: { open: boolean; onO
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-0">
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
           <DialogTitle>{license ? 'Редагувати ліцензію' : 'Додати ліцензію'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden">
-          <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4" style={{ maxHeight: 'calc(90vh - 140px)' }}>
-          {/* License Type Select */}
-          <div className="space-y-2">
-            <Label>Тип ліцензії *</Label>
-            <Select value={form.license_type} onValueChange={(v) => update('license_type', v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Оберіть тип ліцензії" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(LICENSE_TYPE_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Open Source sub-type */}
-          {showOpenSourceType && (
-            <div className="space-y-2">
-              <Label>Тип Open Source ліцензії *</Label>
-              <Select value={form.open_source_type} onValueChange={(v) => update('open_source_type', v)}>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Row 1: Type + Open Source sub-type */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Тип ліцензії *</Label>
+              <Select value={form.license_type} onValueChange={(v) => update('license_type', v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Оберіть тип" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(OPEN_SOURCE_TYPE_LABELS).map(([value, label]) => (
+                  {Object.entries(LICENSE_TYPE_LABELS).map(([value, label]) => (
                     <SelectItem key={value} value={value}>{label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
+            {showOpenSourceType ? (
+              <div className="space-y-1.5">
+                <Label>Тип Open Source *</Label>
+                <Select value={form.open_source_type} onValueChange={(v) => update('open_source_type', v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Оберіть тип" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(OPEN_SOURCE_TYPE_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : showKey ? (
+              <div className="space-y-1.5">
+                <Label>Ліцензійний ключ</Label>
+                <Input value={form.key} onChange={(e) => update('key', e.target.value)} placeholder="XXXXX-XXXXX-XXXXX" className="font-mono" />
+              </div>
+            ) : <div />}
+          </div>
 
-          {/* Conditional fields only shown after type is selected */}
+          {/* Row 2: type-specific params */}
           {t && (
             <>
-              {/* Key */}
-              {showKey && (
-                <div className="space-y-2">
-                  <Label>Ліцензійний ключ</Label>
-                  <Input
-                    value={form.key}
-                    onChange={(e) => update('key', e.target.value)}
-                    placeholder="XXXXX-XXXXX-XXXXX-XXXXX"
-                    className="font-mono"
-                  />
-                </div>
-              )}
-
-              {/* Activations + Cost row */}
-              {(showActivations || showCost) && (
-                <div className="grid grid-cols-2 gap-4">
-                  {showActivations && (
-                    <div className="space-y-2">
-                      <Label>Кількість активацій</Label>
-                      <Input
-                        type="number"
-                        value={form.activations}
-                        onChange={(e) => update('activations', e.target.value)}
-                        min="1"
-                      />
-                    </div>
-                  )}
-                  {showCost && (
-                    <div className="space-y-2">
-                      <Label>Вартість (грн)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={form.cost}
-                        onChange={(e) => update('cost', e.target.value)}
-                        placeholder="0.00"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Dates */}
-              {showDates && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Початок дії</Label>
-                    <Input type="date" value={form.start_date} onChange={(e) => update('start_date', e.target.value)} />
+              <div className="grid grid-cols-4 gap-3">
+                {showActivations && (
+                  <div className="space-y-1.5">
+                    <Label>Активацій</Label>
+                    <Input type="number" value={form.activations} onChange={(e) => update('activations', e.target.value)} min="1" />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Кінець дії</Label>
-                    <Input type="date" value={form.end_date} onChange={(e) => update('end_date', e.target.value)} />
+                )}
+                {showCost && (
+                  <div className="space-y-1.5">
+                    <Label>Вартість (грн)</Label>
+                    <Input type="number" step="0.01" value={form.cost} onChange={(e) => update('cost', e.target.value)} placeholder="0.00" />
                   </div>
-                </div>
-              )}
+                )}
+                {showDates && (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label>Початок дії</Label>
+                      <Input type="date" value={form.start_date} onChange={(e) => update('start_date', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Кінець дії</Label>
+                      <Input type="date" value={form.end_date} onChange={(e) => update('end_date', e.target.value)} />
+                    </div>
+                  </>
+                )}
+                {showTrialDays && (
+                  <div className="space-y-1.5">
+                    <Label>Пробний період (днів)</Label>
+                    <Input type="number" value={form.trial_days} onChange={(e) => update('trial_days', e.target.value)} placeholder="30" min="1" />
+                  </div>
+                )}
+              </div>
 
-              {/* Trial days */}
-              {showTrialDays && (
-                <div className="space-y-2">
-                  <Label>Пробний період (днів)</Label>
-                  <Input
-                    type="number"
-                    value={form.trial_days}
-                    onChange={(e) => update('trial_days', e.target.value)}
-                    placeholder="30"
-                    min="1"
-                  />
-                </div>
-              )}
-
-              {/* OEM Device */}
+              {/* OEM device + perpetual */}
               {showOemDevice && (
-                <div className="space-y-2">
-                  <Label>Прив'язаний пристрій (OEM)</Label>
-                  <SearchableSelect
-                    options={equipmentData?.results?.map((eq) => ({
-                      value: String(eq.id),
-                      label: `${eq.name} (${eq.serial_number || eq.inventory_number || '—'})`,
-                    })) || []}
-                    value={form.oem_device}
-                    onValueChange={(v) => update('oem_device', v)}
-                    placeholder="Оберіть пристрій"
-                    searchPlaceholder="Пошук обладнання..."
-                    emptyText="Не знайдено"
-                  />
+                <div className="grid grid-cols-2 gap-3 items-end">
+                  <div className="space-y-1.5">
+                    <Label>Прив'язаний пристрій (OEM)</Label>
+                    <SearchableSelect
+                      options={equipmentData?.results?.map((eq) => ({
+                        value: String(eq.id),
+                        label: `${eq.name} (${eq.serial_number || eq.inventory_number || '—'})`,
+                      })) || []}
+                      value={form.oem_device}
+                      onValueChange={(v) => update('oem_device', v)}
+                      placeholder="Оберіть пристрій"
+                      searchPlaceholder="Пошук обладнання..."
+                      emptyText="Не знайдено"
+                    />
+                  </div>
+                  {showPerpetual && (
+                    <div className="flex items-center gap-2 pb-2">
+                      <Checkbox id="is_perpetual" checked={form.is_perpetual} onCheckedChange={(v) => update('is_perpetual', !!v)} />
+                      <Label htmlFor="is_perpetual" className="cursor-pointer">Безстрокова</Label>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Perpetual checkbox (OEM) */}
-              {showPerpetual && (
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="is_perpetual"
-                    checked={form.is_perpetual}
-                    onCheckedChange={(v) => update('is_perpetual', !!v)}
-                  />
-                  <Label htmlFor="is_perpetual" className="cursor-pointer">Безстрокова ліцензія</Label>
+              {/* User + Description row */}
+              <div className="grid grid-cols-2 gap-3">
+                {showUser ? (
+                  <div className="space-y-1.5">
+                    <Label>Користувач</Label>
+                    <SearchableSelect
+                      options={users?.map((u) => ({
+                        value: String(u.id),
+                        label: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username,
+                      })) || []}
+                      value={form.user}
+                      onValueChange={(v) => update('user', v)}
+                      placeholder="Не призначено"
+                      searchPlaceholder="Пошук користувача..."
+                      emptyText="Не знайдено"
+                    />
+                  </div>
+                ) : <div />}
+                <div className="space-y-1.5">
+                  <Label>Опис</Label>
+                  <Input value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Примітка..." />
                 </div>
-              )}
-
-              {/* User */}
-              {showUser && (
-                <div className="space-y-2">
-                  <Label>Користувач</Label>
-                  <SearchableSelect
-                    options={users?.map((u) => ({
-                      value: String(u.id),
-                      label: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username,
-                    })) || []}
-                    value={form.user}
-                    onValueChange={(v) => update('user', v)}
-                    placeholder="Не призначено"
-                    searchPlaceholder="Пошук користувача..."
-                    emptyText="Не знайдено"
-                  />
-                </div>
-              )}
+              </div>
 
               {/* Software multi-select */}
-              <div className="space-y-2">
-                <Label>Програми</Label>
-                <Input
-                  placeholder="Пошук програм..."
-                  value={swSearch}
-                  onChange={(e) => setSwSearch(e.target.value)}
-                  className="h-8 text-sm"
-                />
-                <div className="rounded-md border max-h-40 overflow-y-auto">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label>Програми {form.software_ids.length > 0 && <span className="text-muted-foreground font-normal">({form.software_ids.length})</span>}</Label>
+                  <Input
+                    placeholder="Пошук..."
+                    value={swSearch}
+                    onChange={(e) => setSwSearch(e.target.value)}
+                    className="h-7 w-48 text-xs"
+                  />
+                </div>
+                <div className="rounded-md border max-h-32 overflow-y-auto">
                   {filteredSoftware?.length ? (
                     filteredSoftware.map((sw) => (
                       <label
                         key={sw.id}
                         className={cn(
-                          'flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-muted/50 text-sm',
+                          'flex items-center gap-2 px-3 py-1 cursor-pointer hover:bg-muted/50 text-sm',
                           form.software_ids.includes(sw.id) && 'bg-primary/5'
                         )}
                       >
-                        <input
-                          type="checkbox"
-                          checked={form.software_ids.includes(sw.id)}
-                          onChange={() => toggleSoftware(sw.id)}
-                          className="rounded"
-                        />
+                        <input type="checkbox" checked={form.software_ids.includes(sw.id)} onChange={() => toggleSoftware(sw.id)} className="rounded" />
                         <span className="truncate">{sw.name}</span>
                         <span className="text-xs text-muted-foreground ml-auto shrink-0">{sw.version}</span>
                       </label>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground p-3">Немає програм</p>
+                    <p className="text-sm text-muted-foreground p-2">Немає програм</p>
                   )}
                 </div>
-                {form.software_ids.length > 0 && (
-                  <p className="text-xs text-muted-foreground">Обрано: {form.software_ids.length}</p>
-                )}
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <Label>Опис</Label>
-                <Textarea value={form.description} onChange={(e) => update('description', e.target.value)} rows={2} />
               </div>
             </>
           )}
-          </div>
 
-          <div className="flex justify-end gap-2 px-6 py-4 border-t">
+          <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Скасувати</Button>
             <Button type="submit" disabled={isPending || !form.license_type}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

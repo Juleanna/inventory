@@ -89,6 +89,15 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'Скасовано',
 }
 
+export const DELIVERY_METHOD_LABELS: Record<string, string> = {
+  nova_poshta: 'Нова Пошта',
+  ukrposhta: 'Укрпошта',
+  meest: 'Meest',
+  self_pickup: 'Самовивіз',
+  courier: 'Кур\'єр',
+  other: 'Інше',
+}
+
 export const DEPARTMENT_LABELS: Record<string, string> = {
   IT: 'IT відділ',
   HR: 'Відділ кадрів',
@@ -121,6 +130,13 @@ export const SYSTEM_TYPE_LABELS: Record<string, string> = {
   cloud: 'Хмарний сервіс',
   software: 'Програмне забезпечення',
   service: 'Сервіс',
+  os: 'Операційна система',
+  email: 'Електронна пошта',
+  vpn: 'VPN',
+  firewall: 'Файрвол',
+  storage: 'Сховище даних',
+  monitoring: 'Моніторинг',
+  backup: 'Резервне копіювання',
   other: 'Інше',
 }
 

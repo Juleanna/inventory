@@ -4,7 +4,8 @@ from django.db import models
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.decorators import api_view, permission_classes, authentication_classes, action
+from rest_framework.decorators import api_view, permission_classes, authentication_classes, action, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import Serializer, CharField
@@ -829,34 +830,47 @@ def users_import(request):
 
 @api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 def user_profile(request):
     """Профіль користувача — перегляд та оновлення"""
     user = request.user
+
+    PROFILE_FIELDS = (
+        'phone', 'mobile_phone', 'bio', 'department', 'position',
+        'office_location', 'room_number',
+    )
+
+    def _serialize(u):
+        data = {
+            'id': u.id,
+            'username': u.username,
+            'email': u.email,
+            'first_name': u.first_name,
+            'last_name': u.last_name,
+            'is_staff': u.is_staff,
+            'is_active': u.is_active,
+            'avatar': request.build_absolute_uri(u.avatar.url) if u.avatar else None,
+        }
+        for f in PROFILE_FIELDS:
+            data[f] = getattr(u, f, '') or ''
+        return data
+
     if request.method == 'GET':
-        return Response({
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'is_staff': user.is_staff,
-            'is_active': user.is_active,
-        })
+        return Response(_serialize(user))
 
     # PATCH
-    for field in ('first_name', 'last_name', 'email'):
+    for field in ('first_name', 'last_name', 'email') + PROFILE_FIELDS:
         if field in request.data:
             setattr(user, field, request.data[field])
+
+    # Аватарка
+    if 'avatar' in request.FILES:
+        user.avatar = request.FILES['avatar']
+    elif request.data.get('avatar') == '':
+        user.avatar = None
+
     user.save()
-    return Response({
-        'id': user.id,
-        'username': user.username,
-        'email': user.email,
-        'first_name': user.first_name,
-        'last_name': user.last_name,
-        'is_staff': user.is_staff,
-        'is_active': user.is_active,
-    })
+    return Response(_serialize(user))
 
 
 def check_expired_equipment():
@@ -2847,7 +2861,12 @@ class SparePartsViewSet(ModelViewSet):
         category_id = self.request.query_params.get('category_id')
         if category_id:
             queryset = queryset.filter(category_id=category_id)
-        
+
+        # Фільтр по постачальнику
+        primary_supplier = self.request.query_params.get('primary_supplier')
+        if primary_supplier:
+            queryset = queryset.filter(primary_supplier_id=primary_supplier)
+
         return queryset
     
     @action(detail=False, methods=['get'])
@@ -3157,8 +3176,30 @@ class PurchaseOrdersViewSet(ModelViewSet):
                 model = PurchaseOrderItem
                 fields = '__all__'
         
+        class SupplierBriefSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = Supplier
+                fields = ['id', 'name', 'short_name']
+
+        class SparePartBriefSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = SparePart
+                fields = ['id', 'name', 'part_number']
+
+        class PurchaseOrderItemWithDetailsSerializer(serializers.ModelSerializer):
+            spare_part_name = serializers.CharField(source='spare_part.name', read_only=True)
+            spare_part_number = serializers.CharField(source='spare_part.part_number', read_only=True)
+            spare_part_details = SparePartBriefSerializer(source='spare_part', read_only=True)
+            quantity_pending = serializers.ReadOnlyField()
+            is_fully_received = serializers.ReadOnlyField()
+
+            class Meta:
+                model = PurchaseOrderItem
+                fields = '__all__'
+
         class PurchaseOrderSerializer(serializers.ModelSerializer):
-            items = PurchaseOrderItemSerializer(many=True, read_only=True)
+            items = PurchaseOrderItemWithDetailsSerializer(many=True, read_only=True)
+            supplier_details = SupplierBriefSerializer(source='supplier', read_only=True)
             supplier_name = serializers.CharField(source='supplier.name', read_only=True)
             created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
             
@@ -3219,19 +3260,23 @@ class CreatePurchaseOrderView(APIView):
     
     def post(self, request):
         """Створити нове замовлення"""
-        supplier_id = request.data.get('supplier_id')
+        supplier_id = request.data.get('supplier_id') or request.data.get('supplier')
         items = request.data.get('items', [])
-        
-        if not all([supplier_id, items]):
+
+        if not supplier_id or not items:
             return Response({
                 'success': False,
                 'error': 'Не вказано постачальника або позиції замовлення'
             }, status=400)
-        
+
         purchase_order, error = SparePartsService.create_purchase_order(
             supplier_id=supplier_id,
             items=items,
-            created_by=request.user
+            created_by=request.user,
+            expected_delivery_date=request.data.get('expected_delivery_date'),
+            delivery_method=request.data.get('delivery_method', ''),
+            tracking_number=request.data.get('tracking_number', ''),
+            notes=request.data.get('notes', ''),
         )
         
         if purchase_order:

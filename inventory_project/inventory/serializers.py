@@ -20,6 +20,9 @@ class EquipmentSerializer(serializers.ModelSerializer):
             'current_user', 'responsible_person',
             'purchase_price', 'depreciation_rate',
             'cpu', 'ram', 'storage', 'gpu', 'operating_system',
+            'motherboard', 'motherboard_serial', 'disk_model',
+            'display', 'network_adapter', 'power_supply', 'bios_version',
+            'supplier', 'description', 'notes',
             'barcode_image', 'qrcode_image', 'photo',
             'created_at', 'updated_at',
         ]

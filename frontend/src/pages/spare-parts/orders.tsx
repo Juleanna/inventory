@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePurchaseOrder, useSuppliersList } from '@/hooks/use-spare-parts'
+import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePurchaseOrder, useSuppliersList, useSparePartsList } from '@/hooks/use-spare-parts'
 import { PageHeader } from '@/components/shared/page-header'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -9,14 +9,16 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { ArrowLeft, ShoppingCart, Plus, Loader2, ArrowRight, Eye } from 'lucide-react'
-import { ORDER_STATUS_LABELS } from '@/lib/constants'
+import { ArrowLeft, ShoppingCart, Plus, Loader2, ArrowRight, Eye, Trash2, Package, Truck } from 'lucide-react'
+import { ORDER_STATUS_LABELS, DELIVERY_METHOD_LABELS } from '@/lib/constants'
 import type { PurchaseOrder } from '@/types'
 
 const STATUS_FLOW: Record<string, string[]> = {
@@ -207,6 +209,31 @@ export default function OrdersPage() {
                     <p className="text-sm">{detailOrder.actual_delivery_date ? new Date(detailOrder.actual_delivery_date).toLocaleDateString('uk-UA') : '—'}</p>
                   </div>
                 </div>
+
+                {/* Delivery info */}
+                {(detailOrder.delivery_method || detailOrder.tracking_number) && (
+                  <div className="rounded-md border p-3 space-y-2 bg-muted/30">
+                    <div className="flex items-center gap-1.5 text-sm font-medium">
+                      <Truck className="h-3.5 w-3.5" />
+                      Доставка
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {detailOrder.delivery_method && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Спосіб</p>
+                          <p className="text-sm">{DELIVERY_METHOD_LABELS[detailOrder.delivery_method] || detailOrder.delivery_method}</p>
+                        </div>
+                      )}
+                      {detailOrder.tracking_number && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">ТТН</p>
+                          <p className="text-sm font-mono">{detailOrder.tracking_number}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {detailOrder.notes && (
                   <div>
                     <p className="text-xs text-muted-foreground">Нотатки</p>
@@ -216,7 +243,7 @@ export default function OrdersPage() {
 
                 {detailOrder.items && detailOrder.items.length > 0 && (
                   <div>
-                    <p className="text-xs text-muted-foreground mb-2">Позиції</p>
+                    <p className="text-xs text-muted-foreground mb-2">Позиції ({detailOrder.items.length})</p>
                     <div className="rounded-md border">
                       <Table>
                         <TableHeader>
@@ -225,6 +252,9 @@ export default function OrdersPage() {
                             <TableHead className="text-xs">Замовл.</TableHead>
                             <TableHead className="text-xs">Отрим.</TableHead>
                             <TableHead className="text-xs">Ціна</TableHead>
+                            <TableHead className="text-xs w-8">
+                              <Package className="h-3 w-3" title="Додати до запасів" />
+                            </TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -234,6 +264,13 @@ export default function OrdersPage() {
                               <TableCell className="text-sm">{item.quantity_ordered}</TableCell>
                               <TableCell className="text-sm">{item.quantity_received}</TableCell>
                               <TableCell className="text-sm">{item.unit_price} грн</TableCell>
+                              <TableCell className="text-sm">
+                                {item.add_to_inventory ? (
+                                  <Badge variant="secondary" className="text-[10px] px-1">так</Badge>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">ні</span>
+                                )}
+                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -268,31 +305,88 @@ export default function OrdersPage() {
   )
 }
 
+interface OrderItem {
+  spare_part_id: string
+  spare_part_name: string
+  quantity: number
+  unit_price: string
+  add_to_inventory: boolean
+}
+
 function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const createOrder = useCreatePurchaseOrder()
-  const { data: suppliersData } = useSuppliersList()
+  const { data: suppliersData } = useSuppliersList({ page_size: 500 })
+  const { data: partsData } = useSparePartsList({ page_size: 500 })
 
   const [form, setForm] = useState({
     supplier: '',
     expected_delivery_date: '',
+    delivery_method: '',
+    tracking_number: '',
     notes: '',
+  })
+  const [items, setItems] = useState<OrderItem[]>([])
+
+  // New item form
+  const [newItem, setNewItem] = useState({
+    spare_part_id: '',
+    quantity: 1,
+    unit_price: '',
+    add_to_inventory: true,
   })
 
   const update = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }))
 
+  const addItem = () => {
+    if (!newItem.spare_part_id || newItem.quantity < 1) return
+    const part = partsData?.results?.find((p) => String(p.id) === newItem.spare_part_id)
+    if (!part) return
+    // Prevent duplicates
+    if (items.some((i) => i.spare_part_id === newItem.spare_part_id)) return
+
+    setItems((prev) => [
+      ...prev,
+      {
+        spare_part_id: newItem.spare_part_id,
+        spare_part_name: part.name,
+        quantity: newItem.quantity,
+        unit_price: newItem.unit_price || part.unit_cost || '0',
+        add_to_inventory: newItem.add_to_inventory,
+      },
+    ])
+    setNewItem({ spare_part_id: '', quantity: 1, unit_price: '', add_to_inventory: true })
+  }
+
+  const removeItem = (index: number) => {
+    setItems((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const totalAmount = items.reduce((sum, item) => sum + item.quantity * parseFloat(item.unit_price || '0'), 0)
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!form.supplier || items.length === 0) return
+
     createOrder.mutate(
       {
         supplier: Number(form.supplier),
         expected_delivery_date: form.expected_delivery_date || undefined,
+        delivery_method: form.delivery_method || undefined,
+        tracking_number: form.tracking_number || undefined,
         notes: form.notes || undefined,
-      },
+        items: items.map((i) => ({
+          spare_part_id: i.spare_part_id,
+          quantity: i.quantity,
+          unit_price: i.unit_price,
+          add_to_inventory: i.add_to_inventory,
+        })),
+      } as any,
       {
         onSuccess: () => {
           onOpenChange(false)
-          setForm({ supplier: '', expected_delivery_date: '', notes: '' })
+          setForm({ supplier: '', expected_delivery_date: '', delivery_method: '', tracking_number: '', notes: '' })
+          setItems([])
         },
       }
     )
@@ -300,33 +394,164 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Створити замовлення</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>Постачальник *</Label>
-            <Select value={form.supplier} onValueChange={(v) => update('supplier', v)}>
-              <SelectTrigger><SelectValue placeholder="Оберіть постачальника" /></SelectTrigger>
-              <SelectContent>
-                {suppliersData?.results?.map((s) => (
-                  <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Supplier + Expected date */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Постачальник *</Label>
+              <Select value={form.supplier} onValueChange={(v) => update('supplier', v)}>
+                <SelectTrigger><SelectValue placeholder="Оберіть постачальника" /></SelectTrigger>
+                <SelectContent>
+                  {suppliersData?.results?.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>{s.short_name || s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Очікувана дата доставки</Label>
+              <Input type="date" value={form.expected_delivery_date} onChange={(e) => update('expected_delivery_date', e.target.value)} />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Очікувана дата доставки</Label>
-            <Input type="date" value={form.expected_delivery_date} onChange={(e) => update('expected_delivery_date', e.target.value)} />
+
+          {/* Delivery method + Tracking */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Спосіб доставки</Label>
+              <Select value={form.delivery_method} onValueChange={(v) => update('delivery_method', v === '_none' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="Оберіть" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">— Не вказано —</SelectItem>
+                  {Object.entries(DELIVERY_METHOD_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>ТТН / Трекінг номер</Label>
+              <Input value={form.tracking_number} onChange={(e) => update('tracking_number', e.target.value)} placeholder="20450..." />
+            </div>
           </div>
+
+          <Separator />
+
+          {/* Items */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Позиції замовлення *</Label>
+              {items.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  Разом: {totalAmount.toFixed(2)} грн
+                </span>
+              )}
+            </div>
+
+            {/* Existing items */}
+            {items.length > 0 && (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Запчастина</TableHead>
+                      <TableHead className="text-xs w-16">К-сть</TableHead>
+                      <TableHead className="text-xs w-24">Ціна</TableHead>
+                      <TableHead className="text-xs w-16">
+                        <Package className="h-3 w-3" title="Додати до запасів" />
+                      </TableHead>
+                      <TableHead className="text-xs w-10" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((item, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="text-sm">{item.spare_part_name}</TableCell>
+                        <TableCell className="text-sm">{item.quantity}</TableCell>
+                        <TableCell className="text-sm">{item.unit_price} грн</TableCell>
+                        <TableCell className="text-sm">{item.add_to_inventory ? 'так' : 'ні'}</TableCell>
+                        <TableCell>
+                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeItem(idx)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {/* Add new item row */}
+            <div className="rounded-md border p-3 space-y-3 bg-muted/30">
+              <p className="text-xs font-medium text-muted-foreground">Додати позицію</p>
+              <div className="grid grid-cols-[1fr,80px,100px] gap-2">
+                <Select value={newItem.spare_part_id} onValueChange={(v) => {
+                  const part = partsData?.results?.find((p) => String(p.id) === v)
+                  setNewItem((prev) => ({
+                    ...prev,
+                    spare_part_id: v,
+                    unit_price: part?.unit_cost || prev.unit_price,
+                  }))
+                }}>
+                  <SelectTrigger className="text-sm"><SelectValue placeholder="Оберіть запчастину" /></SelectTrigger>
+                  <SelectContent>
+                    {partsData?.results
+                      ?.filter((p) => !items.some((i) => i.spare_part_id === String(p.id)))
+                      .map((p) => (
+                        <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  min={1}
+                  value={newItem.quantity}
+                  onChange={(e) => setNewItem((prev) => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                  placeholder="К-сть"
+                  className="text-sm"
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  value={newItem.unit_price}
+                  onChange={(e) => setNewItem((prev) => ({ ...prev, unit_price: e.target.value }))}
+                  placeholder="Ціна"
+                  className="text-sm"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="add-to-inv"
+                    checked={newItem.add_to_inventory}
+                    onCheckedChange={(v) => setNewItem((prev) => ({ ...prev, add_to_inventory: !!v }))}
+                  />
+                  <label htmlFor="add-to-inv" className="text-xs text-muted-foreground cursor-pointer">
+                    Додати до запасів при отриманні
+                  </label>
+                </div>
+                <Button type="button" size="sm" variant="outline" onClick={addItem} disabled={!newItem.spare_part_id}>
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  Додати
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
           <div className="space-y-2">
             <Label>Нотатки</Label>
-            <Textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} placeholder="Деталі замовлення..." />
+            <Textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={2} placeholder="Деталі замовлення..." />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Скасувати</Button>
-            <Button type="submit" disabled={createOrder.isPending}>
+            <Button type="submit" disabled={createOrder.isPending || items.length === 0}>
               {createOrder.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Створити
             </Button>

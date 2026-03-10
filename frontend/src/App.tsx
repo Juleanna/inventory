@@ -18,6 +18,7 @@ const MaintenanceSchedulePage = lazy(() => import('@/pages/maintenance/schedule'
 const SparePartsListPage = lazy(() => import('@/pages/spare-parts/list'))
 const SparePartDetailPage = lazy(() => import('@/pages/spare-parts/[id]'))
 const SuppliersPage = lazy(() => import('@/pages/spare-parts/suppliers'))
+const SupplierDetailPage = lazy(() => import('@/pages/spare-parts/supplier-detail'))
 const OrdersPage = lazy(() => import('@/pages/spare-parts/orders'))
 const SoftwareListPage = lazy(() => import('@/pages/software/list'))
 const PeripheralsListPage = lazy(() => import('@/pages/peripherals/list'))
@@ -82,6 +83,7 @@ export default function App() {
               <Route path="spare-parts" element={<SparePartsListPage />} />
               <Route path="spare-parts/:id" element={<SparePartDetailPage />} />
               <Route path="spare-parts/suppliers" element={<SuppliersPage />} />
+              <Route path="spare-parts/suppliers/:id" element={<SupplierDetailPage />} />
               <Route path="spare-parts/orders" element={<OrdersPage />} />
               <Route path="users" element={<UsersListPage />} />
               <Route path="passwords" element={<PasswordVaultPage />} />
