@@ -38,7 +38,7 @@ from .two_factor import TwoFactorAuthService
 from .maintenance import MaintenanceService, MaintenanceRequest, MaintenanceSchedule, MaintenanceTask
 from .spare_parts import (
     SparePartsService, SparePart, SparePartCategory, SparePartMovement,
-    Supplier, PurchaseOrder, PurchaseOrderItem
+    Supplier, PurchaseOrder, PurchaseOrderItem, StorageLocation
 )
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
@@ -235,7 +235,7 @@ class NotificationViewSet(ModelViewSet):
 
 
 class LicenseViewSet(ModelViewSet):
-    queryset = License.objects.select_related('software', 'user').order_by('-id')
+    queryset = License.objects.select_related('user').prefetch_related('licensed_software').order_by('-id')
     serializer_class = LicenseSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -296,6 +296,10 @@ def agent_report(request):
         'priority': 'priority', 'ip_address': 'ip_address',
         'mac_address': 'mac_address', 'hostname': 'hostname',
         'cpu': 'cpu', 'ram': 'ram', 'storage': 'storage', 'gpu': 'gpu',
+        'motherboard': 'motherboard', 'motherboard_serial': 'motherboard_serial',
+        'disk_model': 'disk_model', 'display': 'display',
+        'network_adapter': 'network_adapter', 'power_supply': 'power_supply',
+        'bios_version': 'bios_version',
         'operating_system': 'operating_system', 'description': 'description',
         'notes': 'notes', 'supplier': 'supplier',
     }
@@ -504,12 +508,18 @@ def users_list(request):
     elif is_active == 'false':
         queryset = queryset.filter(is_active=False)
 
+    employment_type = request.query_params.get('employment_type', '')
+    if employment_type:
+        queryset = queryset.filter(employment_type=employment_type)
+
     # Пагінація
     page = int(request.query_params.get('page', 1))
     page_size = int(request.query_params.get('page_size', 25))
     total = queryset.count()
     start = (page - 1) * page_size
-    page_queryset = queryset[start:start + page_size]
+    page_queryset = queryset.annotate(
+        equipment_count=models.Count('assigned_equipment')
+    )[start:start + page_size]
 
     results = []
     for u in page_queryset:
@@ -533,6 +543,7 @@ def users_list(request):
             'is_active': u.is_active,
             'date_joined': u.date_joined.isoformat() if u.date_joined else None,
             'last_login': u.last_login.isoformat() if u.last_login else None,
+            'equipment_count': u.equipment_count,
         })
 
     return Response({
@@ -644,6 +655,176 @@ def user_detail(request, user_id):
         return Response(_serialize_user(user))
     except Exception as e:
         return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def users_bulk_action(request):
+    """Масові дії над користувачами (деактивація/видалення)."""
+    if not request.user.is_staff:
+        return Response({'detail': 'Недостатньо прав'}, status=status.HTTP_403_FORBIDDEN)
+
+    action = request.data.get('action', '')
+    ids = request.data.get('ids', [])
+
+    if not ids:
+        return Response({'detail': 'Не вказано жодного користувача'}, status=status.HTTP_400_BAD_REQUEST)
+
+    users = User.objects.filter(id__in=ids)
+    count = users.count()
+
+    if action == 'deactivate':
+        users.update(is_active=False)
+        return Response({'detail': f'Деактивовано {count} користувачів'})
+    elif action == 'activate':
+        users.update(is_active=True)
+        return Response({'detail': f'Активовано {count} користувачів'})
+    elif action == 'delete':
+        users.delete()
+        return Response({'detail': f'Видалено {count} користувачів'})
+
+    return Response({'detail': 'Невідома дія'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def users_stats(request):
+    """Статистика по користувачах для міні-карток та графіків."""
+    total = User.objects.count()
+    active = User.objects.filter(is_active=True).count()
+    inactive = total - active
+
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    new_this_month = User.objects.filter(date_joined__gte=thirty_days_ago).count()
+
+    without_equipment = User.objects.filter(
+        is_active=True
+    ).annotate(
+        eq_count=models.Count('assigned_equipment')
+    ).filter(eq_count=0).count()
+
+    # По відділах
+    by_department = list(
+        User.objects.filter(is_active=True)
+        .values('department')
+        .annotate(count=models.Count('id'))
+        .order_by('-count')
+    )
+
+    # По посадах
+    by_position = list(
+        User.objects.filter(is_active=True)
+        .values('position')
+        .annotate(count=models.Count('id'))
+        .order_by('-count')
+    )
+
+    # По типу зайнятості
+    by_employment = list(
+        User.objects.filter(is_active=True)
+        .values('employment_type')
+        .annotate(count=models.Count('id'))
+        .order_by('-count')
+    )
+
+    return Response({
+        'total': total,
+        'active': active,
+        'inactive': inactive,
+        'new_this_month': new_this_month,
+        'without_equipment': without_equipment,
+        'by_department': by_department,
+        'by_position': by_position,
+        'by_employment': by_employment,
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_equipment(request, user_id):
+    """Обладнання, закріплене за користувачем."""
+    equipment = Equipment.objects.filter(
+        models.Q(current_user_id=user_id) | models.Q(responsible_person_id=user_id)
+    ).values(
+        'id', 'name', 'category', 'status', 'serial_number',
+        'inventory_number', 'location'
+    ).distinct()
+    return Response({'results': list(equipment)})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_history(request, user_id):
+    """Історія змін користувача (django-simple-history)."""
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({'detail': 'Користувача не знайдено'}, status=status.HTTP_404_NOT_FOUND)
+
+    records = user.history.all()[:30]
+    history = []
+    for record in records:
+        delta = record.diff_against(record.prev_record) if record.prev_record else None
+        changes = []
+        if delta:
+            for change in delta.changes:
+                changes.append({
+                    'field': change.field,
+                    'old': str(change.old) if change.old is not None else None,
+                    'new': str(change.new) if change.new is not None else None,
+                })
+        history.append({
+            'date': record.history_date.isoformat(),
+            'user': record.history_user.username if record.history_user else None,
+            'type': record.get_history_type_display(),
+            'changes': changes,
+        })
+    return Response({'results': history})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def users_import(request):
+    """Імпорт користувачів з CSV."""
+    if not request.user.is_staff:
+        return Response({'detail': 'Недостатньо прав'}, status=status.HTTP_403_FORBIDDEN)
+
+    users_data = request.data.get('users', [])
+    if not users_data:
+        return Response({'detail': 'Немає даних для імпорту'}, status=status.HTTP_400_BAD_REQUEST)
+
+    created = 0
+    errors = []
+    for i, row in enumerate(users_data):
+        username = row.get('username', '').strip()
+        if not username:
+            errors.append(f'Рядок {i+1}: відсутній username')
+            continue
+        if User.objects.filter(username=username).exists():
+            errors.append(f'Рядок {i+1}: {username} вже існує')
+            continue
+        try:
+            user = User.objects.create_user(
+                username=username,
+                password=row.get('password', 'changeme123'),
+                email=row.get('email', ''),
+                first_name=row.get('first_name', ''),
+                last_name=row.get('last_name', ''),
+            )
+            for field in ('phone', 'department', 'position', 'employment_type',
+                          'office_location', 'room_number'):
+                if row.get(field):
+                    setattr(user, field, row[field])
+            user.save()
+            created += 1
+        except Exception as e:
+            errors.append(f'Рядок {i+1}: {str(e)}')
+
+    return Response({
+        'created': created,
+        'errors': errors,
+        'total': len(users_data),
+    })
 
 
 @api_view(['GET', 'PATCH'])
@@ -2434,7 +2615,8 @@ class MaintenanceScheduleView(APIView):
         """Отримати розклади ТО"""
         equipment_id = request.GET.get('equipment_id')
         
-        schedules_qs = MaintenanceSchedule.objects.filter(is_active=True)
+        show_inactive = request.GET.get('show_inactive')
+        schedules_qs = MaintenanceSchedule.objects.all() if show_inactive else MaintenanceSchedule.objects.filter(is_active=True)
         
         if equipment_id:
             schedules_qs = schedules_qs.filter(equipment_id=equipment_id)
@@ -2517,6 +2699,55 @@ class MaintenanceScheduleView(APIView):
             }, status=404)
 
 
+class MaintenanceScheduleDetailView(APIView):
+    """API для окремого розкладу ТО (PATCH, DELETE)"""
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return MaintenanceSchedule.objects.get(pk=pk)
+        except MaintenanceSchedule.DoesNotExist:
+            return None
+
+    def patch(self, request, pk):
+        schedule = self.get_object(pk)
+        if not schedule:
+            return Response({'success': False, 'error': 'Розклад не знайдено'}, status=404)
+
+        data = request.data
+        if 'title' in data:
+            schedule.title = data['title']
+        if 'description' in data:
+            schedule.description = data['description']
+        if 'frequency' in data:
+            schedule.frequency = data['frequency']
+        if 'next_maintenance' in data:
+            schedule.next_maintenance = datetime.fromisoformat(
+                data['next_maintenance'].replace('Z', '+00:00')
+            )
+        if 'custom_interval_days' in data:
+            schedule.custom_interval_days = data['custom_interval_days']
+        if 'estimated_duration_hours' in data:
+            schedule.estimated_duration = timedelta(hours=float(data['estimated_duration_hours']))
+        if 'is_active' in data:
+            schedule.is_active = data['is_active']
+
+        schedule.save()
+
+        return Response({
+            'success': True,
+            'message': 'Розклад оновлено'
+        })
+
+    def delete(self, request, pk):
+        schedule = self.get_object(pk)
+        if not schedule:
+            return Response({'success': False, 'error': 'Розклад не знайдено'}, status=404)
+
+        schedule.delete()
+        return Response({'success': True, 'message': 'Розклад видалено'})
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_technicians(request):
@@ -2585,7 +2816,8 @@ class SparePartsViewSet(ModelViewSet):
             total_value = serializers.ReadOnlyField()
             needs_reorder = serializers.ReadOnlyField()
             is_low_stock = serializers.ReadOnlyField()
-            
+            storage_name = serializers.CharField(source='storage.name', read_only=True, default='')
+
             class Meta:
                 model = SparePart
                 fields = '__all__'
@@ -2594,7 +2826,7 @@ class SparePartsViewSet(ModelViewSet):
     
     def get_queryset(self):
         """Кастомна фільтрація запчастин"""
-        queryset = SparePart.objects.select_related('category', 'primary_supplier')
+        queryset = SparePart.objects.select_related('category', 'primary_supplier', 'storage')
         
         # Фільтр по статусу
         status = self.request.query_params.get('status')
@@ -2882,6 +3114,25 @@ class SuppliersViewSet(ModelViewSet):
                 fields = '__all__'
         
         return SupplierSerializer
+
+
+class StorageLocationsViewSet(ModelViewSet):
+    """ViewSet для управління місцями зберігання"""
+    queryset = StorageLocation.objects.filter(is_active=True)
+    permission_classes = [IsAuthenticated]
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ['name']
+    ordering = ['name']
+
+    def get_serializer_class(self):
+        from rest_framework import serializers
+
+        class StorageLocationSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = StorageLocation
+                fields = '__all__'
+
+        return StorageLocationSerializer
 
 
 class PurchaseOrdersViewSet(ModelViewSet):

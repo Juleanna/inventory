@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { usePeripheralsList, useCreatePeripheral, useUpdatePeripheral, useDeletePeripheral, useRegeneratePeripheralCodes } from '@/hooks/use-peripherals'
+import { useState, useMemo, useEffect } from 'react'
+import { usePeripheralsList, useCreatePeripheral, useUpdatePeripheral, useDeletePeripheral, useBulkDeletePeripherals, useRegeneratePeripheralCodes } from '@/hooks/use-peripherals'
 import { useEquipmentList } from '@/hooks/use-equipment'
 import { useDebounce } from '@/hooks/use-debounce'
 import { PageHeader } from '@/components/shared/page-header'
@@ -13,14 +13,35 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { Usb, Plus, Trash2, Pencil, Loader2, QrCode, ArrowUp, ArrowDown, ArrowUpDown, X, Shuffle } from 'lucide-react'
+import { Usb, Plus, Trash2, Pencil, Loader2, QrCode, ArrowUp, ArrowDown, ArrowUpDown, X, Shuffle, ChevronRight, ChevronDown, Monitor, Download } from 'lucide-react'
 import { PERIPHERAL_TYPE_LABELS } from '@/lib/constants'
-import type { PeripheralDevice } from '@/types'
+import type { PeripheralDevice, Equipment } from '@/types'
+
+function exportPeripheralsCsv(devices: PeripheralDevice[]) {
+  const BOM = '\uFEFF'
+  const header = ['Назва', 'Тип', 'Серійний номер', 'Інв. номер', 'Підключено до']
+  const rows = devices.map((d) => [
+    d.name,
+    PERIPHERAL_TYPE_LABELS[d.type] || d.type,
+    d.serial_number,
+    d.inventory_number || '',
+    d.connected_to?.name || '',
+  ])
+  const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'peripherals.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 export default function PeripheralsListPage() {
   const [search, setSearch] = useState('')
@@ -30,23 +51,26 @@ export default function PeripheralsListPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [codesDevice, setCodesDevice] = useState<PeripheralDevice | null>(null)
   const [filterType, setFilterType] = useState('')
-  const [filterEquipment, setFilterEquipment] = useState('')
   const [ordering, setOrdering] = useState('name')
+  const [expanded, setExpanded] = useState<Set<number | 'unlinked'>>(new Set())
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
   const debouncedSearch = useDebounce(search)
-  const { data: equipmentData } = useEquipmentList({ page_size: 200 })
+  const pageSize = 500
   const { data, isLoading } = usePeripheralsList({
     page,
+    page_size: pageSize,
     search: debouncedSearch || undefined,
     type: filterType || undefined,
-    connected_to: filterEquipment ? Number(filterEquipment) : undefined,
     ordering,
   })
   const deletePeripheral = useDeletePeripheral()
+  const bulkDelete = useBulkDeletePeripherals()
   const regenerateCodes = useRegeneratePeripheralCodes()
-  const totalPages = data ? Math.ceil(data.count / 25) : 0
+  const totalPages = data ? Math.ceil(data.count / pageSize) : 0
 
-  const hasFilters = !!filterType || !!filterEquipment
+  const hasFilters = !!filterType
 
   const toggleOrdering = (field: string) => {
     setOrdering((prev) => {
@@ -62,16 +86,120 @@ export default function PeripheralsListPage() {
     return <ArrowUpDown className="h-3.5 w-3.5 opacity-30" />
   }
 
+  const { equipmentMap, unlinkedDevices } = useMemo(() => {
+    const eqMap = new Map<number, { equipment: Equipment; devices: PeripheralDevice[] }>()
+    const unlinked: PeripheralDevice[] = []
+
+    data?.results?.forEach((dev) => {
+      if (dev.connected_to) {
+        const eq = dev.connected_to
+        if (!eqMap.has(eq.id)) {
+          eqMap.set(eq.id, { equipment: eq, devices: [] })
+        }
+        eqMap.get(eq.id)!.devices.push(dev)
+      } else {
+        unlinked.push(dev)
+      }
+    })
+
+    return { equipmentMap: eqMap, unlinkedDevices: unlinked }
+  }, [data])
+
+  const sortedEquipment = useMemo(() => {
+    return Array.from(equipmentMap.values()).sort((a, b) =>
+      a.equipment.name.localeCompare(b.equipment.name)
+    )
+  }, [equipmentMap])
+
+  const toggleExpand = (key: number | 'unlinked') => {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleGroupSelect = (devices: PeripheralDevice[]) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      const groupIds = devices.map((d) => d.id)
+      const allSelected = groupIds.every((id) => next.has(id))
+      if (allSelected) {
+        groupIds.forEach((id) => next.delete(id))
+      } else {
+        groupIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const selectGroupAndDelete = (devices: PeripheralDevice[]) => {
+    const ids = new Set(selectedIds)
+    devices.forEach((d) => ids.add(d.id))
+    setSelectedIds(ids)
+    setBulkDeleteOpen(true)
+  }
+
+  const toggleSelectAll = () => {
+    if (!data?.results) return
+    const allIds = data.results.map((d) => d.id)
+    const allSelected = allIds.every((id) => selectedIds.has(id))
+    setSelectedIds(new Set(allSelected ? [] : allIds))
+  }
+
+  const isGroupAllSelected = (devices: PeripheralDevice[]) =>
+    devices.length > 0 && devices.every((d) => selectedIds.has(d.id))
+
+  const isGroupPartial = (devices: PeripheralDevice[]) =>
+    devices.some((d) => selectedIds.has(d.id)) && !isGroupAllSelected(devices)
+
+  const allPageIds = data?.results?.map((d) => d.id) ?? []
+  const allSelected = allPageIds.length > 0 && allPageIds.every((id) => selectedIds.has(id))
+
+  const handleEdit = (dev: PeripheralDevice) => { setEditDevice(dev); setShowCreate(false) }
+  const handleAdd = () => { setEditDevice(null); setShowCreate(true) }
+  const handleCloseDialog = (open: boolean) => {
+    if (!open) { setShowCreate(false); setEditDevice(null) }
+  }
+
+  const handleBulkDelete = () => {
+    bulkDelete.mutate([...selectedIds], {
+      onSuccess: () => { setSelectedIds(new Set()); setBulkDeleteOpen(false) },
+    })
+  }
+
   return (
     <div>
       <PageHeader
         title="Периферійні пристрої"
         description={`Всього: ${data?.count || 0} пристроїв`}
         actions={
-          <Button onClick={() => setShowCreate(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Додати
-          </Button>
+          <div className="flex gap-2">
+            {selectedIds.size > 0 && (
+              <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Видалити ({selectedIds.size})
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => data?.results && exportPeripheralsCsv(data.results)}>
+              <Download className="mr-2 h-4 w-4" />
+              CSV
+            </Button>
+            <Button onClick={handleAdd}>
+              <Plus className="mr-2 h-4 w-4" />
+              Додати
+            </Button>
+          </div>
         }
       />
 
@@ -95,21 +223,8 @@ export default function PeripheralsListPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="w-52">
-          <SearchableSelect
-            options={equipmentData?.results?.map((eq) => ({
-              value: String(eq.id),
-              label: eq.name,
-            })) || []}
-            value={filterEquipment}
-            onValueChange={(v) => { setFilterEquipment(v); setPage(1) }}
-            placeholder="Усе обладнання"
-            searchPlaceholder="Пошук обладнання..."
-            emptyText="Не знайдено"
-          />
-        </div>
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={() => { setFilterType(''); setFilterEquipment(''); setPage(1) }}>
+          <Button variant="ghost" size="sm" onClick={() => { setFilterType(''); setPage(1) }}>
             <X className="mr-1 h-3.5 w-3.5" />
             Скинути
           </Button>
@@ -123,7 +238,7 @@ export default function PeripheralsListPage() {
           icon={<Usb className="h-12 w-12" />}
           title="Пристроїв не знайдено"
           action={
-            <Button size="sm" onClick={() => setShowCreate(true)}>
+            <Button size="sm" onClick={handleAdd}>
               <Plus className="mr-2 h-3 w-3" />
               Додати пристрій
             </Button>
@@ -135,6 +250,10 @@ export default function PeripheralsListPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                  </TableHead>
+                  <TableHead className="w-8" />
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleOrdering('name')}>
                     <div className="flex items-center gap-1">Назва {getSortIcon('name')}</div>
                   </TableHead>
@@ -145,57 +264,141 @@ export default function PeripheralsListPage() {
                   <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => toggleOrdering('serial_number')}>
                     <div className="flex items-center gap-1">Серійний номер {getSortIcon('serial_number')}</div>
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell">Підключено до</TableHead>
-                  <TableHead className="w-28"></TableHead>
+                  <TableHead className="w-28" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.results.map((device) => (
-                  <TableRow key={device.id}>
-                    <TableCell className="font-medium">{device.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {PERIPHERAL_TYPE_LABELS[device.type] || device.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell font-mono text-sm text-muted-foreground">
-                      {device.inventory_number || '—'}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell font-mono text-sm">{device.serial_number}</TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                      {device.connected_to?.name || '—'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
+                {sortedEquipment.map(({ equipment: eq, devices }) => (
+                  <>
+                    <TableRow key={`eq-${eq.id}`} className="bg-muted/30 hover:bg-muted/50">
+                      <TableCell className="py-2">
+                        <Checkbox
+                          checked={isGroupAllSelected(devices) ? true : isGroupPartial(devices) ? 'indeterminate' : false}
+                          onCheckedChange={() => toggleGroupSelect(devices)}
+                        />
+                      </TableCell>
+                      <TableCell className="py-2 cursor-pointer" onClick={() => toggleExpand(eq.id)}>
+                        {expanded.has(eq.id)
+                          ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                      </TableCell>
+                      <TableCell colSpan={4} className="py-2 cursor-pointer" onClick={() => toggleExpand(eq.id)}>
+                        <div className="flex items-center gap-2">
+                          <Monitor className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">{eq.name}</span>
+                          <Badge variant="secondary" className="text-xs">{devices.length}</Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-2">
                         <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          title="QR / Штрих-код"
-                          onClick={() => setCodesDevice(device)}
+                          size="icon" variant="ghost"
+                          className="h-7 w-7 text-destructive"
+                          title={`Видалити всі пристрої з ${eq.name}`}
+                          onClick={() => selectGroupAndDelete(devices)}
                         >
-                          <QrCode className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={() => setEditDevice(device)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => setDeleteId(device.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                    </TableRow>
+                    {expanded.has(eq.id) && devices.map((dev) => (
+                      <TableRow key={`eq-${eq.id}-dev-${dev.id}`}>
+                        <TableCell>
+                          <Checkbox checked={selectedIds.has(dev.id)} onCheckedChange={() => toggleSelect(dev.id)} />
+                        </TableCell>
+                        <TableCell />
+                        <TableCell className="pl-10"><span className="text-sm font-medium">{dev.name}</span></TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="text-xs">
+                            {PERIPHERAL_TYPE_LABELS[dev.type] || dev.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell font-mono text-sm text-muted-foreground">
+                          {dev.inventory_number || '—'}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell font-mono text-sm">{dev.serial_number}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" title="QR / Штрих-код" onClick={() => setCodesDevice(dev)}>
+                              <QrCode className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleEdit(dev)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeleteId(dev.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </>
                 ))}
+
+                {unlinkedDevices.length > 0 && (
+                  <>
+                    <TableRow className="bg-muted/30 hover:bg-muted/50">
+                      <TableCell className="py-2">
+                        <Checkbox
+                          checked={isGroupAllSelected(unlinkedDevices) ? true : isGroupPartial(unlinkedDevices) ? 'indeterminate' : false}
+                          onCheckedChange={() => toggleGroupSelect(unlinkedDevices)}
+                        />
+                      </TableCell>
+                      <TableCell className="py-2 cursor-pointer" onClick={() => toggleExpand('unlinked')}>
+                        {expanded.has('unlinked')
+                          ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                      </TableCell>
+                      <TableCell colSpan={4} className="py-2 cursor-pointer" onClick={() => toggleExpand('unlinked')}>
+                        <div className="flex items-center gap-2">
+                          <Usb className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium text-muted-foreground">Не підключено до обладнання</span>
+                          <Badge variant="outline" className="text-xs">{unlinkedDevices.length}</Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <Button
+                          size="icon" variant="ghost"
+                          className="h-7 w-7 text-destructive"
+                          title="Видалити всі непідключені пристрої"
+                          onClick={() => selectGroupAndDelete(unlinkedDevices)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    {expanded.has('unlinked') && unlinkedDevices.map((dev) => (
+                      <TableRow key={`unlinked-${dev.id}`}>
+                        <TableCell>
+                          <Checkbox checked={selectedIds.has(dev.id)} onCheckedChange={() => toggleSelect(dev.id)} />
+                        </TableCell>
+                        <TableCell />
+                        <TableCell className="pl-10"><span className="text-sm font-medium">{dev.name}</span></TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="text-xs">
+                            {PERIPHERAL_TYPE_LABELS[dev.type] || dev.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell font-mono text-sm text-muted-foreground">
+                          {dev.inventory_number || '—'}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell font-mono text-sm">{dev.serial_number}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" title="QR / Штрих-код" onClick={() => setCodesDevice(dev)}>
+                              <QrCode className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleEdit(dev)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeleteId(dev.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </>
+                )}
               </TableBody>
             </Table>
           </div>
@@ -206,12 +409,7 @@ export default function PeripheralsListPage() {
 
       <PeripheralFormDialog
         open={showCreate || !!editDevice}
-        onOpenChange={(v) => {
-          if (!v) {
-            setShowCreate(false)
-            setEditDevice(null)
-          }
-        }}
+        onOpenChange={handleCloseDialog}
         device={editDevice}
       />
 
@@ -227,6 +425,16 @@ export default function PeripheralsListPage() {
             setDeleteId(null)
           }
         }}
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={(v) => { if (!v) setBulkDeleteOpen(false) }}
+        title={`Видалити ${selectedIds.size} пристроїв?`}
+        description="Обрані пристрої буде видалено назавжди. Цю дію не можна скасувати."
+        confirmLabel={`Видалити (${selectedIds.size})`}
+        onConfirm={handleBulkDelete}
         variant="destructive"
       />
 

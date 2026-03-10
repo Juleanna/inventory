@@ -56,8 +56,17 @@ export default function SuppliersPage() {
             <Card key={supplier.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">{supplier.name}</CardTitle>
-                  <div className="flex items-center gap-1">
+                  <div className="min-w-0 flex-1 mr-2">
+                    {supplier.short_name ? (
+                      <>
+                        <CardTitle className="text-base text-primary">{supplier.short_name}</CardTitle>
+                        <p className="text-xs text-muted-foreground truncate">{supplier.name}</p>
+                      </>
+                    ) : (
+                      <CardTitle className="text-base">{supplier.name}</CardTitle>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -153,6 +162,7 @@ function SupplierFormDialog({
   const updateSupplier = useUpdateSupplier()
 
   const [form, setForm] = useState({
+    short_name: '',
     name: '',
     contact_person: '',
     email: '',
@@ -167,6 +177,7 @@ function SupplierFormDialog({
   useEffect(() => {
     if (supplier) {
       setForm({
+        short_name: supplier.short_name || '',
         name: supplier.name || '',
         contact_person: supplier.contact_person || '',
         email: supplier.email || '',
@@ -178,7 +189,7 @@ function SupplierFormDialog({
         notes: supplier.notes || '',
       })
     } else {
-      setForm({ name: '', contact_person: '', email: '', phone: '', address: '', website: '', tax_id: '', rating: '', notes: '' })
+      setForm({ short_name: '', name: '', contact_person: '', email: '', phone: '', address: '', website: '', tax_id: '', rating: '', notes: '' })
     }
   }, [supplier])
 
@@ -188,6 +199,7 @@ function SupplierFormDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const payload = {
+      short_name: form.short_name || undefined,
       name: form.name,
       contact_person: form.contact_person || undefined,
       email: form.email || undefined,
@@ -222,49 +234,59 @@ function SupplierFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{supplier ? 'Редагувати постачальника' : 'Додати постачальника'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Назва компанії *</Label>
-              <Input value={form.name} onChange={(e) => update('name', e.target.value)} required />
+          {/* Скорочена назва + ЄДРПОУ */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2 space-y-2">
+              <Label>Скорочена назва</Label>
+              <Input value={form.short_name} onChange={(e) => update('short_name', e.target.value)} placeholder="ESERVER" />
             </div>
+            <div className="space-y-2">
+              <Label>ЄДРПОУ / ІПН</Label>
+              <Input value={form.tax_id} onChange={(e) => update('tax_id', e.target.value)} placeholder="12345678" />
+            </div>
+          </div>
+          {/* Повна назва */}
+          <div className="space-y-2">
+            <Label>Повна назва компанії *</Label>
+            <Input value={form.name} onChange={(e) => update('name', e.target.value)} required placeholder="ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ..." />
+          </div>
+          {/* Контактна особа + Телефон + Email */}
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Контактна особа</Label>
               <Input value={form.contact_person} onChange={(e) => update('contact_person', e.target.value)} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Телефон</Label>
               <Input value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+380..." />
             </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" value={form.email} onChange={(e) => update('email', e.target.value)} />
+            </div>
           </div>
+          {/* Адреса */}
           <div className="space-y-2">
             <Label>Адреса</Label>
             <Input value={form.address} onChange={(e) => update('address', e.target.value)} />
           </div>
-          <div className="space-y-2">
-            <Label>Вебсайт</Label>
-            <Input value={form.website} onChange={(e) => update('website', e.target.value)} placeholder="https://..." />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>ЄДРПОУ / ІПН</Label>
-              <Input value={form.tax_id} onChange={(e) => update('tax_id', e.target.value)} />
+          {/* Вебсайт + Рейтинг */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2 space-y-2">
+              <Label>Вебсайт</Label>
+              <Input value={form.website} onChange={(e) => update('website', e.target.value)} placeholder="https://..." />
             </div>
             <div className="space-y-2">
               <Label>Рейтинг (0-5)</Label>
               <Input type="number" min="0" max="5" step="0.1" value={form.rating} onChange={(e) => update('rating', e.target.value)} />
             </div>
           </div>
+          {/* Нотатки */}
           <div className="space-y-2">
             <Label>Нотатки</Label>
             <Textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={2} />

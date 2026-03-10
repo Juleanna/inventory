@@ -57,6 +57,21 @@ export function useDeletePeripheral() {
   })
 }
 
+export function useBulkDeletePeripherals() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (ids: number[]) => Promise.all(ids.map((id) => peripheralsApi.delete(id))),
+    onSuccess: (_data, ids) => {
+      queryClient.invalidateQueries({ queryKey: ['peripherals'] })
+      toast.success(`Видалено ${ids.length} пристроїв`)
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка масового видалення'))
+    },
+  })
+}
+
 export function useRegeneratePeripheralCodes() {
   const queryClient = useQueryClient()
 

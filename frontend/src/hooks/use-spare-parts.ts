@@ -4,6 +4,29 @@ import type { SparePart, Supplier, PurchaseOrder } from '@/types'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
 
+export function useStorageLocations() {
+  return useQuery({
+    queryKey: ['storage-locations'],
+    queryFn: () => sparePartsApi.listStorageLocations().then((r) => r.data.results),
+  })
+}
+
+export function useCreateStorageLocation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { name: string; description?: string }) =>
+      sparePartsApi.createStorageLocation(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['storage-locations'] })
+      toast.success('Місце зберігання створено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error))
+    },
+  })
+}
+
 export function useSparePartsAnalytics() {
   return useQuery({
     queryKey: ['spare-parts-analytics'],
@@ -39,6 +62,14 @@ export function useCreateMovement() {
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Помилка реєстрації руху'))
     },
+  })
+}
+
+export function useSparePart(id: string) {
+  return useQuery({
+    queryKey: ['spare-parts', id],
+    queryFn: () => sparePartsApi.getPart(Number(id)).then((r) => r.data),
+    enabled: !!id,
   })
 }
 
@@ -104,6 +135,22 @@ export function useCreatePurchaseOrder() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Помилка створення замовлення'))
+    },
+  })
+}
+
+export function useUpdatePurchaseOrder() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<PurchaseOrder> }) =>
+      sparePartsApi.updateOrder(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] })
+      toast.success('Замовлення оновлено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка оновлення замовлення'))
     },
   })
 }

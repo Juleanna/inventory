@@ -10,7 +10,7 @@ export const maintenanceApi = {
     apiClient.post<MaintenanceRequest>('/maintenance/requests/', data),
 
   // Розклади
-  listSchedules: (params?: { page?: number }) =>
+  listSchedules: (params?: { page?: number; show_inactive?: boolean }) =>
     apiClient.get('/maintenance/schedules/', { params }),
 
   createSchedule: (data: Record<string, unknown>) =>
@@ -37,4 +37,7 @@ export const maintenanceApi = {
 
   getDashboard: () =>
     apiClient.get('/maintenance/dashboard/'),
+
+  generateScheduledRequests: () =>
+    apiClient.post('/maintenance/create-scheduled/'),
 }

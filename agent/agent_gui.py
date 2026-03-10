@@ -448,6 +448,29 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(grp_specs)
 
+        # Detailed Hardware
+        grp_hw = QGroupBox("Комплектуючі")
+        grid3 = QGridLayout(grp_hw)
+        grid3.setSpacing(4)
+
+        self.info_motherboard = InfoRow("Материнська плата:")
+        self.info_mb_serial = InfoRow("S/N мат. плати:")
+        self.info_disk_model = InfoRow("Накопичувачі (модель):")
+        self.info_display = InfoRow("Екран:")
+        self.info_net_adapter = InfoRow("Мережевий адаптер:")
+        self.info_psu = InfoRow("Блок живлення:")
+        self.info_bios = InfoRow("BIOS/UEFI:")
+
+        grid3.addWidget(self.info_motherboard, 0, 0)
+        grid3.addWidget(self.info_mb_serial, 0, 1)
+        grid3.addWidget(self.info_disk_model, 1, 0, 1, 2)
+        grid3.addWidget(self.info_display, 2, 0)
+        grid3.addWidget(self.info_net_adapter, 2, 1)
+        grid3.addWidget(self.info_psu, 3, 0)
+        grid3.addWidget(self.info_bios, 3, 1)
+
+        layout.addWidget(grp_hw)
+
         # Network
         grp_net = QGroupBox("Мережа")
         net_layout = QHBoxLayout(grp_net)
@@ -914,6 +937,13 @@ class MainWindow(QMainWindow):
         self.info_ram.set_value(data.get("ram", ""))
         self.info_storage.set_value(data.get("storage", ""))
         self.info_gpu.set_value(data.get("gpu", ""))
+        self.info_motherboard.set_value(data.get("motherboard", ""))
+        self.info_mb_serial.set_value(data.get("motherboard_serial", ""))
+        self.info_disk_model.set_value(data.get("disk_model", "").replace("\n", "; "))
+        self.info_display.set_value(data.get("display", ""))
+        self.info_net_adapter.set_value(data.get("network_adapter", ""))
+        self.info_psu.set_value(data.get("power_supply", ""))
+        self.info_bios.set_value(data.get("bios_version", ""))
         self.info_ip.set_value(data.get("ip_address", ""))
         self.info_mac.set_value(data.get("mac_address", ""))
 

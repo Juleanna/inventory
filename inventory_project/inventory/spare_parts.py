@@ -15,9 +15,15 @@ class Supplier(models.Model):
     
     name = models.CharField(
         max_length=200,
-        verbose_name="Назва постачальника"
+        verbose_name="Повна назва постачальника"
     )
-    
+
+    short_name = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Скорочена назва"
+    )
+
     contact_person = models.CharField(
         max_length=200,
         blank=True,
@@ -114,6 +120,33 @@ class SparePartCategory(models.Model):
         verbose_name_plural = "Категорії запчастин"
         ordering = ['name']
     
+    def __str__(self):
+        return self.name
+
+
+class StorageLocation(models.Model):
+    """Місце зберігання (склад, полиця, стелаж)"""
+
+    name = models.CharField(
+        max_length=200,
+        verbose_name="Назва"
+    )
+
+    description = models.TextField(
+        blank=True,
+        verbose_name="Опис"
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активне"
+    )
+
+    class Meta:
+        verbose_name = "Місце зберігання"
+        verbose_name_plural = "Місця зберігання"
+        ordering = ['name']
+
     def __str__(self):
         return self.name
 
@@ -266,6 +299,15 @@ class SparePart(models.Model):
     storage_location = models.CharField(
         max_length=100,
         blank=True,
+        verbose_name="Місце зберігання (стара)"
+    )
+
+    storage = models.ForeignKey(
+        StorageLocation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='spare_parts',
         verbose_name="Місце зберігання"
     )
     

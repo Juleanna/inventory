@@ -20,6 +20,9 @@ export interface User {
   employment_type: string
   is_staff: boolean
   is_active: boolean
+  equipment_count?: number
+  date_joined?: string | null
+  last_login?: string | null
 }
 
 export interface Equipment {
@@ -57,6 +60,13 @@ export interface Equipment {
   storage: string
   gpu: string
   operating_system: string
+  motherboard: string
+  motherboard_serial: string
+  disk_model: string
+  display: string
+  network_adapter: string
+  power_supply: string
+  bios_version: string
   description: string
   notes: string
   barcode_image: string | null
@@ -146,6 +156,8 @@ export interface SparePart {
   primary_supplier_details?: Supplier
   alternative_suppliers: number[]
   storage_location: string
+  storage: number | null
+  storage_name: string
   last_received_date: string | null
   last_issued_date: string | null
   expiry_date: string | null
@@ -170,6 +182,7 @@ export interface SparePartCategory {
 export interface Supplier {
   id: number
   name: string
+  short_name: string
   contact_person: string
   email: string
   phone: string
@@ -297,15 +310,20 @@ export interface PeripheralDevice {
 export interface License {
   id: number
   license_type: string
+  open_source_type: string
   key: string
   description: string
   activations: number
-  start_date: string
-  end_date: string
-  software: number | null
-  software_name: string
+  start_date: string | null
+  end_date: string | null
+  is_perpetual: boolean
+  cost: string | null
+  trial_days: number | null
+  oem_device: number | null
   user: number | null
   user_name: string
+  software_list: Array<{ id: number; name: string; version: string }>
+  software_ids?: number[]
 }
 
 export interface EquipmentDocument {

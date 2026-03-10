@@ -13,8 +13,8 @@ from .models import License
 class LicenseAdmin(ModelAdmin):
     """Адмін для ліцензій"""
     list_display = (
-        'license_type', 'key_preview', 'activations', 'start_date', 'end_date', 
-        'software', 'user', 'license_status', 'days_remaining'
+        'license_type', 'key_preview', 'activations', 'start_date', 'end_date',
+        'user', 'license_status', 'days_remaining'
     )
     list_filter = (
         'license_type',
@@ -32,6 +32,10 @@ class LicenseAdmin(ModelAdmin):
     
     @display(description=_('Статус ліцензії'), ordering='end_date')
     def license_status(self, obj):
+        if obj.is_perpetual:
+            return format_html('<span class="badge badge-success">Безстрокова</span>')
+        if not obj.end_date or not obj.start_date:
+            return format_html('<span class="badge badge-secondary">—</span>')
         today = timezone.now().date()
         if obj.end_date < today:
             return format_html('<span class="badge badge-danger">Прострочена</span>')
@@ -46,6 +50,8 @@ class LicenseAdmin(ModelAdmin):
     
     @display(description=_('Днів залишилося'), ordering='end_date')
     def days_remaining(self, obj):
+        if obj.is_perpetual or not obj.end_date:
+            return '—'
         today = timezone.now().date()
         if obj.end_date >= today:
             days = (obj.end_date - today).days
@@ -70,6 +76,6 @@ class LicenseAdmin(ModelAdmin):
             'fields': ('start_date', 'end_date')
         }),
         ('Прив\'язка', {
-            'fields': ('software', 'user')
+            'fields': ('user',)
         })
     )

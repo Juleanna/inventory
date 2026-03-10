@@ -205,6 +205,37 @@ export const MOVEMENT_TYPE_LABELS: Record<string, string> = {
   WRITE_OFF: 'Списання',
 }
 
+export const LICENSE_TYPE_LABELS: Record<string, string> = {
+  COMMERCIAL: 'Комерційна',
+  FREEWARE: 'Freeware',
+  SHAREWARE: 'Shareware',
+  OPEN_SOURCE: 'Open Source',
+  TRIAL: 'Trial (пробна)',
+  OEM: 'OEM',
+  VOLUME: 'Volume License (корпоративна)',
+}
+
+export const OPEN_SOURCE_TYPE_LABELS: Record<string, string> = {
+  GPL: 'GPL',
+  MIT: 'MIT',
+  APACHE: 'Apache 2.0',
+  BSD: 'BSD',
+  LGPL: 'LGPL',
+  MPL: 'MPL',
+  AGPL: 'AGPL',
+  OTHER: 'Інша',
+}
+
+export const LICENSE_TYPE_OPTIONS = Object.entries(LICENSE_TYPE_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}))
+
+export const OPEN_SOURCE_TYPE_OPTIONS = Object.entries(OPEN_SOURCE_TYPE_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}))
+
 export const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({
   value,
   label,

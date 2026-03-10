@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { useSparePartsList, useCreateSparePart } from '@/hooks/use-spare-parts'
+import { useSparePartsList, useCreateSparePart, useStorageLocations, useCreateStorageLocation } from '@/hooks/use-spare-parts'
 import { useDebounce } from '@/hooks/use-debounce'
 import { PageHeader } from '@/components/shared/page-header'
 import { SearchInput } from '@/components/shared/search-input'
@@ -21,19 +21,50 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MovementsTable } from '@/components/spare-parts/movements-table'
 import { SparePartsAnalyticsSection } from '@/components/spare-parts/analytics-section'
-import { Package, Truck, ShoppingCart, Plus, Loader2 } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Package, Truck, ShoppingCart, Plus, Loader2, Download, AlertTriangle } from 'lucide-react'
 import { SPARE_PART_CONDITION_LABELS } from '@/lib/constants'
+import type { SparePart } from '@/types'
+
+function exportSparePartsCsv(parts: SparePart[]) {
+  const BOM = '\uFEFF'
+  const headers = ['Назва', 'Артикул', 'Виробник', 'Кількість', 'Мін. запас', 'Ціна', 'Місце']
+  const rows = parts.map((p) => [
+    p.name, p.part_number, p.manufacturer, String(p.quantity_in_stock),
+    String(p.minimum_stock_level), p.unit_price, p.storage_name || p.storage_location || '',
+  ])
+  const csv = BOM + [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'spare-parts.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 export default function SparePartsListPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [showCreate, setShowCreate] = useState(false)
+  const [stockFilter, setStockFilter] = useState('')
   const debouncedSearch = useDebounce(search)
   const { data, isLoading } = useSparePartsList({
     page,
     search: debouncedSearch || undefined,
   })
   const totalPages = data ? Math.ceil(data.count / 25) : 0
+
+  // Low stock count
+  const lowStockCount = data?.results?.filter((p) => p.quantity_in_stock <= p.minimum_stock_level).length || 0
+  const outOfStockCount = data?.results?.filter((p) => p.quantity_in_stock === 0).length || 0
+
+  const filteredResults = data?.results?.filter((p) => {
+    if (!stockFilter) return true
+    if (stockFilter === 'low') return p.quantity_in_stock <= p.minimum_stock_level && p.quantity_in_stock > 0
+    if (stockFilter === 'out') return p.quantity_in_stock === 0
+    return true
+  })
 
   return (
     <div>
@@ -42,6 +73,12 @@ export default function SparePartsListPage() {
         description={`Всього: ${data?.count || 0} позицій`}
         actions={
           <div className="flex gap-2">
+            {data?.results && data.results.length > 0 && (
+              <Button variant="outline" size="sm" onClick={() => exportSparePartsCsv(data.results)}>
+                <Download className="mr-2 h-4 w-4" />
+                CSV
+              </Button>
+            )}
             <Button onClick={() => setShowCreate(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Додати
@@ -70,18 +107,51 @@ export default function SparePartsListPage() {
         </TabsList>
 
         <TabsContent value="list">
-      <div className="mb-4">
+      {/* Low stock alerts */}
+      {(lowStockCount > 0 || outOfStockCount > 0) && (
+        <div className="mb-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {outOfStockCount > 0 && (
+            <Card className="border-red-200 dark:border-red-900 cursor-pointer" onClick={() => setStockFilter(stockFilter === 'out' ? '' : 'out')}>
+              <CardContent className="flex items-center gap-3 p-3">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <div>
+                  <p className="text-lg font-bold text-red-600">{outOfStockCount}</p>
+                  <p className="text-xs text-muted-foreground">Немає в наявності</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {lowStockCount > 0 && (
+            <Card className="border-yellow-200 dark:border-yellow-900 cursor-pointer" onClick={() => setStockFilter(stockFilter === 'low' ? '' : 'low')}>
+              <CardContent className="flex items-center gap-3 p-3">
+                <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                <div>
+                  <p className="text-lg font-bold text-yellow-600">{lowStockCount}</p>
+                  <p className="text-xs text-muted-foreground">Низький запас</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      <div className="mb-4 flex flex-wrap items-end gap-3">
         <SearchInput
           value={search}
           onChange={setSearch}
           placeholder="Пошук запчастин..."
           className="sm:w-72"
         />
+        {stockFilter && (
+          <Badge variant="secondary" className="h-9 px-3 cursor-pointer" onClick={() => setStockFilter('')}>
+            {stockFilter === 'low' ? 'Низький запас' : 'Немає в наявності'} &times;
+          </Badge>
+        )}
       </div>
 
       {isLoading ? (
         <LoadingSpinner />
-      ) : !data?.results?.length ? (
+      ) : !filteredResults?.length ? (
         <EmptyState
           icon={<Package className="h-12 w-12" />}
           title="Запчастини не знайдено"
@@ -100,10 +170,10 @@ export default function SparePartsListPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.results.map((part) => (
+                {filteredResults!.map((part) => (
                   <TableRow key={part.id}>
                     <TableCell>
-                      <span className="font-medium">{part.name}</span>
+                      <Link to={`/spare-parts/${part.id}`} className="font-medium hover:underline text-primary">{part.name}</Link>
                       <p className="text-xs text-muted-foreground">{part.manufacturer}</p>
                     </TableCell>
                     <TableCell className="hidden md:table-cell font-mono text-sm">
@@ -123,7 +193,7 @@ export default function SparePartsListPage() {
                       {part.unit_price} грн
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                      {part.storage_location}
+                      {part.storage_name || part.storage_location}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -166,7 +236,7 @@ function CreateSparePartDialog({ open, onOpenChange }: { open: boolean; onOpenCh
     reorder_point: '',
     unit_price: '',
     unit_cost: '',
-    storage_location: '',
+    storage: '',
     condition: 'NEW',
     is_critical: false,
     weight: '',
@@ -198,7 +268,7 @@ function CreateSparePartDialog({ open, onOpenChange }: { open: boolean; onOpenCh
     if (form.reorder_point) payload.reorder_point = Number(form.reorder_point)
     if (form.unit_price) payload.unit_price = form.unit_price
     if (form.unit_cost) payload.unit_cost = form.unit_cost
-    if (form.storage_location) payload.storage_location = form.storage_location
+    if (form.storage) payload.storage = Number(form.storage)
     if (form.weight) payload.weight = form.weight
     if (form.dimensions) payload.dimensions = form.dimensions
     if (form.expiry_date) payload.expiry_date = form.expiry_date
@@ -215,121 +285,124 @@ function CreateSparePartDialog({ open, onOpenChange }: { open: boolean; onOpenCh
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl p-0">
+        <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle>Додати запчастину</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground pt-3 pb-1">Ідентифікація</p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Назва *</Label>
-              <Input value={form.name} onChange={(e) => update('name', e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label>Артикул *</Label>
-              <Input value={form.part_number} onChange={(e) => update('part_number', e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label>Номер виробника</Label>
-              <Input value={form.manufacturer_part_number} onChange={(e) => update('manufacturer_part_number', e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Виробник</Label>
-              <Input value={form.manufacturer} onChange={(e) => update('manufacturer', e.target.value)} />
-            </div>
-          </div>
+        <form onSubmit={handleSubmit}>
+          <Tabs defaultValue="main" className="w-full">
+            <TabsList className="mx-6 mt-2">
+              <TabsTrigger value="main">Основне</TabsTrigger>
+              <TabsTrigger value="stock">Склад і фінанси</TabsTrigger>
+              <TabsTrigger value="details">Характеристики</TabsTrigger>
+            </TabsList>
 
-          <p className="text-sm font-medium text-muted-foreground pt-3 pb-1">Склад та запаси</p>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Кількість</Label>
-              <Input type="number" value={form.quantity_in_stock} onChange={(e) => update('quantity_in_stock', e.target.value)} placeholder="0" />
-            </div>
-            <div className="space-y-2">
-              <Label>Мін. запас</Label>
-              <Input type="number" value={form.minimum_stock_level} onChange={(e) => update('minimum_stock_level', e.target.value)} placeholder="0" />
-            </div>
-            <div className="space-y-2">
-              <Label>Макс. запас</Label>
-              <Input type="number" value={form.maximum_stock_level} onChange={(e) => update('maximum_stock_level', e.target.value)} placeholder="0" />
-            </div>
-            <div className="space-y-2">
-              <Label>Точка замовлення</Label>
-              <Input type="number" value={form.reorder_point} onChange={(e) => update('reorder_point', e.target.value)} placeholder="0" />
-            </div>
-            <div className="space-y-2 col-span-2">
-              <Label>Місце зберігання</Label>
-              <Input value={form.storage_location} onChange={(e) => update('storage_location', e.target.value)} placeholder="Склад A, Полиця 3" />
-            </div>
-          </div>
-
-          <p className="text-sm font-medium text-muted-foreground pt-3 pb-1">Фінанси</p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Ціна продажу (грн)</Label>
-              <Input type="number" step="0.01" value={form.unit_price} onChange={(e) => update('unit_price', e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Вартість (грн)</Label>
-              <Input type="number" step="0.01" value={form.unit_cost} onChange={(e) => update('unit_cost', e.target.value)} />
-            </div>
-          </div>
-
-          <p className="text-sm font-medium text-muted-foreground pt-3 pb-1">Характеристики</p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Стан</Label>
-              <Select value={form.condition} onValueChange={(v) => update('condition', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(SPARE_PART_CONDITION_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Вага (кг)</Label>
-              <Input type="number" step="0.001" value={form.weight} onChange={(e) => update('weight', e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Розміри</Label>
-              <Input value={form.dimensions} onChange={(e) => update('dimensions', e.target.value)} placeholder="Д x Ш x В" />
-            </div>
-            <div className="flex items-center gap-2 pt-6">
-              <Checkbox
-                id="is_critical"
-                checked={form.is_critical}
-                onCheckedChange={(checked) => update('is_critical', !!checked)}
-              />
-              <Label htmlFor="is_critical" className="cursor-pointer">Критична запчастина</Label>
-            </div>
-          </div>
-
-          <p className="text-sm font-medium text-muted-foreground pt-3 pb-1">Додатково</p>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Опис</Label>
-              <Textarea value={form.description} onChange={(e) => update('description', e.target.value)} rows={2} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Термін придатності</Label>
-                <Input type="date" value={form.expiry_date} onChange={(e) => update('expiry_date', e.target.value)} />
+            <TabsContent value="main" className="px-6 pb-2 mt-0 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Назва *</Label>
+                  <Input value={form.name} onChange={(e) => update('name', e.target.value)} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Артикул *</Label>
+                  <Input value={form.part_number} onChange={(e) => update('part_number', e.target.value)} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Номер виробника</Label>
+                  <Input value={form.manufacturer_part_number} onChange={(e) => update('manufacturer_part_number', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Виробник</Label>
+                  <Input value={form.manufacturer} onChange={(e) => update('manufacturer', e.target.value)} />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label>Гарантія (днів)</Label>
-                <Input type="number" value={form.warranty_period_days} onChange={(e) => update('warranty_period_days', e.target.value)} />
+                <Label>Опис</Label>
+                <Textarea value={form.description} onChange={(e) => update('description', e.target.value)} rows={3} />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Примітки</Label>
-              <Textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={2} />
-            </div>
-          </div>
+            </TabsContent>
 
-          <div className="flex justify-end gap-2 pt-4">
+            <TabsContent value="stock" className="px-6 pb-2 mt-0 space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Кількість</Label>
+                  <Input type="number" value={form.quantity_in_stock} onChange={(e) => update('quantity_in_stock', e.target.value)} placeholder="0" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Мін. запас</Label>
+                  <Input type="number" value={form.minimum_stock_level} onChange={(e) => update('minimum_stock_level', e.target.value)} placeholder="0" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Макс. запас</Label>
+                  <Input type="number" value={form.maximum_stock_level} onChange={(e) => update('maximum_stock_level', e.target.value)} placeholder="0" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Точка замовлення</Label>
+                  <Input type="number" value={form.reorder_point} onChange={(e) => update('reorder_point', e.target.value)} placeholder="0" />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label>Місце зберігання</Label>
+                  <StorageLocationSelect value={form.storage} onChange={(v) => update('storage', v)} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Ціна продажу (грн)</Label>
+                  <Input type="number" step="0.01" value={form.unit_price} onChange={(e) => update('unit_price', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Вартість (грн)</Label>
+                  <Input type="number" step="0.01" value={form.unit_cost} onChange={(e) => update('unit_cost', e.target.value)} />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="details" className="px-6 pb-2 mt-0 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Стан</Label>
+                  <Select value={form.condition} onValueChange={(v) => update('condition', v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(SPARE_PART_CONDITION_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Вага (кг)</Label>
+                  <Input type="number" step="0.001" value={form.weight} onChange={(e) => update('weight', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Розміри</Label>
+                  <Input value={form.dimensions} onChange={(e) => update('dimensions', e.target.value)} placeholder="Д x Ш x В" />
+                </div>
+                <div className="flex items-center gap-2 pt-6">
+                  <Checkbox
+                    id="is_critical"
+                    checked={form.is_critical}
+                    onCheckedChange={(checked) => update('is_critical', !!checked)}
+                  />
+                  <Label htmlFor="is_critical" className="cursor-pointer">Критична запчастина</Label>
+                </div>
+                <div className="space-y-2">
+                  <Label>Термін придатності</Label>
+                  <Input type="date" value={form.expiry_date} onChange={(e) => update('expiry_date', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Гарантія (днів)</Label>
+                  <Input type="number" value={form.warranty_period_days} onChange={(e) => update('warranty_period_days', e.target.value)} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Примітки</Label>
+                <Textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} />
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <div className="flex justify-end gap-2 px-6 py-4 border-t">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Скасувати</Button>
             <Button type="submit" disabled={createPart.isPending}>
               {createPart.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -339,5 +412,53 @@ function CreateSparePartDialog({ open, onOpenChange }: { open: boolean; onOpenCh
         </form>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function StorageLocationSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { data: locations } = useStorageLocations()
+  const createLocation = useCreateStorageLocation()
+  const [adding, setAdding] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleAdd = () => {
+    const name = inputRef.current?.value?.trim()
+    if (!name) return
+    createLocation.mutate({ name }, {
+      onSuccess: (res) => {
+        onChange(String(res.data.id))
+        setAdding(false)
+      },
+    })
+  }
+
+  if (adding) {
+    return (
+      <div className="flex gap-2">
+        <Input ref={inputRef} placeholder="Назва нового складу..." autoFocus onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAdd() } }} />
+        <Button type="button" size="sm" onClick={handleAdd} disabled={createLocation.isPending}>
+          {createLocation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'OK'}
+        </Button>
+        <Button type="button" size="sm" variant="ghost" onClick={() => setAdding(false)}>✕</Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex gap-2">
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="flex-1">
+          <SelectValue placeholder="Оберіть склад" />
+        </SelectTrigger>
+        <SelectContent>
+          {locations?.map((loc) => (
+            <SelectItem key={loc.id} value={String(loc.id)}>{loc.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button type="button" size="icon" variant="outline" className="shrink-0" onClick={() => setAdding(true)} title="Додати нове місце">
+        <Plus className="h-4 w-4" />
+      </Button>
+    </div>
   )
 }

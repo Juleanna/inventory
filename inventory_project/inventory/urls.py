@@ -11,13 +11,13 @@ from .views import (
     LicenseViewSet, SoftwareViewSet, PeripheralDeviceViewSet,
     DashboardView, AnalyticsView, ReportsView, ExportView,
     # Нові views для запчастин
-    SparePartsViewSet, SuppliersViewSet, PurchaseOrdersViewSet, SparePartCategoriesViewSet,
+    SparePartsViewSet, SuppliersViewSet, PurchaseOrdersViewSet, SparePartCategoriesViewSet, StorageLocationsViewSet,
     # 2FA views
     TwoFactorSetupView, TwoFactorVerifyView, TwoFactorStatusView,
     # Maintenance views
     MaintenanceRequestViewSet,
     MaintenanceDashboardView, AssignTechnicianView, StartMaintenanceView, CompleteMaintenanceView,
-    MaintenanceScheduleView,
+    MaintenanceScheduleView, MaintenanceScheduleDetailView,
     # Персоналізація
     PersonalizedDashboardView, UserPreferencesView
 )
@@ -37,6 +37,7 @@ router.register(r'spare-parts', SparePartsViewSet)
 router.register(r'suppliers', SuppliersViewSet)
 router.register(r'purchase-orders', PurchaseOrdersViewSet)
 router.register(r'spare-part-categories', SparePartCategoriesViewSet)
+router.register(r'storage-locations', StorageLocationsViewSet)
 router.register(r'maintenance/requests', MaintenanceRequestViewSet, basename='maintenance-request')
 
 # PASSWORD MANAGEMENT API
@@ -51,6 +52,14 @@ urlpatterns = [
 
     # Health check
     path('api/health/', views.health_check, name='health_check'),
+
+    # ============ SPARE PARTS (before router to avoid pk conflict) ============
+    path('api/spare-parts/movements/', views.SparePartMovementView.as_view(), name='spare-parts-movements'),
+    path('api/spare-parts/issue/', views.IssueSparePartView.as_view(), name='issue-spare-part'),
+    path('api/spare-parts/receive/', views.ReceiveSparePartView.as_view(), name='receive-spare-part'),
+    path('api/spare-parts/create-order/', views.CreatePurchaseOrderView.as_view(), name='create-purchase-order'),
+    path('api/spare-parts/equipment/<str:equipment_id>/', views.get_spare_parts_for_equipment, name='spare-parts-for-equipment'),
+    path('api/spare-parts/analytics/', views.spare_parts_analytics, name='spare-parts-analytics'),
 
     # Основне API
     path('api/', include(router.urls)),
@@ -108,7 +117,12 @@ urlpatterns = [
     path('api/auth/change-password/', views.change_password, name='change-password'),
     path('api/users/', views.users_list, name='users-list'),
     path('api/users/create/', views.user_create, name='user-create'),
+    path('api/users/bulk-action/', views.users_bulk_action, name='users-bulk-action'),
+    path('api/users/stats/', views.users_stats, name='users-stats'),
+    path('api/users/import/', views.users_import, name='users-import'),
     path('api/users/<int:user_id>/', views.user_detail, name='user-detail'),
+    path('api/users/<int:user_id>/equipment/', views.user_equipment, name='user-equipment'),
+    path('api/users/<int:user_id>/history/', views.user_history, name='user-history'),
 
     # ============ 2FA AUTHENTICATION ============
     path('api/auth/2fa-setup/', TwoFactorSetupView.as_view(), name='2fa-setup'),
@@ -121,16 +135,11 @@ urlpatterns = [
     path('api/maintenance/start/', StartMaintenanceView.as_view(), name='start-maintenance'),
     path('api/maintenance/complete/', CompleteMaintenanceView.as_view(), name='complete-maintenance'),
     path('api/maintenance/schedules/', MaintenanceScheduleView.as_view(), name='maintenance-schedules'),
+    path('api/maintenance/schedules/<int:pk>/', MaintenanceScheduleDetailView.as_view(), name='maintenance-schedule-detail'),
     path('api/maintenance/technicians/', views.get_technicians, name='get-technicians'),
     path('api/maintenance/create-scheduled/', views.create_scheduled_maintenance, name='create-scheduled-maintenance'),
     
-    # ============ SPARE PARTS MANAGEMENT ============
-    path('api/spare-parts/movements/', views.SparePartMovementView.as_view(), name='spare-parts-movements'),
-    path('api/spare-parts/issue/', views.IssueSparePartView.as_view(), name='issue-spare-part'),
-    path('api/spare-parts/receive/', views.ReceiveSparePartView.as_view(), name='receive-spare-part'),
-    path('api/spare-parts/create-order/', views.CreatePurchaseOrderView.as_view(), name='create-purchase-order'),
-    path('api/spare-parts/equipment/<str:equipment_id>/', views.get_spare_parts_for_equipment, name='spare-parts-for-equipment'),
-    path('api/spare-parts/analytics/', views.spare_parts_analytics, name='spare-parts-analytics'),
+    # ============ SPARE PARTS MANAGEMENT (routes moved before router) ============
     
     # ============ ДОКУМЕНТИ ОБЛАДНАННЯ ============
     path('api/equipment/<int:equipment_id>/documents/<int:doc_id>/', views.delete_equipment_document, name='delete-equipment-document'),

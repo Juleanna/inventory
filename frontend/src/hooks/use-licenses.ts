@@ -18,6 +18,7 @@ export function useCreateLicense() {
     mutationFn: (data: Partial<License>) => licensesApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['licenses'] })
+      queryClient.invalidateQueries({ queryKey: ['software'] })
       toast.success('Ліцензію додано')
     },
     onError: (error) => {
@@ -34,6 +35,7 @@ export function useUpdateLicense() {
       licensesApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['licenses'] })
+      queryClient.invalidateQueries({ queryKey: ['software'] })
       toast.success('Ліцензію оновлено')
     },
     onError: (error) => {
@@ -49,6 +51,7 @@ export function useDeleteLicense() {
     mutationFn: (id: number) => licensesApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['licenses'] })
+      queryClient.invalidateQueries({ queryKey: ['software'] })
       toast.success('Ліцензію видалено')
     },
     onError: (error) => {

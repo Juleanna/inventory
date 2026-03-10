@@ -3,6 +3,7 @@ import { useSoftwareList, useCreateSoftware, useUpdateSoftware, useDeleteSoftwar
 import { useEquipmentList } from '@/hooks/use-equipment'
 import { useLicensesList } from '@/hooks/use-licenses'
 import { useDebounce } from '@/hooks/use-debounce'
+import { LICENSE_TYPE_LABELS } from '@/lib/constants'
 import { PageHeader } from '@/components/shared/page-header'
 import { SearchInput } from '@/components/shared/search-input'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
@@ -20,9 +21,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { AppWindow, Plus, Trash2, Pencil, Loader2, ChevronRight, ChevronDown, Monitor, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react'
+import { AppWindow, Plus, Trash2, Pencil, Loader2, ChevronRight, ChevronDown, Monitor, ArrowUp, ArrowDown, ArrowUpDown, Download } from 'lucide-react'
 import type { Software, Equipment } from '@/types'
 import { cn } from '@/lib/utils'
+
+function exportSoftwareCsv(software: Software[]) {
+  const BOM = '\uFEFF'
+  const header = ['Назва', 'Версія', 'Виробник', 'Ліцензія', 'Встановлено на']
+  const rows = software.map((sw) => [
+    sw.name,
+    sw.version,
+    sw.vendor || '',
+    sw.license ? (LICENSE_TYPE_LABELS[sw.license.license_type] || sw.license.license_type) : '',
+    sw.installed_on?.map((eq) => eq.name).join('; ') || '',
+  ])
+  const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'software.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 export default function SoftwareListPage() {
   const [search, setSearch] = useState('')
@@ -165,6 +186,10 @@ export default function SoftwareListPage() {
                 Видалити ({selectedIds.size})
               </Button>
             )}
+            <Button variant="outline" onClick={() => data?.results && exportSoftwareCsv(data.results)}>
+              <Download className="mr-2 h-4 w-4" />
+              CSV
+            </Button>
             <Button onClick={handleAdd}>
               <Plus className="mr-2 h-4 w-4" />
               Додати
@@ -251,7 +276,7 @@ export default function SoftwareListPage() {
                         <TableCell className="hidden sm:table-cell font-mono text-sm">{sw.version}</TableCell>
                         <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{sw.vendor}</TableCell>
                         <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                          {sw.license?.license_type || '—'}
+                          {sw.license ? (LICENSE_TYPE_LABELS[sw.license.license_type] || sw.license.license_type) : '—'}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
@@ -310,7 +335,7 @@ export default function SoftwareListPage() {
                         <TableCell className="hidden sm:table-cell font-mono text-sm">{sw.version}</TableCell>
                         <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{sw.vendor}</TableCell>
                         <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                          {sw.license?.license_type || '—'}
+                          {sw.license ? (LICENSE_TYPE_LABELS[sw.license.license_type] || sw.license.license_type) : '—'}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
@@ -465,7 +490,7 @@ function SoftwareFormDialog({
               <SearchableSelect
                 options={licensesData?.results?.map((lic) => ({
                   value: String(lic.id),
-                  label: `${lic.license_type} — ${lic.key.length > 16 ? lic.key.slice(0, 8) + '...' + lic.key.slice(-4) : lic.key}`,
+                  label: `${LICENSE_TYPE_LABELS[lic.license_type] || lic.license_type}${lic.key ? ` — ${lic.key.length > 16 ? lic.key.slice(0, 8) + '...' + lic.key.slice(-4) : lic.key}` : ''}`,
                 })) || []}
                 value={form.license_id}
                 onValueChange={(v) => update('license_id', v)}

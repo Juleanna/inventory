@@ -298,12 +298,48 @@ class Equipment(models.Model):
         verbose_name="Відеокарта"
     )
     operating_system = models.CharField(
-        max_length=100, 
-        null=True, 
-        blank=True, 
+        max_length=100,
+        null=True,
+        blank=True,
         verbose_name="Операційна система"
     )
-    
+
+    # Деталізовані характеристики
+    motherboard = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Материнська плата"
+    )
+    motherboard_serial = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Серійний номер материнської плати"
+    )
+    disk_model = models.TextField(
+        blank=True,
+        verbose_name="Накопичувачі (деталізовано)"
+    )
+    display = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Екран / Монітор"
+    )
+    network_adapter = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Мережевий адаптер"
+    )
+    power_supply = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Блок живлення"
+    )
+    bios_version = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Версія BIOS/UEFI"
+    )
+
     # Додаткова інформація
     description = models.TextField(
         blank=True,

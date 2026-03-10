@@ -9,7 +9,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/shared/searchable-select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Loader2, Shuffle } from 'lucide-react'
 import { CATEGORY_OPTIONS, STATUS_OPTIONS, PRIORITY_OPTIONS } from '@/lib/constants'
 import type { Equipment } from '@/types'
@@ -46,6 +45,13 @@ const emptyForm = {
   ram: '',
   storage: '',
   gpu: '',
+  motherboard: '',
+  motherboard_serial: '',
+  disk_model: '',
+  display: '',
+  network_adapter: '',
+  power_supply: '',
+  bios_version: '',
   ip_address: '',
   mac_address: '',
   hostname: '',
@@ -90,6 +96,13 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
         ram: equipment.ram || '',
         storage: equipment.storage || '',
         gpu: equipment.gpu || '',
+        motherboard: equipment.motherboard || '',
+        motherboard_serial: equipment.motherboard_serial || '',
+        disk_model: equipment.disk_model || '',
+        display: equipment.display || '',
+        network_adapter: equipment.network_adapter || '',
+        power_supply: equipment.power_supply || '',
+        bios_version: equipment.bios_version || '',
         ip_address: equipment.ip_address || '',
         mac_address: equipment.mac_address || '',
         hostname: equipment.hostname || '',
@@ -145,16 +158,17 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
           <DialogTitle>{isEdit ? 'Редагувати обладнання' : 'Додати обладнання'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <ScrollArea className="max-h-[65vh] pr-4">
-            <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 mb-4">
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-6 mb-4">
                 <TabsTrigger value="basic">Основне</TabsTrigger>
                 <TabsTrigger value="location">Розташування</TabsTrigger>
                 <TabsTrigger value="specs">Мережа</TabsTrigger>
+                <TabsTrigger value="hardware">Комплектуючі</TabsTrigger>
                 <TabsTrigger value="finance">Фінанси</TabsTrigger>
                 <TabsTrigger value="extra">Додатково</TabsTrigger>
               </TabsList>
 
+            <div className="max-h-[55vh] overflow-y-auto pr-2">
               <TabsContent value="basic" className="space-y-3 p-1">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
@@ -301,9 +315,14 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
                     <Input value={form.hostname} onChange={(e) => update('hostname', e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Операційна система</Label>
-                    <Input value={form.operating_system} onChange={(e) => update('operating_system', e.target.value)} />
+                    <Label>Мережевий адаптер</Label>
+                    <Input value={form.network_adapter} onChange={(e) => update('network_adapter', e.target.value)} placeholder="Realtek RTL8111H" />
                   </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="hardware" className="space-y-4 p-1">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Процесор (CPU)</Label>
                     <Input value={form.cpu} onChange={(e) => update('cpu', e.target.value)} />
@@ -319,6 +338,34 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
                   <div className="space-y-2">
                     <Label>Відеокарта (GPU)</Label>
                     <Input value={form.gpu} onChange={(e) => update('gpu', e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Операційна система</Label>
+                    <Input value={form.operating_system} onChange={(e) => update('operating_system', e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Материнська плата</Label>
+                    <Input value={form.motherboard} onChange={(e) => update('motherboard', e.target.value)} placeholder="ASUS PRIME B550M-A" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>S/N мат. плати</Label>
+                    <Input value={form.motherboard_serial} onChange={(e) => update('motherboard_serial', e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Екран / Монітор</Label>
+                    <Input value={form.display} onChange={(e) => update('display', e.target.value)} placeholder="15.6&quot; FHD IPS" />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label>Накопичувачі (деталізовано)</Label>
+                    <Textarea value={form.disk_model} onChange={(e) => update('disk_model', e.target.value)} rows={2} placeholder="SSD: Samsung 970 EVO 500GB&#10;HDD: WD Blue 1TB" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Блок живлення</Label>
+                    <Input value={form.power_supply} onChange={(e) => update('power_supply', e.target.value)} placeholder="Corsair RM650 650W" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Версія BIOS/UEFI</Label>
+                    <Input value={form.bios_version} onChange={(e) => update('bios_version', e.target.value)} />
                   </div>
                 </div>
               </TabsContent>
@@ -362,8 +409,8 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
                   <Textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} />
                 </div>
               </TabsContent>
-            </Tabs>
-          </ScrollArea>
+            </div>
+          </Tabs>
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Скасувати

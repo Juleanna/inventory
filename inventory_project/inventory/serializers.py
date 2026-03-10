@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Equipment, Notification, License, Software, PeripheralDevice
+from .models import Equipment, Notification, Software, PeripheralDevice
+from licenses.models import License
 
 
 class EquipmentSerializer(serializers.ModelSerializer):
@@ -39,15 +40,20 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 
 class LicenseSerializer(serializers.ModelSerializer):
-    software_name = serializers.CharField(source='software.name', read_only=True, default='')
     user_name = serializers.SerializerMethodField()
+    software_list = serializers.SerializerMethodField()
+    software_ids = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True, required=False
+    )
 
     class Meta:
         model = License
         fields = [
-            'id', 'license_type', 'key', 'description',
+            'id', 'license_type', 'open_source_type', 'key', 'description',
             'activations', 'start_date', 'end_date',
-            'software', 'software_name', 'user', 'user_name',
+            'is_perpetual', 'cost', 'trial_days', 'oem_device',
+            'user', 'user_name',
+            'software_list', 'software_ids',
         ]
 
     def get_user_name(self, obj):
@@ -55,6 +61,26 @@ class LicenseSerializer(serializers.ModelSerializer):
             full = obj.user.get_full_name()
             return full if full.strip() else obj.user.username
         return ''
+
+    def get_software_list(self, obj):
+        return list(obj.licensed_software.values('id', 'name', 'version'))
+
+    def create(self, validated_data):
+        software_ids = validated_data.pop('software_ids', None)
+        license = super().create(validated_data)
+        if software_ids is not None:
+            Software.objects.filter(id__in=software_ids).update(license=license)
+        return license
+
+    def update(self, instance, validated_data):
+        software_ids = validated_data.pop('software_ids', None)
+        license = super().update(instance, validated_data)
+        if software_ids is not None:
+            # Зняти ліцензію з попередніх програм
+            instance.licensed_software.update(license=None)
+            # Призначити нові
+            Software.objects.filter(id__in=software_ids).update(license=license)
+        return license
 
 
 class SoftwareSerializer(serializers.ModelSerializer):

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useEquipmentList } from '@/hooks/use-equipment'
 import { useSoftwareList } from '@/hooks/use-software'
+import { usePeripheralsList } from '@/hooks/use-peripherals'
+import { useSparePartsList } from '@/hooks/use-spare-parts'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -27,8 +29,17 @@ export function GlobalSearch() {
   const navigate = useNavigate()
   const debouncedQuery = useDebounce(query, 200)
 
-  const { data: equipmentData } = useEquipmentList(
+  const searchParams = debouncedQuery ? { search: debouncedQuery, page_size: 5 } : undefined
+
+  const { data: equipmentData } = useEquipmentList(searchParams)
+  const { data: softwareData } = useSoftwareList(
     debouncedQuery ? { search: debouncedQuery, page_size: 5 } : undefined
+  )
+  const { data: peripheralsData } = usePeripheralsList(
+    debouncedQuery ? { search: debouncedQuery, page_size: 5 } : undefined
+  )
+  const { data: sparePartsData } = useSparePartsList(
+    debouncedQuery ? { search: debouncedQuery } : undefined
   )
 
   useEffect(() => {
@@ -52,6 +63,12 @@ export function GlobalSearch() {
     ? SECTIONS.filter((s) => s.label.toLowerCase().includes(query.toLowerCase()))
     : SECTIONS
 
+  const hasEquipment = debouncedQuery && equipmentData?.results && equipmentData.results.length > 0
+  const hasSoftware = debouncedQuery && softwareData?.results && softwareData.results.length > 0
+  const hasPeripherals = debouncedQuery && peripheralsData?.results && peripheralsData.results.length > 0
+  const hasSpareParts = debouncedQuery && sparePartsData?.results && sparePartsData.results.length > 0
+  const hasAnyResults = hasEquipment || hasSoftware || hasPeripherals || hasSpareParts
+
   return (
     <>
       <button
@@ -72,12 +89,12 @@ export function GlobalSearch() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Пошук сторінок та обладнання..."
+              placeholder="Пошук по всій системі..."
               className="border-0 shadow-none focus-visible:ring-0 h-11"
               autoFocus
             />
           </div>
-          <div className="max-h-[300px] overflow-y-auto p-2">
+          <div className="max-h-[400px] overflow-y-auto p-2">
             {filteredSections.length > 0 && (
               <div className="mb-2">
                 <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Сторінки</p>
@@ -94,10 +111,10 @@ export function GlobalSearch() {
               </div>
             )}
 
-            {debouncedQuery && equipmentData?.results && equipmentData.results.length > 0 && (
-              <div>
+            {hasEquipment && (
+              <div className="mb-2">
                 <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Обладнання</p>
-                {equipmentData.results.map((eq) => (
+                {equipmentData!.results.map((eq) => (
                   <button
                     key={eq.id}
                     onClick={() => handleSelect(`/equipment/${eq.id}`)}
@@ -113,7 +130,64 @@ export function GlobalSearch() {
               </div>
             )}
 
-            {query && filteredSections.length === 0 && (!equipmentData?.results || equipmentData.results.length === 0) && (
+            {hasSoftware && (
+              <div className="mb-2">
+                <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Програми</p>
+                {softwareData!.results.map((sw) => (
+                  <button
+                    key={sw.id}
+                    onClick={() => handleSelect('/software')}
+                    className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-muted transition-colors"
+                  >
+                    <AppWindow className="h-4 w-4 text-muted-foreground" />
+                    <div className="text-left">
+                      <p>{sw.name}</p>
+                      <p className="text-xs text-muted-foreground">{sw.version} {sw.vendor && `— ${sw.vendor}`}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {hasPeripherals && (
+              <div className="mb-2">
+                <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Периферія</p>
+                {peripheralsData!.results.map((dev) => (
+                  <button
+                    key={dev.id}
+                    onClick={() => handleSelect('/peripherals')}
+                    className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-muted transition-colors"
+                  >
+                    <Usb className="h-4 w-4 text-muted-foreground" />
+                    <div className="text-left">
+                      <p>{dev.name}</p>
+                      <p className="text-xs text-muted-foreground">{dev.serial_number}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {hasSpareParts && (
+              <div className="mb-2">
+                <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Запчастини</p>
+                {sparePartsData!.results.slice(0, 5).map((part) => (
+                  <button
+                    key={part.id}
+                    onClick={() => handleSelect('/spare-parts')}
+                    className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-muted transition-colors"
+                  >
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <div className="text-left">
+                      <p>{part.name}</p>
+                      <p className="text-xs text-muted-foreground">{part.part_number} — {part.manufacturer}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {query && filteredSections.length === 0 && !hasAnyResults && (
               <p className="py-6 text-center text-sm text-muted-foreground">Нiчого не знайдено</p>
             )}
           </div>

@@ -1,6 +1,7 @@
 """
-IT Inventory Agent v4.0
+IT Inventory Agent v5.0
 Збирає повну інформацію про комп'ютер та відправляє на сервер інвентаризації.
+Включає деталізовані характеристики: материнська плата, накопичувачі, екран, мережевий адаптер, BIOS.
 Підтримує Windows, Linux, macOS.
 """
 import os
@@ -87,6 +88,12 @@ class SystemCollector:
         ram = self._get_ram()
         storage = self._get_storage()
         gpu = self._get_gpu()
+        motherboard = self._get_motherboard()
+        disk_model = self._get_disk_models()
+        display = self._get_display()
+        network_adapter = self._get_network_adapter()
+        power_supply = self._get_power_supply()
+        bios_version = self._get_bios_version()
         software = self._get_installed_software()
         peripherals = self._get_peripherals()
 
@@ -108,13 +115,21 @@ class SystemCollector:
             "ram": ram,
             "storage": storage,
             "gpu": gpu,
+            # Деталізовані характеристики
+            "motherboard": motherboard.get("name", ""),
+            "motherboard_serial": motherboard.get("serial", ""),
+            "disk_model": disk_model,
+            "display": display,
+            "network_adapter": network_adapter,
+            "power_supply": power_supply,
+            "bios_version": bios_version,
             # Статус
             "status": "WORKING",
             # Масиви для синхронізації
             "installed_software": software,
             "peripherals": peripherals,
             # Мета
-            "agent_version": "4.0",
+            "agent_version": "5.0",
         }
 
         elapsed = time.time() - start
@@ -242,6 +257,208 @@ class SystemCollector:
                 for line in result.stdout.splitlines():
                     if "VGA" in line or "3D" in line:
                         return line.split(": ", 1)[-1].strip()
+            except Exception:
+                pass
+        return ""
+
+    # --- Motherboard ---
+
+    def _get_motherboard(self) -> dict:
+        name, serial = "", ""
+        if self._is_windows:
+            name = self._wmi_value("Win32_BaseBoard", "Manufacturer") or ""
+            product = self._wmi_value("Win32_BaseBoard", "Product") or ""
+            if name and product:
+                name = f"{name} {product}"
+            elif product:
+                name = product
+            serial = self._wmi_value("Win32_BaseBoard", "SerialNumber") or ""
+            if serial in ("To Be Filled By O.E.M.", "Default string", "None", ""):
+                serial = ""
+        else:
+            try:
+                r = subprocess.run(["sudo", "dmidecode", "-t", "baseboard"], capture_output=True, text=True, timeout=5)
+                for line in r.stdout.splitlines():
+                    line = line.strip()
+                    if line.startswith("Manufacturer:"):
+                        name = line.split(":", 1)[1].strip()
+                    elif line.startswith("Product Name:"):
+                        product = line.split(":", 1)[1].strip()
+                        name = f"{name} {product}".strip()
+                    elif line.startswith("Serial Number:"):
+                        serial = line.split(":", 1)[1].strip()
+                        if serial in ("Not Specified", "None", ""):
+                            serial = ""
+            except Exception:
+                pass
+        return {"name": name, "serial": serial}
+
+    # --- Disk Models ---
+
+    def _get_disk_models(self) -> str:
+        disks = []
+        if self._is_windows:
+            try:
+                result = subprocess.run(
+                    ["powershell", "-NoProfile", "-Command",
+                     "Get-CimInstance Win32_DiskDrive | Select-Object Model, Size, MediaType | ConvertTo-Json -Compress"],
+                    capture_output=True, text=True, timeout=10,
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    raw = json.loads(result.stdout)
+                    if isinstance(raw, dict):
+                        raw = [raw]
+                    for d in raw:
+                        model = (d.get("Model") or "").strip()
+                        size = d.get("Size")
+                        media = (d.get("MediaType") or "").strip()
+                        if not model:
+                            continue
+                        size_str = f" {int(size) // (1024**3)}GB" if size else ""
+                        type_str = ""
+                        if "SSD" in media.upper() or "SSD" in model.upper():
+                            type_str = "SSD: "
+                        elif "HDD" in media.upper() or "Fixed" in media:
+                            type_str = "HDD: "
+                        disks.append(f"{type_str}{model}{size_str}")
+            except Exception:
+                pass
+        else:
+            try:
+                result = subprocess.run(["lsblk", "-d", "-o", "NAME,MODEL,SIZE,ROTA", "-n"],
+                                        capture_output=True, text=True, timeout=5)
+                for line in result.stdout.strip().splitlines():
+                    parts = line.split(None, 3)
+                    if len(parts) >= 3:
+                        model = parts[1] if parts[1] != "" else parts[0]
+                        size = parts[2]
+                        rota = parts[3] if len(parts) > 3 else "1"
+                        prefix = "HDD: " if rota.strip() == "1" else "SSD: "
+                        disks.append(f"{prefix}{model} {size}")
+            except Exception:
+                pass
+        return "\n".join(disks) if disks else ""
+
+    # --- Display ---
+
+    def _get_display(self) -> str:
+        if self._is_windows:
+            name = self._wmi_value("Win32_DesktopMonitor", "Name")
+            if name and name != "Generic PnP Monitor":
+                return name.strip()
+            # Fallback: get from VideoController
+            desc = self._wmi_value("Win32_VideoController", "VideoModeDescription")
+            if desc:
+                return desc.strip()
+        else:
+            try:
+                result = subprocess.run(["xrandr", "--current"], capture_output=True, text=True, timeout=5)
+                for line in result.stdout.splitlines():
+                    if " connected" in line:
+                        parts = line.split()
+                        name = parts[0]
+                        # Find resolution
+                        for p in parts:
+                            if "x" in p and p[0].isdigit():
+                                return f"{name} {p}"
+                        return name
+            except Exception:
+                pass
+        return ""
+
+    # --- Network Adapter ---
+
+    def _get_network_adapter(self) -> str:
+        if self._is_windows:
+            try:
+                result = subprocess.run(
+                    ["powershell", "-NoProfile", "-Command",
+                     "Get-CimInstance Win32_NetworkAdapter | Where-Object { $_.NetConnectionStatus -eq 2 } | "
+                     "Select-Object -First 1 -ExpandProperty Name"],
+                    capture_output=True, text=True, timeout=10,
+                )
+                val = result.stdout.strip()
+                if val:
+                    return val.split("\n")[0].strip()
+            except Exception:
+                pass
+        else:
+            try:
+                result = subprocess.run(["lspci"], capture_output=True, text=True, timeout=5)
+                for line in result.stdout.splitlines():
+                    if "Ethernet" in line or "Network" in line:
+                        return line.split(": ", 1)[-1].strip()
+            except Exception:
+                pass
+        return ""
+
+    # --- Power Supply ---
+
+    def _get_power_supply(self) -> str:
+        # PSU info is generally not available via software on desktops.
+        # On laptops, we can report battery + adapter info.
+        if self._is_windows:
+            try:
+                result = subprocess.run(
+                    ["powershell", "-NoProfile", "-Command",
+                     "Get-CimInstance Win32_Battery | Select-Object Name, DesignCapacity, FullChargeCapacity | ConvertTo-Json -Compress"],
+                    capture_output=True, text=True, timeout=10,
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    raw = json.loads(result.stdout)
+                    if isinstance(raw, dict):
+                        raw = [raw]
+                    parts = []
+                    for b in raw:
+                        name = (b.get("Name") or "").strip()
+                        design = b.get("DesignCapacity")
+                        full = b.get("FullChargeCapacity")
+                        info = name
+                        if design:
+                            info += f" {design}mWh"
+                        if design and full and design > 0:
+                            health = int(full / design * 100)
+                            info += f" ({health}% health)"
+                        if info:
+                            parts.append(info)
+                    return "; ".join(parts)
+            except Exception:
+                pass
+        else:
+            battery = psutil.sensors_battery()
+            if battery:
+                return f"Battery {battery.percent}%"
+        return ""
+
+    # --- BIOS Version ---
+
+    def _get_bios_version(self) -> str:
+        if self._is_windows:
+            manufacturer = self._wmi_value("Win32_BIOS", "Manufacturer") or ""
+            version = self._wmi_value("Win32_BIOS", "SMBIOSBIOSVersion") or ""
+            # Get date via structured query
+            try:
+                result = subprocess.run(
+                    ["powershell", "-NoProfile", "-Command",
+                     "(Get-CimInstance Win32_BIOS).ReleaseDate.ToString('yyyy-MM-dd')"],
+                    capture_output=True, text=True, timeout=10,
+                )
+                date = result.stdout.strip() if result.returncode == 0 else ""
+            except Exception:
+                date = ""
+            parts = []
+            if manufacturer:
+                parts.append(manufacturer)
+            if version:
+                parts.append(version)
+            if date:
+                parts.append(date)
+            return " ".join(parts)
+        else:
+            try:
+                result = subprocess.run(["sudo", "dmidecode", "-s", "bios-version"],
+                                        capture_output=True, text=True, timeout=5)
+                return result.stdout.strip()
             except Exception:
                 pass
         return ""
@@ -524,7 +741,7 @@ class AgentClient:
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(description="IT Inventory Agent v4.0")
+    parser = argparse.ArgumentParser(description="IT Inventory Agent v5.0")
     parser.add_argument("--json", action="store_true", help="Зберегти JSON локально без відправки")
     parser.add_argument("--loop", action="store_true", help="Запускати періодично")
     parser.add_argument("--interval", type=int, help="Інтервал у секундах (для --loop)")

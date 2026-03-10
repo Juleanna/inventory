@@ -33,8 +33,8 @@ from .models import (
     UserPreferences, UserActivity, CustomDashboard
 )
 from .spare_parts import (
-    Supplier, SparePartCategory, SparePart, SparePartMovement, 
-    PurchaseOrder, PurchaseOrderItem
+    Supplier, SparePartCategory, SparePart, SparePartMovement,
+    PurchaseOrder, PurchaseOrderItem, StorageLocation
 )
 from .maintenance import (
     MaintenanceRequest, MaintenanceSchedule, MaintenanceTask
@@ -617,6 +617,14 @@ class SupplierAdmin(ModelAdmin):
     list_filter = ('is_active', 'rating')
     search_fields = ('name', 'contact_person', 'email')
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(StorageLocation)
+class StorageLocationAdmin(ModelAdmin):
+    """Адмін для місць зберігання"""
+    list_display = ('name', 'description', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('name',)
 
 
 @admin.register(SparePartCategory)

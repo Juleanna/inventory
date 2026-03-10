@@ -25,7 +25,7 @@ export function useCreateMaintenanceRequest() {
   })
 }
 
-export function useMaintenanceSchedules(params?: { page?: number }) {
+export function useMaintenanceSchedules(params?: { page?: number; show_inactive?: boolean }) {
   return useQuery({
     queryKey: ['maintenance', 'schedules', params],
     queryFn: () => maintenanceApi.listSchedules(params).then((r) => r.data),

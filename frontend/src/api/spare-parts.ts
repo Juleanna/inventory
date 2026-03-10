@@ -50,6 +50,15 @@ export const sparePartsApi = {
   createOrder: (data: Partial<PurchaseOrder>) =>
     apiClient.post<PurchaseOrder>('/spare-parts/create-purchase-order/', data),
 
+  updateOrder: (id: number, data: Partial<PurchaseOrder>) =>
+    apiClient.patch<PurchaseOrder>(`/purchase-orders/${id}/`, data),
+
+  listStorageLocations: () =>
+    apiClient.get<PaginatedResponse<{ id: number; name: string; description: string; is_active: boolean }>>('/storage-locations/'),
+
+  createStorageLocation: (data: { name: string; description?: string }) =>
+    apiClient.post<{ id: number; name: string }>('/storage-locations/', data),
+
   analytics: () =>
     apiClient.get<{ success: boolean; analytics: SparePartsAnalytics }>('/spare-parts/analytics/'),
 

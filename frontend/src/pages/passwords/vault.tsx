@@ -20,9 +20,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AuditLogTable } from '@/components/passwords/audit-log-table'
-import { KeyRound, Plus, Copy, Eye, EyeOff, Trash2, Globe, Loader2, Pencil, MoreHorizontal } from 'lucide-react'
+import { Checkbox as CheckboxPrimitive } from '@/components/ui/checkbox'
+import { KeyRound, Plus, Copy, Eye, EyeOff, Trash2, Globe, Loader2, Pencil, MoreHorizontal, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { SYSTEM_TYPE_LABELS, CRITICALITY_LABELS, ACCOUNT_TYPE_LABELS, ACCOUNT_STATUS_LABELS } from '@/lib/constants'
+
+function generatePassword(length: number, options: { uppercase: boolean; lowercase: boolean; digits: boolean; symbols: boolean }) {
+  let chars = ''
+  if (options.uppercase) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  if (options.lowercase) chars += 'abcdefghijklmnopqrstuvwxyz'
+  if (options.digits) chars += '0123456789'
+  if (options.symbols) chars += '!@#$%^&*()-_=+[]{}|;:,.<>?'
+  if (!chars) chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  const array = new Uint8Array(length)
+  crypto.getRandomValues(array)
+  return Array.from(array).map((b) => chars[b % chars.length]).join('')
+}
 
 const emptySystem = { name: '', url: '', description: '', system_type: 'web', ip_address: '', port: '', criticality: 'medium' }
 const emptyAccount = { system: 0, username: '', password: '', notes: '', account_type: 'user', email: '', description: '', status: 'active', password_expires: '', assigned_to: '' }
@@ -519,13 +532,50 @@ export default function PasswordVaultPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">{editAccountId ? 'Новий пароль' : 'Пароль *'}</Label>
-                  <Input
-                    type="password"
-                    value={accountForm.password}
-                    onChange={(e) => setAccountForm((prev) => ({ ...prev, password: e.target.value }))}
-                    required={!editAccountId}
-                    placeholder={editAccountId ? 'Не змінювати' : ''}
-                  />
+                  <div className="flex gap-1">
+                    <Input
+                      type="password"
+                      value={accountForm.password}
+                      onChange={(e) => setAccountForm((prev) => ({ ...prev, password: e.target.value }))}
+                      required={!editAccountId}
+                      placeholder={editAccountId ? 'Не змінювати' : ''}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0"
+                      title="Згенерувати пароль"
+                      onClick={() => {
+                        const pwd = generatePassword(16, { uppercase: true, lowercase: true, digits: true, symbols: true })
+                        setAccountForm((prev) => ({ ...prev, password: pwd }))
+                        navigator.clipboard.writeText(pwd)
+                        toast.success('Пароль згенеровано та скопійовано')
+                      }}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {accountForm.password && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            accountForm.password.length >= 16 ? 'bg-green-500 w-full' :
+                            accountForm.password.length >= 12 ? 'bg-yellow-500 w-3/4' :
+                            accountForm.password.length >= 8 ? 'bg-orange-500 w-1/2' :
+                            'bg-red-500 w-1/4'
+                          }`}
+                        />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">
+                        {accountForm.password.length >= 16 ? 'Сильний' :
+                         accountForm.password.length >= 12 ? 'Добрий' :
+                         accountForm.password.length >= 8 ? 'Середній' : 'Слабкий'}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">

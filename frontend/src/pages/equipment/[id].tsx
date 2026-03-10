@@ -1,14 +1,19 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useEquipment, useEquipmentPeripherals, useEquipmentSoftware, useEquipmentHistory, useEquipmentDocuments, useUploadDocument, useDeleteDocument } from '@/hooks/use-equipment'
+import { usePeripheralsList, useUpdatePeripheral, useCreatePeripheral } from '@/hooks/use-peripherals'
 import { PageHeader } from '@/components/shared/page-header'
+import { SearchableSelect } from '@/components/shared/searchable-select'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, Pencil, Monitor as MonitorIcon, Cpu, History, FileUp, Trash2, Download, FileText, Printer } from 'lucide-react'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ArrowLeft, Pencil, Monitor as MonitorIcon, Cpu, History, FileUp, Trash2, Download, FileText, Printer, Plus, Unplug, Loader2, Shuffle } from 'lucide-react'
 import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS, PERIPHERAL_TYPE_LABELS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { EquipmentFormDialog } from '@/components/equipment/equipment-form'
@@ -23,7 +28,17 @@ export default function EquipmentDetailPage() {
   const { data: documents } = useEquipmentDocuments(equipmentId)
   const uploadDocument = useUploadDocument()
   const deleteDocument = useDeleteDocument()
+  const updatePeripheral = useUpdatePeripheral()
+  const createPeripheral = useCreatePeripheral()
+  // Fetch unconnected peripherals for the "attach" dropdown
+  const { data: allPeripherals } = usePeripheralsList({ page_size: 500 })
+  const unconnectedPeripherals = allPeripherals?.results?.filter(
+    (p) => !p.connected_to
+  ) || []
   const [editOpen, setEditOpen] = useState(false)
+  const [attachPeripheralId, setAttachPeripheralId] = useState('')
+  const [showCreatePeripheral, setShowCreatePeripheral] = useState(false)
+  const [newPeripheral, setNewPeripheral] = useState({ name: '', type: '', serial_number: '' })
 
   if (isLoading) return <LoadingSpinner size="lg" />
   if (!equipment) return <div className="p-8 text-center text-muted-foreground">Обладнання не знайдено</div>
@@ -43,7 +58,14 @@ export default function EquipmentDetailPage() {
     { label: 'CPU', value: equipment.cpu },
     { label: 'RAM', value: equipment.ram },
     { label: 'Сховище', value: equipment.storage },
+    { label: 'Накопичувачі', value: equipment.disk_model },
     { label: 'GPU', value: equipment.gpu },
+    { label: 'Материнська плата', value: equipment.motherboard },
+    { label: 'S/N мат. плати', value: equipment.motherboard_serial },
+    { label: 'Екран', value: equipment.display },
+    { label: 'Мережевий адаптер', value: equipment.network_adapter },
+    { label: 'Блок живлення', value: equipment.power_supply },
+    { label: 'BIOS/UEFI', value: equipment.bios_version },
     { label: 'ОС', value: equipment.operating_system },
     { label: 'IP адреса', value: equipment.ip_address },
     { label: 'MAC адреса', value: equipment.mac_address },
@@ -219,12 +241,53 @@ export default function EquipmentDetailPage() {
         <TabsContent value="peripherals">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <MonitorIcon className="h-4 w-4" />
-                Підключена периферія
+              <CardTitle className="flex items-center justify-between text-base">
+                <span className="flex items-center gap-2">
+                  <MonitorIcon className="h-4 w-4" />
+                  Підключена периферія
+                </span>
+                <Button size="sm" variant="outline" onClick={() => setShowCreatePeripheral(true)}>
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  Створити і підключити
+                </Button>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {/* Attach existing peripheral */}
+              {unconnectedPeripherals.length > 0 && (
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <SearchableSelect
+                      options={unconnectedPeripherals.map((p) => ({
+                        value: String(p.id),
+                        label: `${p.name} (${PERIPHERAL_TYPE_LABELS[p.type] || p.type} · ${p.serial_number})`,
+                      }))}
+                      value={attachPeripheralId}
+                      onValueChange={setAttachPeripheralId}
+                      placeholder="Обрати периферію для підключення..."
+                      searchPlaceholder="Пошук периферії..."
+                      emptyText="Немає вільної периферії"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    disabled={!attachPeripheralId || updatePeripheral.isPending}
+                    onClick={() => {
+                      if (attachPeripheralId) {
+                        updatePeripheral.mutate(
+                          { id: Number(attachPeripheralId), data: { connected_to_id: equipmentId } as Record<string, unknown> },
+                          { onSuccess: () => setAttachPeripheralId('') },
+                        )
+                      }
+                    }}
+                  >
+                    {updatePeripheral.isPending && <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />}
+                    Підключити
+                  </Button>
+                </div>
+              )}
+
+              {/* Connected peripherals list */}
               {peripheralCount > 0 ? (
                 <div className="space-y-2">
                   {peripherals!.results.map((p) => (
@@ -237,6 +300,20 @@ export default function EquipmentDetailPage() {
                           {p.inventory_number && ` · Інв. ${p.inventory_number}`}
                         </p>
                       </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => {
+                          updatePeripheral.mutate({
+                            id: p.id,
+                            data: { connected_to_id: null } as Record<string, unknown>,
+                          })
+                        }}
+                      >
+                        <Unplug className="mr-1 h-3.5 w-3.5" />
+                        Відключити
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -245,6 +322,91 @@ export default function EquipmentDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Create & attach new peripheral dialog */}
+          <Dialog open={showCreatePeripheral} onOpenChange={setShowCreatePeripheral}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Створити та підключити периферію</DialogTitle>
+              </DialogHeader>
+              <form
+                className="space-y-4"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  createPeripheral.mutate(
+                    {
+                      name: newPeripheral.name,
+                      type: newPeripheral.type,
+                      serial_number: newPeripheral.serial_number,
+                      connected_to_id: equipmentId,
+                    } as Record<string, unknown>,
+                    {
+                      onSuccess: () => {
+                        setShowCreatePeripheral(false)
+                        setNewPeripheral({ name: '', type: '', serial_number: '' })
+                      },
+                    },
+                  )
+                }}
+              >
+                <div className="space-y-2">
+                  <Label>Назва *</Label>
+                  <Input
+                    value={newPeripheral.name}
+                    onChange={(e) => setNewPeripheral((p) => ({ ...p, name: e.target.value }))}
+                    required
+                    placeholder="Logitech MX Keys"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Тип *</Label>
+                    <Select value={newPeripheral.type} onValueChange={(v) => setNewPeripheral((p) => ({ ...p, type: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Оберіть тип" /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(PERIPHERAL_TYPE_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Серійний номер *</Label>
+                    <div className="flex gap-1">
+                      <Input
+                        value={newPeripheral.serial_number}
+                        onChange={(e) => setNewPeripheral((p) => ({ ...p, serial_number: e.target.value }))}
+                        required
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0"
+                        onClick={() => {
+                          const prefix = newPeripheral.type || 'DEV'
+                          const hex = Array.from(crypto.getRandomValues(new Uint8Array(5)))
+                            .map((b) => b.toString(16).padStart(2, '0').toUpperCase())
+                            .join('')
+                          setNewPeripheral((p) => ({ ...p, serial_number: `${prefix}-${hex}` }))
+                        }}
+                      >
+                        <Shuffle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button type="button" variant="outline" onClick={() => setShowCreatePeripheral(false)}>Скасувати</Button>
+                  <Button type="submit" disabled={createPeripheral.isPending}>
+                    {createPeripheral.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Створити та підключити
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Software tab */}
