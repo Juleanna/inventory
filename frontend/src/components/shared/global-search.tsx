@@ -7,20 +7,33 @@ import { useSparePartsList } from '@/hooks/use-spare-parts'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Monitor, AppWindow, Usb, FileKey, Wrench, Package, KeyRound, Users, Search } from 'lucide-react'
+import {
+  Monitor, AppWindow, Usb, FileKey, Wrench, Package, KeyRound, Users, Search,
+  LayoutDashboard, BarChart3, Bell, Settings, HardDriveDownload, FileText,
+  ClipboardList, MapPin, ScanLine, Calculator, Copy,
+} from 'lucide-react'
 
 const SECTIONS = [
-  { path: '/', label: 'Дашборд', icon: Monitor },
+  { path: '/', label: 'Дашборд', icon: LayoutDashboard },
   { path: '/equipment', label: 'Обладнання', icon: Monitor },
   { path: '/software', label: 'Програми', icon: AppWindow },
   { path: '/peripherals', label: 'Периферія', icon: Usb },
   { path: '/licenses', label: 'Ліцензії', icon: FileKey },
   { path: '/maintenance', label: 'Обслуговування', icon: Wrench },
   { path: '/spare-parts', label: 'Запчастини', icon: Package },
+  { path: '/contracts', label: 'Договори', icon: FileText },
   { path: '/passwords', label: 'Паролі', icon: KeyRound },
   { path: '/users', label: 'Користувачі', icon: Users },
-  { path: '/analytics', label: 'Аналітика', icon: Monitor },
-  { path: '/settings', label: 'Налаштування', icon: Monitor },
+  { path: '/analytics', label: 'Аналітика', icon: BarChart3 },
+  { path: '/qr-scanner', label: 'QR Сканер', icon: ScanLine },
+  { path: '/equipment/compare', label: 'Порівняння обладнання', icon: Copy },
+  { path: '/equipment/templates', label: 'Шаблони обладнання', icon: ClipboardList },
+  { path: '/location-map', label: 'Карта обладнання', icon: MapPin },
+  { path: '/depreciation', label: 'Амортизаційний звіт', icon: Calculator },
+  { path: '/activity-log', label: 'Журнал дій', icon: ClipboardList },
+  { path: '/notifications', label: 'Сповіщення', icon: Bell },
+  { path: '/backups', label: 'Бекапи', icon: HardDriveDownload },
+  { path: '/settings', label: 'Налаштування', icon: Settings },
 ]
 
 export function GlobalSearch() {

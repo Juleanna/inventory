@@ -30,6 +30,13 @@ from .backup_views import (
     BackupUploadGDriveView, GDriveDeleteView, GDriveStatusView, GDriveAuthorizeView,
     GDriveUploadCredentialsView, BackupSettingsView,
 )
+from .advanced_views import (
+    ContractViewSet, EquipmentTemplateViewSet,
+    ActivityLogView, GlobalSearchView, DepreciationReportView,
+    EquipmentCompareView, LocationMapView,
+    EmailSettingsView, LdapSettingsView, DashboardWidgetsView as AdvancedDashboardWidgetsView,
+    ExportReportView, BulkOperationsView, CsvImportView,
+)
 
 # API роутер для ViewSets
 router = DefaultRouter()
@@ -51,6 +58,10 @@ router.register(r'password-systems', SystemViewSet)
 router.register(r'password-categories', SystemCategoryViewSet)
 router.register(r'password-accounts', SystemAccountViewSet)
 router.register(r'password-logs', PasswordAccessLogViewSet)
+
+# CONTRACTS & TEMPLATES
+router.register(r'contracts', ContractViewSet)
+router.register(r'equipment-templates', EquipmentTemplateViewSet)
 
 urlpatterns = [
     # Головна сторінка
@@ -166,6 +177,19 @@ urlpatterns = [
     path('api/backups/gdrive/authorize/', GDriveAuthorizeView.as_view(), name='gdrive-authorize'),
     path('api/backups/gdrive/credentials/', GDriveUploadCredentialsView.as_view(), name='gdrive-credentials'),
     path('api/backups/gdrive/delete/<str:file_id>/', GDriveDeleteView.as_view(), name='gdrive-delete'),
+
+    # ============ ADVANCED FEATURES ============
+    path('api/activity-log/', ActivityLogView.as_view(), name='activity-log'),
+    path('api/search/', GlobalSearchView.as_view(), name='global-search'),
+    path('api/reports/depreciation/', DepreciationReportView.as_view(), name='depreciation-report'),
+    path('api/equipment/compare/', EquipmentCompareView.as_view(), name='equipment-compare'),
+    path('api/location-map/', LocationMapView.as_view(), name='location-map'),
+    path('api/settings/email/', EmailSettingsView.as_view(), name='email-settings'),
+    path('api/settings/ldap/', LdapSettingsView.as_view(), name='ldap-settings'),
+    path('api/settings/widgets/', AdvancedDashboardWidgetsView.as_view(), name='dashboard-widgets'),
+    path('api/export/report/', ExportReportView.as_view(), name='export-report'),
+    path('api/equipment/bulk-operations/', BulkOperationsView.as_view(), name='bulk-operations'),
+    path('api/equipment/csv-import/', CsvImportView.as_view(), name='csv-import'),
 
     # ============ PWA SUPPORT ============
     path('api/csrf-token/', views.csrf_token, name='csrf-token'),

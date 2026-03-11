@@ -31,6 +31,15 @@ const SettingsPage = lazy(() => import('@/pages/settings'))
 const BackupsPage = lazy(() => import('@/pages/backups'))
 const NotFoundPage = lazy(() => import('@/pages/not-found'))
 
+// New pages
+const ActivityLogPage = lazy(() => import('@/pages/activity-log'))
+const ContractsPage = lazy(() => import('@/pages/contracts'))
+const EquipmentComparePage = lazy(() => import('@/pages/equipment-compare'))
+const LocationMapPage = lazy(() => import('@/pages/location-map'))
+const QrScannerPage = lazy(() => import('@/pages/qr-scanner'))
+const EquipmentTemplatesPage = lazy(() => import('@/pages/equipment-templates'))
+const DepreciationPage = lazy(() => import('@/pages/depreciation'))
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -76,6 +85,8 @@ export default function App() {
               <Route index element={<DashboardPage />} />
               <Route path="equipment" element={<EquipmentListPage />} />
               <Route path="equipment/:id" element={<EquipmentDetailPage />} />
+              <Route path="equipment/compare" element={<EquipmentComparePage />} />
+              <Route path="equipment/templates" element={<EquipmentTemplatesPage />} />
               <Route path="software" element={<SoftwareListPage />} />
               <Route path="peripherals" element={<PeripheralsListPage />} />
               <Route path="licenses" element={<LicensesListPage />} />
@@ -92,6 +103,11 @@ export default function App() {
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="backups" element={<BackupsPage />} />
+              <Route path="contracts" element={<ContractsPage />} />
+              <Route path="activity-log" element={<ActivityLogPage />} />
+              <Route path="location-map" element={<LocationMapPage />} />
+              <Route path="qr-scanner" element={<QrScannerPage />} />
+              <Route path="depreciation" element={<DepreciationPage />} />
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />

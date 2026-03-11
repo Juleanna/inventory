@@ -83,6 +83,9 @@ google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
 
+# LDAP інтеграція (опціонально)
+python-ldap
+
 # WSGI сервер для продакшену
 gunicorn
 whitenoise

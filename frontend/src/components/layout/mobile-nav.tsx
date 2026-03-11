@@ -16,6 +16,12 @@ import {
   Bell,
   HardDriveDownload,
   Settings,
+  FileText,
+  ClipboardList,
+  MapPin,
+  ScanLine,
+  Calculator,
+  Copy,
 } from 'lucide-react'
 
 const mainNav = [
@@ -29,6 +35,15 @@ const mainNav = [
 const operationsNav = [
   { path: '/maintenance', label: 'Обслуговування', icon: Wrench },
   { path: '/spare-parts', label: 'Запчастини', icon: Package },
+  { path: '/contracts', label: 'Договори', icon: FileText },
+]
+
+const toolsNav = [
+  { path: '/qr-scanner', label: 'QR Сканер', icon: ScanLine },
+  { path: '/equipment/compare', label: 'Порівняння', icon: Copy },
+  { path: '/equipment/templates', label: 'Шаблони', icon: ClipboardList },
+  { path: '/location-map', label: 'Карта обладнання', icon: MapPin },
+  { path: '/depreciation', label: 'Амортизація', icon: Calculator },
 ]
 
 const systemNav = [
@@ -36,6 +51,7 @@ const systemNav = [
   { path: '/passwords', label: 'Паролі', icon: KeyRound },
   { path: '/analytics', label: 'Аналітика', icon: BarChart3 },
   { path: '/notifications', label: 'Сповіщення', icon: Bell },
+  { path: '/activity-log', label: 'Журнал дій', icon: ClipboardList },
   { path: '/backups', label: 'Бекапи', icon: HardDriveDownload },
   { path: '/settings', label: 'Налаштування', icon: Settings },
 ]
@@ -96,6 +112,7 @@ export function MobileNav({ open, onOpenChange }: MobileNavProps) {
           <div className="space-y-5 p-3 pt-4">
             {renderSection('Основне', mainNav)}
             {renderSection('Операції', operationsNav)}
+            {renderSection('Інструменти', toolsNav)}
             {renderSection('Система', systemNav)}
           </div>
         </ScrollArea>
