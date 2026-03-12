@@ -86,6 +86,11 @@ google-auth-oauthlib
 # LDAP інтеграція (опціонально)
 python-ldap
 
-# WSGI сервер для продакшену
+# WebSocket (django-channels)
+channels
+channels-redis
+daphne
+
+# WSGI/ASGI сервер для продакшену
 gunicorn
 whitenoise

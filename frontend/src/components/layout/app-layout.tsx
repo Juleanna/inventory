@@ -4,9 +4,11 @@ import { Sidebar } from './sidebar'
 import { Header } from './header'
 import { MobileNav } from './mobile-nav'
 import { Breadcrumb } from '@/components/shared/breadcrumb'
+import { useWebSocket } from '@/hooks/use-websocket'
 
 export function AppLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  useWebSocket()
 
   return (
     <div className="flex h-screen overflow-hidden">

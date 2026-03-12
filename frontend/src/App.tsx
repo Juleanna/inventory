@@ -39,6 +39,9 @@ const LocationMapPage = lazy(() => import('@/pages/location-map'))
 const QrScannerPage = lazy(() => import('@/pages/qr-scanner'))
 const EquipmentTemplatesPage = lazy(() => import('@/pages/equipment-templates'))
 const DepreciationPage = lazy(() => import('@/pages/depreciation'))
+const AdvancedAnalyticsPage = lazy(() => import('@/pages/advanced-analytics'))
+const AutomationRulesPage = lazy(() => import('@/pages/automation-rules'))
+const WebhooksPage = lazy(() => import('@/pages/webhooks'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -108,6 +111,9 @@ export default function App() {
               <Route path="location-map" element={<LocationMapPage />} />
               <Route path="qr-scanner" element={<QrScannerPage />} />
               <Route path="depreciation" element={<DepreciationPage />} />
+              <Route path="analytics/advanced" element={<AdvancedAnalyticsPage />} />
+              <Route path="automation-rules" element={<AutomationRulesPage />} />
+              <Route path="webhooks" element={<WebhooksPage />} />
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />

@@ -37,6 +37,8 @@ from .advanced_views import (
     EmailSettingsView, LdapSettingsView, DashboardWidgetsView as AdvancedDashboardWidgetsView,
     ExportReportView, BulkOperationsView, CsvImportView,
 )
+from .webhooks import WebhookViewSet
+from .automation import AutomationRuleViewSet
 
 # API роутер для ViewSets
 router = DefaultRouter()
@@ -62,6 +64,8 @@ router.register(r'password-logs', PasswordAccessLogViewSet)
 # CONTRACTS & TEMPLATES
 router.register(r'contracts', ContractViewSet)
 router.register(r'equipment-templates', EquipmentTemplateViewSet)
+router.register(r'webhooks', WebhookViewSet)
+router.register(r'automation-rules', AutomationRuleViewSet)
 
 urlpatterns = [
     # Головна сторінка
@@ -99,6 +103,7 @@ urlpatterns = [
     path('api/analytics/financial/', analytics.financial_analytics, name='financial_analytics'),
     path('api/analytics/maintenance/', analytics.maintenance_analytics, name='maintenance_analytics'),
     path('api/analytics/users/', analytics.user_analytics, name='user_analytics'),
+    path('api/analytics/advanced/', analytics.advanced_analytics, name='advanced_analytics'),
     path('api/analytics/report/', analytics.generate_report, name='generate_report'),
     
     # Мобільне API

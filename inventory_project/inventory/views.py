@@ -89,7 +89,7 @@ class EquipmentViewSet(ModelViewSet):
     """ViewSet для обладнання з CRUD, фільтрацією, пошуком і сортуванням."""
     queryset = Equipment.objects.select_related(
         'current_user', 'responsible_person'
-    ).all()
+    ).prefetch_related('documents', 'history_set').all()
     serializer_class = EquipmentSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = EquipmentFilter
@@ -915,7 +915,8 @@ class DashboardView(APIView):
 class AnalyticsView(APIView):
     """API для аналітичних даних"""
     permission_classes = [IsAuthenticated]
-    
+
+    @method_decorator(cache_page(3600))
     def get(self, request):
         """Отримати аналітичні дані з трендами"""
         months = int(request.query_params.get('months', 12))
@@ -2814,7 +2815,7 @@ def create_scheduled_maintenance(request):
 
 class SparePartsViewSet(ModelViewSet):
     """ViewSet для управління запчастинами"""
-    queryset = SparePart.objects.all()
+    queryset = SparePart.objects.select_related('category', 'storage_location').all()
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['name', 'part_number', 'manufacturer_part_number', 'description']

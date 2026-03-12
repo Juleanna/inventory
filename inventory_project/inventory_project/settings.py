@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'django_celery_beat',  # Для планування завдань Celery
     'django_celery_results',  # Для результатів Celery
     'drf_spectacular',  # API документація (Swagger/ReDoc)
+    'channels',  # WebSocket підтримка
 ]
 
 MIDDLEWARE = [
@@ -321,6 +322,20 @@ LOGGING = {
 # Додати до inventory_project/settings.py
 
 # Celery налаштування
+
+# Django Channels (WebSocket)
+ASGI_APPLICATION = 'inventory_project.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [config('REDIS_URL', default='redis://127.0.0.1:6379/1')],
+        },
+    } if not DEBUG else {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
+}
+
 CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']

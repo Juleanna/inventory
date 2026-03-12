@@ -357,6 +357,166 @@ def user_analytics(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def advanced_analytics(request):
+    """Розширена аналітика з прогнозуванням та трендами"""
+    try:
+        today = timezone.now().date()
+
+        # 1. Розподіл обладнання за віком (роки)
+        age_distribution = []
+        for i in range(8):
+            year_start = today - timedelta(days=365 * (i + 1))
+            year_end = today - timedelta(days=365 * i)
+            count = Equipment.objects.filter(
+                purchase_date__gte=year_start,
+                purchase_date__lt=year_end
+            ).count()
+            age_distribution.append({
+                'age': f'{i}-{i+1}' if i < 7 else '7+',
+                'label': f'{i} р.' if i < 7 else '7+ р.',
+                'count': count,
+            })
+
+        # 2. Щомісячні тренди закупівель (24 місяці)
+        monthly_acquisitions = []
+        for i in range(24):
+            month_date = today.replace(day=1) - timedelta(days=30 * i)
+            month_start = month_date.replace(day=1)
+            if month_start.month == 12:
+                month_end = month_start.replace(year=month_start.year + 1, month=1) - timedelta(days=1)
+            else:
+                month_end = month_start.replace(month=month_start.month + 1) - timedelta(days=1)
+
+            qs = Equipment.objects.filter(
+                purchase_date__gte=month_start,
+                purchase_date__lte=month_end
+            )
+            count = qs.count()
+            total = float(qs.aggregate(total=Sum('purchase_price'))['total'] or 0)
+            monthly_acquisitions.append({
+                'month': month_start.strftime('%Y-%m'),
+                'count': count,
+                'total_cost': total,
+            })
+        monthly_acquisitions.reverse()
+
+        # 3. Аналіз витрат по категоріях
+        cost_by_category = list(
+            Equipment.objects.filter(purchase_price__isnull=False)
+            .values('category')
+            .annotate(
+                total_cost=Sum('purchase_price'),
+                count=Count('id'),
+                avg_cost=Avg('purchase_price'),
+            )
+            .order_by('-total_cost')
+        )
+        for item in cost_by_category:
+            item['total_cost'] = float(item['total_cost'] or 0)
+            item['avg_cost'] = float(item['avg_cost'] or 0)
+
+        # 4. Прогноз заміни обладнання (наступні 12 місяців)
+        lifecycle_forecast = []
+        for i in range(12):
+            month_date = today + timedelta(days=30 * i)
+            month_start = month_date.replace(day=1)
+            if month_start.month == 12:
+                month_end = month_start.replace(year=month_start.year + 1, month=1) - timedelta(days=1)
+            else:
+                month_end = month_start.replace(month=month_start.month + 1) - timedelta(days=1)
+
+            expiring = Equipment.objects.filter(
+                expiry_date__gte=month_start,
+                expiry_date__lte=month_end,
+                status='WORKING'
+            ).count()
+            warranty_expiring = Equipment.objects.filter(
+                warranty_until__gte=month_start,
+                warranty_until__lte=month_end,
+            ).count()
+            lifecycle_forecast.append({
+                'month': month_start.strftime('%Y-%m'),
+                'expiring': expiring,
+                'warranty_ending': warranty_expiring,
+            })
+
+        # 5. Частота обслуговування по категоріях та місяцях (останні 6 місяців)
+        maintenance_heatmap = []
+        categories = Equipment.objects.values_list('category', flat=True).distinct()
+        for cat in categories:
+            row = {'category': cat, 'months': []}
+            for i in range(6):
+                m = today.replace(day=1) - timedelta(days=30 * i)
+                m_start = m.replace(day=1)
+                if m_start.month == 12:
+                    m_end = m_start.replace(year=m_start.year + 1, month=1) - timedelta(days=1)
+                else:
+                    m_end = m_start.replace(month=m_start.month + 1) - timedelta(days=1)
+
+                count = Equipment.objects.filter(
+                    category=cat,
+                    last_maintenance_date__gte=m_start,
+                    last_maintenance_date__lte=m_end
+                ).count()
+                row['months'].append({
+                    'month': m_start.strftime('%Y-%m'),
+                    'count': count,
+                })
+            row['months'].reverse()
+            maintenance_heatmap.append(row)
+
+        # 6. Простий прогноз витрат (лінійна екстраполяція)
+        last_6_months_costs = []
+        for i in range(6):
+            m = today.replace(day=1) - timedelta(days=30 * i)
+            m_start = m.replace(day=1)
+            if m_start.month == 12:
+                m_end = m_start.replace(year=m_start.year + 1, month=1) - timedelta(days=1)
+            else:
+                m_end = m_start.replace(month=m_start.month + 1) - timedelta(days=1)
+            total = float(Equipment.objects.filter(
+                purchase_date__gte=m_start,
+                purchase_date__lte=m_end
+            ).aggregate(total=Sum('purchase_price'))['total'] or 0)
+            last_6_months_costs.append(total)
+        last_6_months_costs.reverse()
+
+        avg_monthly_cost = sum(last_6_months_costs) / max(len(last_6_months_costs), 1)
+        cost_forecast = []
+        for i in range(6):
+            m = today + timedelta(days=30 * (i + 1))
+            cost_forecast.append({
+                'month': m.strftime('%Y-%m'),
+                'predicted_cost': round(avg_monthly_cost, 2),
+            })
+
+        return Response({
+            'age_distribution': age_distribution,
+            'monthly_acquisitions': monthly_acquisitions,
+            'cost_by_category': cost_by_category,
+            'lifecycle_forecast': lifecycle_forecast,
+            'maintenance_heatmap': maintenance_heatmap,
+            'cost_forecast': cost_forecast,
+            'summary': {
+                'avg_monthly_cost': round(avg_monthly_cost, 2),
+                'total_active_equipment': Equipment.objects.filter(status='WORKING').count(),
+                'equipment_over_5_years': Equipment.objects.filter(
+                    purchase_date__lt=today - timedelta(days=365 * 5)
+                ).count(),
+            },
+            'generated_at': timezone.now().isoformat(),
+        })
+
+    except Exception as e:
+        logger.error(f"Помилка розширеної аналітики: {e}")
+        return Response(
+            {'error': 'Помилка розширеної аналітики'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def generate_report(request):
     """Генерація комплексного звіту"""
     try:

@@ -25,6 +25,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo)
+    // Send to Sentry if configured
+    import('@/lib/sentry').then(({ captureError }) => {
+      captureError(error, { componentStack: errorInfo.componentStack || '' })
+    }).catch(() => {})
   }
 
   handleReset = () => {

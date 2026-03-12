@@ -22,6 +22,9 @@ import {
   ScanLine,
   Calculator,
   Copy,
+  TrendingUp,
+  Zap,
+  Webhook,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -53,8 +56,11 @@ const systemNav = [
   { path: '/users', label: 'Користувачі', icon: Users },
   { path: '/passwords', label: 'Паролі', icon: KeyRound },
   { path: '/analytics', label: 'Аналітика', icon: BarChart3 },
+  { path: '/analytics/advanced', label: 'Розширена аналітика', icon: TrendingUp },
   { path: '/notifications', label: 'Сповіщення', icon: Bell },
   { path: '/activity-log', label: 'Журнал дій', icon: ClipboardList },
+  { path: '/automation-rules', label: 'Автоматизація', icon: Zap },
+  { path: '/webhooks', label: 'Вебхуки', icon: Webhook },
   { path: '/backups', label: 'Бекапи', icon: HardDriveDownload },
   { path: '/settings', label: 'Налаштування', icon: Settings },
 ]

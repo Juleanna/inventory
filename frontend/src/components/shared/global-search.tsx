@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import {
   Monitor, AppWindow, Usb, FileKey, Wrench, Package, KeyRound, Users, Search,
   LayoutDashboard, BarChart3, Bell, Settings, HardDriveDownload, FileText,
-  ClipboardList, MapPin, ScanLine, Calculator, Copy,
+  ClipboardList, MapPin, ScanLine, Calculator, Copy, TrendingUp, Zap, Webhook,
 } from 'lucide-react'
 
 const SECTIONS = [
@@ -31,6 +31,9 @@ const SECTIONS = [
   { path: '/location-map', label: 'Карта обладнання', icon: MapPin },
   { path: '/depreciation', label: 'Амортизаційний звіт', icon: Calculator },
   { path: '/activity-log', label: 'Журнал дій', icon: ClipboardList },
+  { path: '/analytics/advanced', label: 'Розширена аналітика', icon: TrendingUp },
+  { path: '/automation-rules', label: 'Автоматизація', icon: Zap },
+  { path: '/webhooks', label: 'Вебхуки', icon: Webhook },
   { path: '/notifications', label: 'Сповіщення', icon: Bell },
   { path: '/backups', label: 'Бекапи', icon: HardDriveDownload },
   { path: '/settings', label: 'Налаштування', icon: Settings },
