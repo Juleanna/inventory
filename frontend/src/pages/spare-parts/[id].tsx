@@ -31,7 +31,6 @@ export default function SparePartDetailPage() {
   const { data: part, isLoading } = useSparePart(id!)
   const { data: movementsData } = useSparePartMovements({ spare_part_id: id, page_size: 20 })
   const issuePart = useIssueSparePart()
-  const updatePart = useUpdateSparePart()
 
   const [issueOpen, setIssueOpen] = useState(false)
   const [issueQty, setIssueQty] = useState(1)

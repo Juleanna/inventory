@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useLicensesList, useCreateLicense, useUpdateLicense, useDeleteLicense } from '@/hooks/use-licenses'
 import { useSoftwareList } from '@/hooks/use-software'
 import { useUsersList } from '@/hooks/use-auth'
@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -327,30 +326,23 @@ function LicenseFormDialog({ open, onOpenChange, license }: { open: boolean; onO
   const { data: equipmentData } = useEquipmentList({ page_size: 200 })
   const [swSearch, setSwSearch] = useState('')
 
-  const [form, setForm] = useState<LicenseFormState>(emptyForm)
-
-  useEffect(() => {
-    if (license) {
-      setForm({
-        license_type: license.license_type || '',
-        open_source_type: license.open_source_type || '',
-        key: license.key || '',
-        description: license.description || '',
-        activations: String(license.activations ?? 1),
-        start_date: license.start_date || '',
-        end_date: license.end_date || '',
-        is_perpetual: license.is_perpetual ?? false,
-        cost: license.cost || '',
-        trial_days: license.trial_days ? String(license.trial_days) : '',
-        oem_device: license.oem_device ? String(license.oem_device) : '',
-        software_ids: license.software_list?.map((s) => s.id) || [],
-        user: license.user ? String(license.user) : '',
-      })
-    } else {
-      setForm(emptyForm)
-    }
-    setSwSearch('')
-  }, [license])
+  const [form, setForm] = useState<LicenseFormState>(() =>
+    license ? {
+      license_type: license.license_type || '',
+      open_source_type: license.open_source_type || '',
+      key: license.key || '',
+      description: license.description || '',
+      activations: String(license.activations ?? 1),
+      start_date: license.start_date || '',
+      end_date: license.end_date || '',
+      is_perpetual: license.is_perpetual ?? false,
+      cost: license.cost || '',
+      trial_days: license.trial_days ? String(license.trial_days) : '',
+      oem_device: license.oem_device ? String(license.oem_device) : '',
+      software_ids: license.software_list?.map((s) => s.id) || [],
+      user: license.user ? String(license.user) : '',
+    } : emptyForm
+  )
 
   const update = (field: keyof LicenseFormState, value: string | boolean | number[]) =>
     setForm((prev) => ({ ...prev, [field]: value }))

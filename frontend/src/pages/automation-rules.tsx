@@ -25,7 +25,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { Zap, Plus, Play, Trash2, Pencil, Loader2, RotateCcw } from 'lucide-react'
+import { Zap, Plus, Play, Trash2, Pencil, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function AutomationRulesPage() {

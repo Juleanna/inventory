@@ -381,7 +381,7 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
           unit_price: i.unit_price,
           add_to_inventory: i.add_to_inventory,
         })),
-      } as any,
+      } as unknown as Partial<PurchaseOrder>,
       {
         onSuccess: () => {
           onOpenChange(false)

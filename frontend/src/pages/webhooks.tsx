@@ -4,7 +4,7 @@ import { webhooksApi, WEBHOOK_EVENTS, type WebhookConfig, type WebhookLog } from
 import { useAuthStore } from '@/stores/auth-store'
 import { PageHeader } from '@/components/shared/page-header'
 import { EmptyState } from '@/components/shared/empty-state'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'

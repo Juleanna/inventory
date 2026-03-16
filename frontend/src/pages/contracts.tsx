@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/shared/page-header'
-import { FileText, Plus, Pencil, Trash2, Download, Search, FileCheck, AlertTriangle, DollarSign } from 'lucide-react'
+import { FileText, Plus, Trash2, Download, Search, FileCheck, AlertTriangle, DollarSign } from 'lucide-react'
 
 const TYPE_OPTIONS = [
   { value: 'WARRANTY', label: 'Гарантійний' },
@@ -48,7 +48,7 @@ const TYPE_COLORS: Record<string, string> = {
 }
 
 export default function ContractsPage() {
-  const [page, setPage] = useState(1)
+  const [page] = useState(1)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -83,7 +83,7 @@ export default function ContractsPage() {
   const activeCount = contracts.filter(c => c.status === 'ACTIVE').length
   const expiringCount = contracts.filter(c => {
     if (!c.end_date) return false
-    const daysLeft = (new Date(c.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    const daysLeft = (new Date(c.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
     return daysLeft > 0 && daysLeft <= 30
   }).length
   const totalAmount = contracts.reduce((sum, c) => sum + (c.amount ? parseFloat(c.amount) : 0), 0)

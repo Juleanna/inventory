@@ -61,7 +61,7 @@ export function useUsersList() {
     queryFn: () => authApi.listUsers().then((r) => {
       const data = r.data
       // API повертає {count, results} або масив
-      return Array.isArray(data) ? data : (data as any).results ?? []
+      return Array.isArray(data) ? data : (data as { results: unknown[] }).results ?? []
     }),
   })
 }

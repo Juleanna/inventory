@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useCreateUser, useUpdateUser } from '@/hooks/use-users'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -42,33 +42,27 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
   const updateUser = useUpdateUser()
   const isEdit = !!user
 
-  const [form, setForm] = useState(emptyForm)
-
-  useEffect(() => {
-    if (user) {
-      setForm({
-        username: user.username || '',
-        password: '',
-        email: user.email || '',
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        phone: user.phone || '',
-        mobile_phone: user.mobile_phone || '',
-        department: user.department || '',
-        custom_department: user.custom_department || '',
-        position: user.position || '',
-        custom_position: user.custom_position || '',
-        office_location: user.office_location || '',
-        room_number: user.room_number || '',
-        employment_type: user.employment_type || '',
-        hire_date: user.hire_date || '',
-        is_staff: user.is_staff,
-        is_active: user.is_active,
-      })
-    } else {
-      setForm(emptyForm)
-    }
-  }, [user])
+  const [form, setForm] = useState(() =>
+    user ? {
+      username: user.username || '',
+      password: '',
+      email: user.email || '',
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      phone: user.phone || '',
+      mobile_phone: user.mobile_phone || '',
+      department: user.department || '',
+      custom_department: user.custom_department || '',
+      position: user.position || '',
+      custom_position: user.custom_position || '',
+      office_location: user.office_location || '',
+      room_number: user.room_number || '',
+      employment_type: user.employment_type || '',
+      hire_date: user.hire_date || '',
+      is_staff: user.is_staff,
+      is_active: user.is_active,
+    } : emptyForm
+  )
 
   const update = (field: string, value: string | boolean) =>
     setForm((prev) => ({ ...prev, [field]: value }))

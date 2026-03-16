@@ -20,7 +20,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AuditLogTable } from '@/components/passwords/audit-log-table'
-import { Checkbox as CheckboxPrimitive } from '@/components/ui/checkbox'
 import { KeyRound, Plus, Copy, Eye, EyeOff, Trash2, Globe, Loader2, Pencil, MoreHorizontal, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { SYSTEM_TYPE_LABELS, CRITICALITY_LABELS, ACCOUNT_TYPE_LABELS, ACCOUNT_STATUS_LABELS } from '@/lib/constants'

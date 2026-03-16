@@ -121,7 +121,6 @@ export default function EquipmentListPage() {
   const regenerateCodes = useRegenerateCodes()
   const bulkUpdateStatus = useBulkUpdateStatus()
   const bulkDelete = useBulkDelete()
-  const [bulkStatusOpen, setBulkStatusOpen] = useState(false)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
   const totalPages = data ? Math.ceil(data.count / 25) : 0

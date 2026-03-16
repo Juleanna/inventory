@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { render, type RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
@@ -26,5 +27,3 @@ export function renderWithProviders(
 ) {
   return render(ui, { wrapper: AllProviders, ...options })
 }
-
-export { render }

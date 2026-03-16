@@ -1029,7 +1029,6 @@ function GDriveNotConfigured({ onSetup }: { onSetup: () => void }) {
 }
 
 function GDriveNotAuthorized({
-  authUrl,
   onSetup,
 }: {
   authUrl?: string

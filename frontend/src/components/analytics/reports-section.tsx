@@ -37,7 +37,7 @@ export function ReportsSection() {
       if (form.category && form.category !== '_all') params.category = form.category
       if (form.status && form.status !== '_all') params.status = form.status
 
-      const response = await analyticsApi.generateExportReport(params as any)
+      const response = await analyticsApi.generateExportReport(params as { type: string; format: string; date_from?: string; date_to?: string; department?: string; category?: string; status?: string })
       const ext = form.format === 'excel' ? 'xlsx' : 'pdf'
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')

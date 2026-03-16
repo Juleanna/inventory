@@ -166,12 +166,18 @@ export default function MaintenanceSchedulePage() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
-  const schedules: Record<string, unknown>[] =
-    (data as { schedules?: Record<string, unknown>[]; results?: Record<string, unknown>[] })?.schedules
-    || (data as { results?: Record<string, unknown>[] })?.results
-    || []
+  const schedules: Record<string, unknown>[] = useMemo(
+    () =>
+      (data as { schedules?: Record<string, unknown>[]; results?: Record<string, unknown>[] })?.schedules
+      || (data as { results?: Record<string, unknown>[] })?.results
+      || [],
+    [data]
+  )
 
-  const requests: MaintenanceRequest[] = requestsData?.results || []
+  const requests: MaintenanceRequest[] = useMemo(
+    () => requestsData?.results || [],
+    [requestsData]
+  )
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -336,10 +342,6 @@ export default function MaintenanceSchedulePage() {
                       const dayEvents = eventsMap.get(key) || []
                       const isToday = key === todayStr
                       const isSelected = key === selectedDay
-                      const scheduleCount = dayEvents.filter((e) => e.type === 'schedule').length
-                      const requestCount = dayEvents.filter((e) => e.type === 'request').length
-                      const hasCritical = dayEvents.some((e) => e.priority === 'CRITICAL' || e.priority === 'HIGH')
-
                       return (
                         <div
                           key={i}
@@ -805,8 +807,6 @@ function EditScheduleDialog({
   schedule: Record<string, unknown> | null
 }) {
   const updateSchedule = useUpdateMaintenanceSchedule()
-  const { data: equipmentData } = useEquipmentList({ page_size: 200 })
-  const { data: users } = useUsersList()
 
   const [form, setForm] = useState({
     title: '',

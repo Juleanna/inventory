@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useAuthStore } from '@/stores/auth-store'
+import type { User } from '@/types'
 
 describe('Auth Store', () => {
   beforeEach(() => {
@@ -28,13 +29,13 @@ describe('Auth Store', () => {
 
   it('should set user', () => {
     const user = { id: 1, username: 'testuser', email: 'test@test.com', first_name: 'Test', last_name: 'User' }
-    useAuthStore.getState().setUser(user as any)
+    useAuthStore.getState().setUser(user as unknown as User)
     expect(useAuthStore.getState().user).toEqual(user)
   })
 
   it('should logout and clear state', () => {
     useAuthStore.getState().setTokens('access', 'refresh')
-    useAuthStore.getState().setUser({ id: 1, username: 'test' } as any)
+    useAuthStore.getState().setUser({ id: 1, username: 'test' } as unknown as User)
     useAuthStore.getState().logout()
 
     const state = useAuthStore.getState()

@@ -10,8 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/shared/page-header'
-import { ClipboardList, Plus, Pencil, Trash2, Monitor, Cpu, HardDrive, MemoryStick } from 'lucide-react'
-import type { EquipmentTemplate } from '@/api/templates'
+import { ClipboardList, Plus, Trash2, Monitor, Cpu, HardDrive, MemoryStick } from 'lucide-react'
 
 const CATEGORIES: Record<string, string> = {
   PC: 'Стаціонарний ПК', WORK: 'Робоча станція', SRV: 'Сервер', PRN: 'Принтер',
