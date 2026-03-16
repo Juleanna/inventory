@@ -348,9 +348,14 @@ class Equipment(models.Model):
             models.Index(fields=["status"], name="idx_equipment_status"),
             models.Index(fields=["category"], name="idx_equipment_category"),
             models.Index(fields=["location"], name="idx_equipment_location"),
-            models.Index(fields=["building", "floor", "room"], name="idx_equipment_building"),
+            models.Index(
+                fields=["building", "floor", "room"],
+                name="idx_equipment_building",
+            ),
             models.Index(fields=["created_at"], name="idx_equipment_created_at"),
-            models.Index(fields=["status", "category"], name="idx_equipment_status_cat"),
+            models.Index(
+                fields=["status", "category"], name="idx_equipment_status_cat"
+            ),
             models.Index(fields=["warranty_until"], name="idx_equipment_warranty"),
             models.Index(fields=["expiry_date"], name="idx_equipment_expiry"),
         ]
