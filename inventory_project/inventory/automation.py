@@ -55,6 +55,10 @@ class AutomationRule(models.Model):
         app_label = "inventory"
         verbose_name = "Правило автоматизації"
         verbose_name_plural = "Правила автоматизації"
+        indexes = [
+            models.Index(fields=["active"], name="idx_automation_active"),
+            models.Index(fields=["trigger_type"], name="idx_automation_trigger"),
+        ]
 
     def __str__(self):
         return self.name

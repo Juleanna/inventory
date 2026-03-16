@@ -78,6 +78,11 @@ class Contract(models.Model):
         ordering = ["-created_at"]
         verbose_name = "Договір"
         verbose_name_plural = "Договори"
+        indexes = [
+            models.Index(fields=["status"], name="idx_contract_status"),
+            models.Index(fields=["contract_type"], name="idx_contract_type"),
+            models.Index(fields=["start_date", "end_date"], name="idx_contract_dates"),
+        ]
 
     def __str__(self):
         return f"{self.contract_number} — {self.title}"

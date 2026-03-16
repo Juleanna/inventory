@@ -32,7 +32,7 @@ FROM base AS final
 COPY . /app/
 
 # Створюємо необхідні директорії
-RUN mkdir -p /app/logs /app/staticfiles /app/media
+RUN mkdir -p /app/logs /app/staticfiles /app/media /app/inventory_project/static
 
 # Виправляємо CRLF → LF (Windows Git може додати \r)
 RUN sed -i 's/\r$//' /app/entrypoint.sh

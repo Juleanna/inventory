@@ -45,7 +45,7 @@ services:
       dockerfile: Dockerfile
     container_name: inventory_web
     env_file:
-      - .env
+      - .env.docker
     environment:
       - DB_HOST=db
       - DB_PORT=5432
@@ -79,7 +79,7 @@ services:
     container_name: inventory_celery_worker
     command: celery -A inventory_project worker -l info --concurrency=2
     env_file:
-      - .env
+      - .env.docker
     environment:
       - DB_HOST=db
       - DB_PORT=5432
@@ -105,7 +105,7 @@ services:
     container_name: inventory_celery_beat
     command: celery -A inventory_project beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     env_file:
-      - .env
+      - .env.docker
     environment:
       - DB_HOST=db
       - DB_PORT=5432
