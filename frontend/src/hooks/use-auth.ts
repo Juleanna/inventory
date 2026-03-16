@@ -10,7 +10,7 @@ interface SimpleUser {
   first_name: string
   last_name: string
   email: string
-  is_active?: boolean
+  is_active: boolean
 }
 import { toast } from 'sonner'
 
@@ -70,7 +70,15 @@ export function useUsersList() {
     queryFn: (): Promise<SimpleUser[]> => authApi.listUsers().then((r) => {
       const data = r.data
       // API повертає {count, results} або масив
-      return Array.isArray(data) ? data : (data as { results: SimpleUser[] }).results ?? []
+      const list = Array.isArray(data) ? data : (data as { results: SimpleUser[] }).results ?? []
+      return list.map((u: Record<string, unknown>) => ({
+        id: u.id as number,
+        username: u.username as string,
+        first_name: u.first_name as string,
+        last_name: u.last_name as string,
+        email: u.email as string,
+        is_active: (u.is_active as boolean) ?? true,
+      }))
     }),
   })
 }
