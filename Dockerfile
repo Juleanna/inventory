@@ -34,6 +34,9 @@ COPY . /app/
 # Створюємо необхідні директорії
 RUN mkdir -p /app/logs /app/staticfiles /app/media
 
+# Виправляємо CRLF → LF (Windows Git може додати \r)
+RUN sed -i 's/\r$//' /app/entrypoint.sh
+
 # Створюємо непривілейованого користувача
 RUN groupadd -r django && useradd -r -g django django \
     && chown -R django:django /app \
