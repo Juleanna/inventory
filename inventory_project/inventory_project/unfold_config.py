@@ -13,7 +13,6 @@ UNFOLD = {
         "light": lambda request: static("admin/img/inventory-light.svg"),
         "dark": lambda request: static("admin/img/inventory-dark.svg"),
     },
-    
     # Навігація і меню
     "SIDEBAR": {
         "show_search": True,
@@ -48,12 +47,16 @@ UNFOLD = {
                     {
                         "title": _("Периферійні пристрої"),
                         "icon": "hardware",
-                        "link": reverse_lazy("admin:inventory_peripheraldevice_changelist"),
+                        "link": reverse_lazy(
+                            "admin:inventory_peripheraldevice_changelist"
+                        ),
                     },
                     {
                         "title": _("Документи"),
                         "icon": "description",
-                        "link": reverse_lazy("admin:inventory_equipmentdocument_changelist"),
+                        "link": reverse_lazy(
+                            "admin:inventory_equipmentdocument_changelist"
+                        ),
                     },
                 ],
             },
@@ -64,18 +67,24 @@ UNFOLD = {
                     {
                         "title": _("Запити на ТО"),
                         "icon": "build",
-                        "link": reverse_lazy("admin:inventory_maintenancerequest_changelist"),
+                        "link": reverse_lazy(
+                            "admin:inventory_maintenancerequest_changelist"
+                        ),
                         "badge": "priority",
                     },
                     {
                         "title": _("Розклад ТО"),
                         "icon": "schedule",
-                        "link": reverse_lazy("admin:inventory_maintenanceschedule_changelist"),
+                        "link": reverse_lazy(
+                            "admin:inventory_maintenanceschedule_changelist"
+                        ),
                     },
                     {
                         "title": _("Завдання ТО"),
                         "icon": "task_alt",
-                        "link": reverse_lazy("admin:inventory_maintenancetask_changelist"),
+                        "link": reverse_lazy(
+                            "admin:inventory_maintenancetask_changelist"
+                        ),
                     },
                 ],
             },
@@ -96,12 +105,16 @@ UNFOLD = {
                     {
                         "title": _("Категорії"),
                         "icon": "category",
-                        "link": reverse_lazy("admin:inventory_sparepartcategory_changelist"),
+                        "link": reverse_lazy(
+                            "admin:inventory_sparepartcategory_changelist"
+                        ),
                     },
                     {
                         "title": _("Замовлення"),
                         "icon": "shopping_cart",
-                        "link": reverse_lazy("admin:inventory_purchaseorder_changelist"),
+                        "link": reverse_lazy(
+                            "admin:inventory_purchaseorder_changelist"
+                        ),
                     },
                 ],
             },
@@ -130,18 +143,24 @@ UNFOLD = {
                     {
                         "title": _("Облікові записи"),
                         "icon": "vpn_key",
-                        "link": reverse_lazy("admin:inventory_systemaccount_changelist"),
+                        "link": reverse_lazy(
+                            "admin:inventory_systemaccount_changelist"
+                        ),
                         "badge": "priority",
                     },
                     {
                         "title": _("Категорії систем"),
                         "icon": "category",
-                        "link": reverse_lazy("admin:inventory_systemcategory_changelist"),
+                        "link": reverse_lazy(
+                            "admin:inventory_systemcategory_changelist"
+                        ),
                     },
                     {
                         "title": _("Логи доступу"),
                         "icon": "security",
-                        "link": reverse_lazy("admin:inventory_passwordaccesslog_changelist"),
+                        "link": reverse_lazy(
+                            "admin:inventory_passwordaccesslog_changelist"
+                        ),
                         "badge": "info",
                     },
                 ],
@@ -163,7 +182,9 @@ UNFOLD = {
                     {
                         "title": _("Налаштування"),
                         "icon": "settings",
-                        "link": reverse_lazy("admin:inventory_userpreferences_changelist"),
+                        "link": reverse_lazy(
+                            "admin:inventory_userpreferences_changelist"
+                        ),
                     },
                 ],
             },
@@ -185,18 +206,19 @@ UNFOLD = {
                     {
                         "title": _("Дашборди"),
                         "icon": "dashboard_customize",
-                        "link": reverse_lazy("admin:inventory_customdashboard_changelist"),
+                        "link": reverse_lazy(
+                            "admin:inventory_customdashboard_changelist"
+                        ),
                     },
                 ],
             },
         ],
     },
-    
     # Кольори і теми
     "COLORS": {
         "primary": {
             "50": "250 245 255",
-            "100": "243 232 255", 
+            "100": "243 232 255",
             "200": "233 213 255",
             "300": "196 181 253",
             "400": "147 51 234",
@@ -208,7 +230,6 @@ UNFOLD = {
             "950": "41 37 116",
         },
     },
-    
     # Додаткові налаштування
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": True,
@@ -222,7 +243,6 @@ UNFOLD = {
     "SCRIPTS": [
         lambda request: static("admin/js/custom-unfold.js"),
     ],
-    
     # Фільтри і дії
     "ACTIONS": True,
     "FILTERS": {
@@ -230,7 +250,6 @@ UNFOLD = {
         "SEARCH": True,
         "LIST_FILTER": True,
     },
-    
     # Налаштування форм
     "FORMS": {
         "SUBMIT_BUTTON_TEXT": _("Зберегти"),
@@ -238,7 +257,6 @@ UNFOLD = {
         "SAVE_AND_CONTINUE_TEXT": _("Зберегти і продовжити"),
         "SAVE_AND_ADD_ANOTHER_TEXT": _("Зберегти і додати інше"),
     },
-    
     # Налаштування таблиць
     "TABLES": {
         "PAGINATION": {
@@ -254,14 +272,16 @@ UNFOLD = {
     },
 }
 
+
 def get_environment_badge():
     """Відображення середовища розробки"""
     import os
-    environment = os.environ.get('DJANGO_ENVIRONMENT', 'development')
-    
-    if environment == 'production':
+
+    environment = os.environ.get("DJANGO_ENVIRONMENT", "development")
+
+    if environment == "production":
         return None  # Не показувати badge у продакшені
-    elif environment == 'staging':
+    elif environment == "staging":
         return "staging", "warning"
     else:
         return "dev", "info"

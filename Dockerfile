@@ -1,12 +1,11 @@
-# Використовуємо офіційний Python образ як базовий
-FROM python:3.11-slim
+# === BACKEND DOCKERFILE ===
+# Етап 1: Базовий образ з залежностями
+FROM python:3.11-slim AS base
 
-# Встановлюємо змінні середовища
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive
 
-# Встановлюємо системні залежності
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
@@ -14,42 +13,34 @@ RUN apt-get update \
         postgresql-client \
         gettext \
         curl \
-        && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
-# Створюємо робочу директорію
 WORKDIR /app
 
-# Створюємо директорію для логів
-RUN mkdir -p /app/logs
-
-# Копіюємо файли залежностей
-COPY requirements.txt /app/
-COPY requirements-dev.txt /app/
-
-# Встановлюємо Python залежності
+# Копіюємо та встановлюємо залежності (кешується окремо)
+COPY requirements.txt requirements-dev.txt /app/
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir -r requirements-dev.txt
+    || pip install --no-cache-dir -r requirements.txt --no-deps
+
+# Етап 2: Фінальний образ
+FROM base AS final
 
 # Копіюємо код проекту
 COPY . /app/
 
-# Створюємо користувача для безпеки
-RUN groupadd -r django && useradd -r -g django django
+# Створюємо необхідні директорії
+RUN mkdir -p /app/logs /app/staticfiles /app/media
 
-# Встановлюємо права на директорії
-RUN chown -R django:django /app
-RUN chmod +x /app/entrypoint.sh
-RUN chmod 755 /app/logs
-RUN mkdir -p /app/staticfiles && chown django:django /app/staticfiles
-RUN mkdir -p /app/media && chown django:django /app/media
+# Створюємо непривілейованого користувача
+RUN groupadd -r django && useradd -r -g django django \
+    && chown -R django:django /app \
+    && chmod +x /app/entrypoint.sh \
+    && chmod 755 /app/logs
 
-# Переключаємося на непривілейованого користувача
 USER django
 
-# Відкриваємо порт
 EXPOSE 8000
 
-# Команда запуску
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "inventory_project.wsgi:application"]
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "inventory_project.asgi:application"]

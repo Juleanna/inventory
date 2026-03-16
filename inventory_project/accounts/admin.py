@@ -3,8 +3,11 @@ from .models import CustomUser, UserProfile
 from unfold.admin import ModelAdmin, StackedInline, TabularInline
 from unfold.decorators import display, action
 from unfold.contrib.filters.admin import (
-    ChoicesDropdownFilter, MultipleChoicesDropdownFilter,
-    TextFilter, FieldTextFilter, RangeDateFilter
+    ChoicesDropdownFilter,
+    MultipleChoicesDropdownFilter,
+    TextFilter,
+    FieldTextFilter,
+    RangeDateFilter,
 )
 from simple_history.admin import SimpleHistoryAdmin
 from django.utils.translation import gettext_lazy as _
@@ -23,38 +26,53 @@ try:
 except admin.sites.NotRegistered:
     pass
 
+
 # Регистрируем заново с вашим классом админки
 @admin.register(CustomUser)
 class CustomUserAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, ModelAdmin):
-    list_display = ('username', 'email', 'phone', 'position', 'department', 'user_status', 'last_login_display')
-    search_fields = ('username', 'email', 'phone', 'position', 'department')
-    list_filter = (
-        ('is_active', ChoicesDropdownFilter),
-        ('is_staff', ChoicesDropdownFilter),
-        ('is_superuser', ChoicesDropdownFilter),
-        'department',
-        ('date_joined', RangeDateFilter)
+    list_display = (
+        "username",
+        "email",
+        "phone",
+        "position",
+        "department",
+        "user_status",
+        "last_login_display",
     )
-    
+    search_fields = ("username", "email", "phone", "position", "department")
+    list_filter = (
+        ("is_active", ChoicesDropdownFilter),
+        ("is_staff", ChoicesDropdownFilter),
+        ("is_superuser", ChoicesDropdownFilter),
+        "department",
+        ("date_joined", RangeDateFilter),
+    )
+
     compressed_fields = True
     warn_unsaved_form = True
-    
-    @display(description=_('Статус користувача'), boolean=True)
+
+    @display(description=_("Статус користувача"), boolean=True)
     def user_status(self, obj):
         return obj.is_active
-    
-    @display(description=_('Останній вхід'), ordering='last_login')
+
+    @display(description=_("Останній вхід"), ordering="last_login")
     def last_login_display(self, obj):
         if obj.last_login:
             from django.utils import timezone
+
             delta = timezone.now() - obj.last_login
             if delta.days == 0:
                 return format_html('<span class="text-success">Сьогодні</span>')
             elif delta.days <= 7:
-                return format_html('<span class="text-warning">{} днів тому</span>', delta.days)
+                return format_html(
+                    '<span class="text-warning">{} днів тому</span>', delta.days
+                )
             else:
-                return format_html('<span class="text-danger">{} днів тому</span>', delta.days)
+                return format_html(
+                    '<span class="text-danger">{} днів тому</span>', delta.days
+                )
         return format_html('<span class="text-muted">Ніколи</span>')
+
     fieldsets = (
         (
             _("Основная информация"),
@@ -89,48 +107,45 @@ class CustomUserAdmin(SimpleHistoryAdmin, ImportExportModelAdmin, ModelAdmin):
 
     def password_change_action(self, obj):
         if obj:
-            url = reverse('admin:customuser_change_password', args=[obj.pk])
+            url = reverse("admin:customuser_change_password", args=[obj.pk])
             return format_html('<a class="button" href="{}">Изменить пароль</a>', url)
         return None
 
-    actions_for_obj = ['password_change_action']
+    actions_for_obj = ["password_change_action"]
 
 
 @admin.register(UserProfile)
 class UserProfileAdmin(ModelAdmin):
     """Адмін для профілів користувачів"""
+
     list_display = (
-        'user', 'items_per_page', 'default_equipment_view', 
-        'email_digest_frequency', 'favorite_count'
+        "user",
+        "items_per_page",
+        "default_equipment_view",
+        "email_digest_frequency",
+        "favorite_count",
     )
     list_filter = (
-        ('default_equipment_view', ChoicesDropdownFilter),
-        ('email_digest_frequency', ChoicesDropdownFilter)
+        ("default_equipment_view", ChoicesDropdownFilter),
+        ("email_digest_frequency", ChoicesDropdownFilter),
     )
-    search_fields = ('user__username', 'user__email')
+    search_fields = ("user__username", "user__email")
     compressed_fields = True
-    
-    @display(description=_('Кількість улюблених'), ordering='favorite_equipment__count')
+
+    @display(description=_("Кількість улюблених"), ordering="favorite_equipment__count")
     def favorite_count(self, obj):
         count = obj.favorite_equipment.count()
         if count > 0:
             return format_html('<span class="badge badge-info">{}</span>', count)
         return format_html('<span class="text-muted">0</span>')
-    
+
     fieldsets = (
-        (_('Користувач'), {
-            'fields': ('user',)
-        }),
-        (_('Налаштування інтерфейсу'), {
-            'fields': ('items_per_page', 'default_equipment_view')
-        }),
-        (_('Улюблене обладнання'), {
-            'fields': ('favorite_equipment',)
-        }),
-        (_('Сповіщення'), {
-            'fields': ('email_digest_frequency',)
-        }),
-        (_('Швидкі дії'), {
-            'fields': ('quick_actions',)
-        })
+        (_("Користувач"), {"fields": ("user",)}),
+        (
+            _("Налаштування інтерфейсу"),
+            {"fields": ("items_per_page", "default_equipment_view")},
+        ),
+        (_("Улюблене обладнання"), {"fields": ("favorite_equipment",)}),
+        (_("Сповіщення"), {"fields": ("email_digest_frequency",)}),
+        (_("Швидкі дії"), {"fields": ("quick_actions",)}),
     )
