@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Inventory — Деплой на Windows-сервер</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-2: #334155;
+            --border: #475569;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-light: #60a5fa;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --code-bg: #0d1117;
+            --purple: #a78bfa;
+            --teal: #2dd4bf;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-light), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p { color: var(--text-muted); font-size: 1.1rem; }
+
+        .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+        .toc {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .toc h2 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--accent-light); }
+        .toc ol { padding-left: 1.2rem; }
+        .toc li { margin-bottom: 0.4rem; }
+        .toc a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+        .toc a:hover { color: var(--accent-light); }
+
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--accent-light);
+        }
+
+        .section h3 { font-size: 1.15rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: var(--purple); }
+        .section h4 { font-size: 1rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--teal); }
+        p { margin-bottom: 0.75rem; }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.88rem;
+            color: var(--teal);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            overflow-x: auto;
+            margin: 0.75rem 0 1rem;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text);
+            position: relative;
+        }
+
+        pre .comment { color: #6a737d; }
+        pre .cmd { color: #79c0ff; }
+        pre .flag { color: #ffa657; }
+        pre .string { color: #a5d6ff; }
+        pre .keyword { color: #ff7b72; }
+        pre .output { color: #8b949e; }
+
+        pre .shell-label {
+            position: absolute;
+            top: 0.4rem;
+            right: 0.6rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            background: var(--surface-2);
+            padding: 0.1rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        ul, ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+        li { margin-bottom: 0.4rem; }
+
+        .alert {
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+
+        .alert-info { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); color: var(--accent-light); }
+        .alert-warning { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: var(--warning); }
+        .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: var(--success); }
+        .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--error); }
+
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+        th, td { padding: 0.6rem 0.8rem; border: 1px solid var(--border); text-align: left; }
+        th { background: var(--surface-2); font-weight: 600; color: var(--accent-light); }
+        td { background: var(--code-bg); }
+
+        .step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .step { display: flex; align-items: flex-start; margin-bottom: 1.25rem; }
+        .step-content { flex: 1; }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-green { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+        .badge-blue { background: rgba(59,130,246,0.15); color: var(--accent-light); border: 1px solid rgba(59,130,246,0.3); }
+        .badge-yellow { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+        .badge-red { background: rgba(239,68,68,0.15); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
+        .badge-purple { background: rgba(167,139,250,0.15); color: var(--purple); border: 1px solid rgba(167,139,250,0.3); }
+
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+        @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Деплой на Windows-сервер</h1>
+    <p>IT Inventory System &mdash; повна інструкція з налаштування продакшн-деплою</p>
+</div>
+
+<div class="container">
+
+    <!-- TOC -->
+    <div class="toc">
+        <h2>Зміст</h2>
+        <ol>
+            <li><a href="#overview">Схема деплою</a></li>
+            <li><a href="#prerequisites">Передумови на сервері</a></li>
+            <li><a href="#openssh">Налаштування OpenSSH Server</a></li>
+            <li><a href="#firewall">Налаштування брандмауера</a></li>
+            <li><a href="#project-setup">Підготовка проєкту на сервері</a></li>
+            <li><a href="#first-deploy">Перший запуск</a></li>
+            <li><a href="#manual-deploy">Ручний деплой (deploy.ps1)</a></li>
+            <li><a href="#auto-deploy">Автоматичний деплой (GitHub Actions)</a></li>
+            <li><a href="#github-secrets">Налаштування GitHub Secrets</a></li>
+            <li><a href="#verify">Перевірка роботи</a></li>
+            <li><a href="#manage">Керування сервером</a></li>
+            <li><a href="#troubleshooting">Проблеми та рішення</a></li>
+        </ol>
+    </div>
+
+    <!-- 1. Overview -->
+    <div class="section" id="overview">
+        <h2>1. Схема деплою</h2>
+
+        <p>Проєкт підтримує два способи деплою:</p>
+
+        <div class="two-col">
+            <div class="alert alert-info">
+                <strong>Ручний деплой</strong><br>
+                Запуск <code>.\deploy.ps1</code> на сервері.<br>
+                Збирає образи локально, виконує міграції, перезапускає сервіси.
+            </div>
+            <div class="alert alert-success">
+                <strong>Автоматичний деплой</strong><br>
+                Push у <code>main</code> &rarr; GitHub Actions &rarr; CI перевірки &rarr; збірка Docker-образів &rarr; SSH на сервер &rarr; оновлення.
+            </div>
+        </div>
+
+        <h3>Мережева конфігурація</h3>
+        <table>
+            <tr><th>Сервіс</th><th>Порт на сервері</th><th>Доступ</th></tr>
+            <tr><td>Додаток (Nginx)</td><td><code>8081</code></td><td>Зовнішній (з інтернету)</td></tr>
+            <tr><td>PostgreSQL</td><td><code>5433</code></td><td>Тільки локально</td></tr>
+            <tr><td>Redis</td><td><code>6380</code></td><td>Тільки локально</td></tr>
+            <tr><td>OpenSSH</td><td><code>22</code></td><td>Зовнішній (для CD)</td></tr>
+        </table>
+
+        <div class="alert alert-warning">
+            <strong>Доступ з інтернету</strong> &mdash; щоб додаток був доступний ззовні, потрібно:
+            <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+                <li>Відкрити порт 8081 у брандмауері Windows</li>
+                <li>Налаштувати проброс портів (port forwarding) на роутері: зовнішній порт &rarr; IP сервера:8081</li>
+                <li>Або використати статичний IP / DDNS-сервіс, якщо IP динамічний</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 2. Prerequisites -->
+    <div class="section" id="prerequisites">
+        <h2>2. Передумови на сервері</h2>
+
+        <h3>Обов'язкові компоненти</h3>
+        <table>
+            <tr><th>Компонент</th><th>Версія</th><th>Перевірка</th></tr>
+            <tr>
+                <td>Windows 10/11 Pro або Server</td>
+                <td>10.0.19045+</td>
+                <td><code>winver</code></td>
+            </tr>
+            <tr>
+                <td>Docker Desktop</td>
+                <td>4.x</td>
+                <td><code>docker --version</code></td>
+            </tr>
+            <tr>
+                <td>Git</td>
+                <td>2.x</td>
+                <td><code>git --version</code></td>
+            </tr>
+            <tr>
+                <td>PowerShell</td>
+                <td>5.1+ (вбудований)</td>
+                <td><code>$PSVersionTable</code></td>
+            </tr>
+        </table>
+
+        <h3>Перевірка Docker Desktop</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Перевірити що Docker працює</span>
+<span class="cmd">docker</span> --version
+<span class="cmd">docker compose</span> version
+<span class="cmd">docker</span> run --rm hello-world</pre>
+
+        <div class="alert alert-warning">
+            <strong>Docker Desktop повинен запускатися автоматично</strong> при старті Windows. Перевірте: Docker Desktop &rarr; Settings &rarr; General &rarr; <strong>"Start Docker Desktop when you sign in to your computer"</strong> &mdash; увімкнено.
+        </div>
+
+        <h3>Налаштування Docker Desktop для продакшну</h3>
+        <p>Docker Desktop &rarr; Settings &rarr; Resources:</p>
+        <ul>
+            <li><strong>CPUs:</strong> мінімум 2 (рекомендовано 4)</li>
+            <li><strong>Memory:</strong> мінімум 4 GB (рекомендовано 8 GB)</li>
+            <li><strong>Disk image size:</strong> мінімум 30 GB</li>
+        </ul>
+    </div>
+
+    <!-- 3. OpenSSH -->
+    <div class="section" id="openssh">
+        <h2>3. Налаштування OpenSSH Server</h2>
+
+        <p>OpenSSH потрібен для автоматичного деплою через GitHub Actions. Якщо ви плануєте використовувати тільки ручний деплой &mdash; цей крок можна пропустити.</p>
+
+        <h3>Крок 1: Встановлення OpenSSH Server</h3>
+<pre><span class="shell-label">PowerShell (Адміністратор)</span>
+<span class="comment"># Перевірити чи встановлений</span>
+<span class="cmd">Get-WindowsCapability</span> -Online | <span class="cmd">Where-Object</span> Name -like <span class="string">'OpenSSH.Server*'</span>
+
+<span class="comment"># Встановити якщо не встановлений</span>
+<span class="cmd">Add-WindowsCapability</span> -Online -Name <span class="string">OpenSSH.Server~~~~0.0.1.0</span></pre>
+
+        <h3>Крок 2: Запуск та автостарт сервісу</h3>
+<pre><span class="shell-label">PowerShell (Адміністратор)</span>
+<span class="comment"># Запустити сервіс</span>
+<span class="cmd">Start-Service</span> sshd
+
+<span class="comment"># Автозапуск при старті Windows</span>
+<span class="cmd">Set-Service</span> -Name sshd -StartupType Automatic
+
+<span class="comment"># Перевірити статус</span>
+<span class="cmd">Get-Service</span> sshd
+
+<span class="output"># Очікуваний результат:
+# Status   Name    DisplayName
+# ------   ----    -----------
+# Running  sshd    OpenSSH SSH Server</span></pre>
+
+        <h3>Крок 3: Зміна стандартної оболонки на Git Bash</h3>
+        <p>GitHub Actions SSH-action відправляє bash-команди. Потрібно зробити Git Bash оболонкою за замовчуванням для SSH:</p>
+<pre><span class="shell-label">PowerShell (Адміністратор)</span>
+<span class="comment"># Встановити Git Bash як оболонку за замовчуванням для SSH</span>
+<span class="cmd">New-ItemProperty</span> -Path <span class="string">"HKLM:\SOFTWARE\OpenSSH"</span> `
+    -Name DefaultShell `
+    -Value <span class="string">"C:\Program Files\Git\bin\bash.exe"</span> `
+    -PropertyType String -Force
+
+<span class="comment"># Перезапустити SSH-сервіс</span>
+<span class="cmd">Restart-Service</span> sshd</pre>
+
+        <div class="alert alert-error">
+            <strong>Важливо!</strong> Якщо Git встановлений в іншій директорії, замініть шлях. Перевірте: <code>where.exe bash</code>
+        </div>
+
+        <h3>Крок 4: Генерація SSH-ключа для GitHub Actions</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Генеруємо нову пару ключів для деплою</span>
+<span class="cmd">ssh-keygen</span> -t ed25519 -C <span class="string">"github-actions-deploy"</span> -f <span class="string">$env:USERPROFILE\.ssh\deploy_key</span> -N <span class="string">""</span>
+
+<span class="comment"># Результат — два файли:
+#   ~/.ssh/deploy_key       — ПРИВАТНИЙ ключ (додати в GitHub Secrets)
+#   ~/.ssh/deploy_key.pub   — ПУБЛІЧНИЙ ключ (додати в authorized_keys)</span></pre>
+
+        <h3>Крок 5: Додати публічний ключ до authorized_keys</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Для звичайного користувача:</span>
+<span class="cmd">Get-Content</span> <span class="string">$env:USERPROFILE\.ssh\deploy_key.pub</span> | <span class="cmd">Add-Content</span> <span class="string">$env:USERPROFILE\.ssh\authorized_keys</span>
+
+<span class="comment"># Для адміністратора (Windows використовує інший файл!):</span>
+<span class="cmd">Get-Content</span> <span class="string">$env:USERPROFILE\.ssh\deploy_key.pub</span> | <span class="cmd">Add-Content</span> <span class="string">$env:ProgramData\ssh\administrators_authorized_keys</span>
+
+<span class="comment"># Встановити правильні права (для адміністратора):</span>
+<span class="cmd">icacls</span> <span class="string">$env:ProgramData\ssh\administrators_authorized_keys</span> /inheritance:r /grant <span class="string">"SYSTEM:(F)"</span> /grant <span class="string">"BUILTIN\Administrators:(F)"</span></pre>
+
+        <div class="alert alert-info">
+            <strong>Який файл використовувати?</strong>
+            <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+                <li>Якщо SSH-користувач &mdash; <strong>адміністратор</strong> &rarr; <code>C:\ProgramData\ssh\administrators_authorized_keys</code></li>
+                <li>Якщо SSH-користувач &mdash; <strong>звичайний</strong> &rarr; <code>C:\Users\USERNAME\.ssh\authorized_keys</code></li>
+            </ul>
+        </div>
+
+        <h3>Крок 6: Перевірка SSH-з'єднання</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Перевірка з'єднання з локальної машини</span>
+<span class="cmd">ssh</span> -i <span class="string">$env:USERPROFILE\.ssh\deploy_key</span> <span class="flag">localhost</span> <span class="string">"echo SSH працює && docker --version"</span>
+
+<span class="output"># Очікуваний результат:
+# SSH працює
+# Docker version 27.x.x, build xxxxxxx</span></pre>
+
+        <h3>Крок 7: Скопіювати приватний ключ</h3>
+        <p>Скопіюйте вміст приватного ключа &mdash; він знадобиться для GitHub Secrets:</p>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Вивести вміст приватного ключа</span>
+<span class="cmd">Get-Content</span> <span class="string">$env:USERPROFILE\.ssh\deploy_key</span>
+
+<span class="output"># Скопіюйте ВСЕ, включаючи рядки:
+# -----BEGIN OPENSSH PRIVATE KEY-----
+# ...
+# -----END OPENSSH PRIVATE KEY-----</span></pre>
+    </div>
+
+    <!-- 4. Firewall -->
+    <div class="section" id="firewall">
+        <h2>4. Налаштування брандмауера</h2>
+
+        <h3>Відкрити порти</h3>
+<pre><span class="shell-label">PowerShell (Адміністратор)</span>
+<span class="comment"># Порт 8081 — веб-додаток (доступ з інтернету)</span>
+<span class="cmd">New-NetFirewallRule</span> -DisplayName <span class="string">"IT Inventory Web"</span> `
+    -Direction Inbound -Protocol TCP -LocalPort <span class="flag">8081</span> `
+    -Action Allow -Profile Any
+
+<span class="comment"># Порт 22 — SSH (для автодеплою з GitHub Actions)</span>
+<span class="cmd">New-NetFirewallRule</span> -DisplayName <span class="string">"OpenSSH Server"</span> `
+    -Direction Inbound -Protocol TCP -LocalPort <span class="flag">22</span> `
+    -Action Allow -Profile Any</pre>
+
+        <div class="alert alert-warning">
+            <strong>Порт 22 (SSH)</strong> &mdash; якщо не плануєте автодеплой через GitHub Actions, цей порт відкривати не потрібно.
+        </div>
+
+        <h3>Port Forwarding на роутері</h3>
+        <p>Щоб додаток був доступний з інтернету, налаштуйте проброс портів на роутері:</p>
+        <table>
+            <tr><th>Зовнішній порт</th><th>Внутрішній IP</th><th>Внутрішній порт</th><th>Протокол</th></tr>
+            <tr><td>8081</td><td>IP вашого сервера (наприклад 192.168.1.100)</td><td>8081</td><td>TCP</td></tr>
+            <tr><td>22</td><td>IP вашого сервера</td><td>22</td><td>TCP</td></tr>
+        </table>
+
+        <h3>Дізнатись свій зовнішній IP</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Зовнішній IP (для GitHub Secrets)</span>
+<span class="cmd">Invoke-RestMethod</span> <span class="string">http://ifconfig.me/ip</span>
+
+<span class="comment"># Локальний IP (для port forwarding)</span>
+<span class="cmd">Get-NetIPAddress</span> -AddressFamily IPv4 | <span class="cmd">Where-Object</span> { $_.InterfaceAlias -notlike <span class="string">"*Loopback*"</span> }</pre>
+
+        <div class="alert alert-info">
+            <strong>Динамічний IP?</strong> Якщо ваш провайдер змінює IP, використайте безкоштовний DDNS-сервіс (No-IP, DuckDNS тощо). Тоді в GitHub Secrets замість IP вкажете доменне ім'я.
+        </div>
+    </div>
+
+    <!-- 5. Project setup -->
+    <div class="section" id="project-setup">
+        <h2>5. Підготовка проєкту на сервері</h2>
+
+        <h3>Крок 1: Клонування репозиторію</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Клонувати проєкт (наприклад, на диск D:)</span>
+<span class="cmd">cd</span> D:\
+<span class="cmd">git clone</span> <span class="string">https://github.com/YOUR_USERNAME/inventory.git</span>
+<span class="cmd">cd</span> inventory</pre>
+
+        <h3>Крок 2: Створення .env файлу</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Скопіювати шаблон</span>
+<span class="cmd">copy</span> .env.example .env
+
+<span class="comment"># Відкрити для редагування</span>
+<span class="cmd">notepad</span> .env</pre>
+
+        <h3>Обов'язкові зміни в .env</h3>
+        <table>
+            <tr><th>Змінна</th><th>Значення</th><th>Важливість</th></tr>
+            <tr>
+                <td><code>SECRET_KEY</code></td>
+                <td>Унікальний довгий рядок (50+ символів)</td>
+                <td><span class="badge badge-red">ОБОВ'ЯЗКОВО ЗМІНИТИ</span></td>
+            </tr>
+            <tr>
+                <td><code>DEBUG</code></td>
+                <td><code>False</code></td>
+                <td><span class="badge badge-red">ОБОВ'ЯЗКОВО</span></td>
+            </tr>
+            <tr>
+                <td><code>ALLOWED_HOSTS</code></td>
+                <td><code>ваш_зовнішній_IP,localhost,127.0.0.1</code></td>
+                <td><span class="badge badge-red">ОБОВ'ЯЗКОВО</span></td>
+            </tr>
+            <tr>
+                <td><code>DB_PASSWORD</code></td>
+                <td>Надійний пароль (не <code>changeme</code>!)</td>
+                <td><span class="badge badge-red">ОБОВ'ЯЗКОВО ЗМІНИТИ</span></td>
+            </tr>
+            <tr>
+                <td><code>DJANGO_SUPERUSER_PASSWORD</code></td>
+                <td>Пароль адміністратора</td>
+                <td><span class="badge badge-yellow">Рекомендовано змінити</span></td>
+            </tr>
+        </table>
+
+        <h3>Генерація SECRET_KEY</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Згенерувати випадковий ключ</span>
+<span class="cmd">python</span> -c <span class="string">"import secrets; print(secrets.token_urlsafe(64))"</span>
+
+<span class="comment"># Або якщо Python не встановлений:</span>
+<span class="cmd">[System.Guid]::NewGuid().ToString()</span> + <span class="cmd">[System.Guid]::NewGuid().ToString()</span></pre>
+
+        <h3>Приклад .env для продакшну</h3>
+<pre><span class="comment"># Django</span>
+<span class="flag">SECRET_KEY</span>=<span class="string">ваш-згенерований-довгий-секретний-ключ-тут</span>
+<span class="flag">DEBUG</span>=<span class="string">False</span>
+<span class="flag">ALLOWED_HOSTS</span>=<span class="string">203.0.113.50,localhost,127.0.0.1</span>
+
+<span class="comment"># Database</span>
+<span class="flag">DB_NAME</span>=<span class="string">inventory_db</span>
+<span class="flag">DB_USER</span>=<span class="string">postgres</span>
+<span class="flag">DB_PASSWORD</span>=<span class="string">ваш-надійний-пароль-бази-даних</span>
+<span class="flag">DB_HOST</span>=<span class="string">localhost</span>
+<span class="flag">DB_PORT</span>=<span class="string">5432</span>
+<span class="flag">DB_PORT_EXTERNAL</span>=<span class="string">5433</span>
+
+<span class="comment"># Redis</span>
+<span class="flag">REDIS_URL</span>=<span class="string">redis://127.0.0.1:6379/1</span>
+<span class="flag">REDIS_PORT_EXTERNAL</span>=<span class="string">6380</span>
+
+<span class="comment"># App port</span>
+<span class="flag">APP_PORT</span>=<span class="string">8081</span>
+
+<span class="comment"># Superuser</span>
+<span class="flag">DJANGO_SUPERUSER_USERNAME</span>=<span class="string">admin</span>
+<span class="flag">DJANGO_SUPERUSER_EMAIL</span>=<span class="string">admin@example.com</span>
+<span class="flag">DJANGO_SUPERUSER_PASSWORD</span>=<span class="string">ваш-пароль-адміністратора</span></pre>
+    </div>
+
+    <!-- 6. First deploy -->
+    <div class="section" id="first-deploy">
+        <h2>6. Перший запуск</h2>
+
+        <h3>Варіант А: Через скрипт (рекомендовано)</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="cmd">cd</span> D:\inventory
+<span class="cmd">.\deploy.ps1</span>
+
+<span class="output"># ========================================
+#   IT Inventory — Deploy
+# ========================================
+# [1/6] Оновлення коду з GitHub...
+# [OK] Код оновлено
+# [2/6] Збірка Docker-образів...
+# [OK] Образи готові
+# [3/6] Запуск контейнерів...
+# [OK] Контейнери запущені
+# [4/6] Виконання міграцій БД...
+# [OK] Міграції виконані
+# [5/6] Збір статичних файлів...
+# [OK] Статичні файли зібрані
+# [6/6] Перевірка здоров'я...
+# [OK] Сервер працює!
+# ========================================
+#   Деплой завершено!
+# ========================================</span></pre>
+
+        <h3>Варіант Б: Вручну крок за кроком</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="cmd">cd</span> D:\inventory
+
+<span class="comment"># 1. Збірка образів</span>
+<span class="cmd">docker compose</span> build --parallel
+
+<span class="comment"># 2. Запуск всіх сервісів</span>
+<span class="cmd">docker compose</span> up -d
+
+<span class="comment"># 3. Перевірити що все піднялось</span>
+<span class="cmd">docker compose</span> ps
+
+<span class="comment"># 4. Міграції</span>
+<span class="cmd">docker compose</span> exec -T web python inventory_project/manage.py migrate --noinput
+
+<span class="comment"># 5. Статичні файли</span>
+<span class="cmd">docker compose</span> exec -T web python inventory_project/manage.py collectstatic --noinput
+
+<span class="comment"># 6. Створити суперкористувача (перший раз)</span>
+<span class="cmd">docker compose</span> exec -T web python inventory_project/manage.py createsuperuser --noinput
+
+<span class="comment"># 7. Перевірка</span>
+<span class="cmd">curl</span> http://localhost:8081/api/health/</pre>
+    </div>
+
+    <!-- 7. Manual deploy -->
+    <div class="section" id="manual-deploy">
+        <h2>7. Ручний деплой (deploy.ps1)</h2>
+
+        <p>Скрипт <code>deploy.ps1</code> автоматизує весь процес оновлення:</p>
+
+        <h3>Базовий запуск</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Стандартний деплой: git pull + build + up + migrate</span>
+<span class="cmd">.\deploy.ps1</span></pre>
+
+        <h3>Параметри</h3>
+        <table>
+            <tr><th>Параметр</th><th>Опис</th><th>Приклад</th></tr>
+            <tr>
+                <td><code>-SkipPull</code></td>
+                <td>Не виконувати git pull</td>
+                <td><code>.\deploy.ps1 -SkipPull</code></td>
+            </tr>
+            <tr>
+                <td><code>-SkipMigrate</code></td>
+                <td>Не виконувати міграції БД</td>
+                <td><code>.\deploy.ps1 -SkipMigrate</code></td>
+            </tr>
+            <tr>
+                <td><code>-SkipBuild</code></td>
+                <td>Не збирати образи (docker pull замість build)</td>
+                <td><code>.\deploy.ps1 -SkipBuild</code></td>
+            </tr>
+            <tr>
+                <td><code>-Force</code></td>
+                <td>Повністю зупинити і перезапустити всі контейнери</td>
+                <td><code>.\deploy.ps1 -Force</code></td>
+            </tr>
+        </table>
+
+        <h3>Комбінації параметрів</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Тільки перезапуск без оновлення коду</span>
+<span class="cmd">.\deploy.ps1</span> <span class="flag">-SkipPull -SkipBuild</span>
+
+<span class="comment"># Повне перерозгортання з нуля</span>
+<span class="cmd">.\deploy.ps1</span> <span class="flag">-Force</span>
+
+<span class="comment"># Швидке оновлення (тільки код, без міграцій)</span>
+<span class="cmd">.\deploy.ps1</span> <span class="flag">-SkipMigrate</span></pre>
+    </div>
+
+    <!-- 8. Auto deploy -->
+    <div class="section" id="auto-deploy">
+        <h2>8. Автоматичний деплой (GitHub Actions)</h2>
+
+        <p>При кожному push у <code>main</code> GitHub Actions автоматично:</p>
+        <ol>
+            <li>Запускає CI-перевірки (лінтинг, тести, збірка)</li>
+            <li>Збирає Docker-образи та публікує в GHCR</li>
+            <li>Підключається до вашого сервера через SSH</li>
+            <li>Виконує <code>git pull</code> + <code>docker compose up -d</code> + міграції</li>
+        </ol>
+
+        <h3>Що відбувається на сервері (SSH-скрипт)</h3>
+<pre><span class="comment"># GitHub Actions виконує ці команди через SSH:</span>
+<span class="cmd">cd</span> /d/inventory          <span class="comment"># Git Bash шлях до D:\inventory</span>
+<span class="cmd">git pull</span> origin main     <span class="comment"># Оновлення коду</span>
+<span class="cmd">docker compose</span> pull      <span class="comment"># Завантаження нових образів</span>
+<span class="cmd">docker compose</span> up -d     <span class="comment"># Перезапуск сервісів</span>
+<span class="comment"># ... міграції, collectstatic, health check</span></pre>
+
+        <h3>Потік автодеплою</h3>
+<pre><span class="output">git push origin main
+      │
+      ▼
+┌─────────────────────┐
+│  GitHub Actions CI   │  Лінтинг, тести, збірка
+│  (~3-5 хвилин)       │
+└──────────┬──────────┘
+           │ Все пройшло ✓
+           ▼
+┌─────────────────────┐
+│  Docker Build & Push │  Збірка образів → GHCR
+│  (~3-5 хвилин)       │
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│  SSH → Ваш сервер    │  pull + up + migrate
+│  (~1 хвилина)        │
+└──────────┬──────────┘
+           │
+           ▼
+     Додаток оновлено!</span></pre>
+    </div>
+
+    <!-- 9. GitHub Secrets -->
+    <div class="section" id="github-secrets">
+        <h2>9. Налаштування GitHub Secrets</h2>
+
+        <h3>Де додавати</h3>
+        <div class="step">
+            <span class="step-num">1</span>
+            <div class="step-content">Перейдіть у ваш репозиторій на GitHub</div>
+        </div>
+        <div class="step">
+            <span class="step-num">2</span>
+            <div class="step-content"><strong>Settings</strong> &rarr; <strong>Secrets and variables</strong> &rarr; <strong>Actions</strong></div>
+        </div>
+        <div class="step">
+            <span class="step-num">3</span>
+            <div class="step-content">Натисніть <strong>"New repository secret"</strong> для кожного секрету</div>
+        </div>
+
+        <h3>Список секретів</h3>
+        <table>
+            <tr><th>Ім'я секрету</th><th>Значення</th><th>Як отримати</th></tr>
+            <tr>
+                <td><code>DEPLOY_HOST</code></td>
+                <td>Ваш зовнішній IP-адреса</td>
+                <td><code>Invoke-RestMethod http://ifconfig.me/ip</code></td>
+            </tr>
+            <tr>
+                <td><code>DEPLOY_USER</code></td>
+                <td>Ім'я Windows-користувача</td>
+                <td><code>$env:USERNAME</code></td>
+            </tr>
+            <tr>
+                <td><code>DEPLOY_SSH_KEY</code></td>
+                <td>Вміст приватного ключа</td>
+                <td><code>Get-Content ~/.ssh/deploy_key</code></td>
+            </tr>
+            <tr>
+                <td><code>DEPLOY_PORT</code></td>
+                <td><code>22</code></td>
+                <td>Стандартний SSH-порт</td>
+            </tr>
+        </table>
+
+        <div class="alert alert-error">
+            <strong>DEPLOY_SSH_KEY</strong> &mdash; скопіюйте <strong>весь</strong> вміст файлу, включаючи рядки <code>-----BEGIN OPENSSH PRIVATE KEY-----</code> та <code>-----END OPENSSH PRIVATE KEY-----</code>
+        </div>
+
+        <h3>Налаштування Environment (опціонально)</h3>
+        <p>Для додаткового захисту створіть Environment "production":</p>
+        <div class="step">
+            <span class="step-num">1</span>
+            <div class="step-content">Settings &rarr; <strong>Environments</strong> &rarr; <strong>New environment</strong> &rarr; назва: <code>production</code></div>
+        </div>
+        <div class="step">
+            <span class="step-num">2</span>
+            <div class="step-content">Увімкніть <strong>"Required reviewers"</strong> якщо хочете ручне підтвердження перед деплоєм</div>
+        </div>
+    </div>
+
+    <!-- 10. Verify -->
+    <div class="section" id="verify">
+        <h2>10. Перевірка роботи</h2>
+
+        <h3>Локальна перевірка (на сервері)</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Статус контейнерів</span>
+<span class="cmd">docker compose</span> ps
+
+<span class="comment"># Health check</span>
+<span class="cmd">curl</span> http://localhost:8081/api/health/
+
+<span class="comment"># Логи</span>
+<span class="cmd">docker compose</span> logs web --tail 20</pre>
+
+        <h3>Зовнішня перевірка (з іншого пристрою)</h3>
+        <p>Відкрийте в браузері:</p>
+        <table>
+            <tr><th>URL</th><th>Що побачите</th></tr>
+            <tr><td><code>http://ВАШ_IP:8081</code></td><td>Головна сторінка (React)</td></tr>
+            <tr><td><code>http://ВАШ_IP:8081/api/health/</code></td><td><code>{"status": "healthy", "database": "ok"}</code></td></tr>
+            <tr><td><code>http://ВАШ_IP:8081/api/admin/</code></td><td>Django Admin панель</td></tr>
+        </table>
+
+        <h3>Перевірка SSH (з іншої машини)</h3>
+<pre><span class="shell-label">Terminal</span>
+<span class="cmd">ssh</span> -i deploy_key <span class="flag">user@ВАШ_IP</span> <span class="string">"docker compose -f /d/inventory/docker-compose.yml ps"</span></pre>
+    </div>
+
+    <!-- 11. Manage -->
+    <div class="section" id="manage">
+        <h2>11. Керування сервером</h2>
+
+        <h3>Основні команди</h3>
+<pre><span class="shell-label">PowerShell (в директорії D:\inventory)</span>
+<span class="comment"># Статус всіх сервісів</span>
+<span class="cmd">docker compose</span> ps
+
+<span class="comment"># Логи конкретного сервісу</span>
+<span class="cmd">docker compose</span> logs web --tail 50 -f
+<span class="cmd">docker compose</span> logs celery_worker --tail 50 -f
+
+<span class="comment"># Перезапуск одного сервісу</span>
+<span class="cmd">docker compose</span> restart web
+
+<span class="comment"># Зупинити все</span>
+<span class="cmd">docker compose</span> down
+
+<span class="comment"># Зупинити і видалити дані (НЕБЕЗПЕЧНО!)</span>
+<span class="cmd">docker compose</span> down -v</pre>
+
+        <h3>Django management-команди</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Django shell</span>
+<span class="cmd">docker compose</span> exec web python inventory_project/manage.py shell
+
+<span class="comment"># Створити суперкористувача вручну</span>
+<span class="cmd">docker compose</span> exec web python inventory_project/manage.py createsuperuser
+
+<span class="comment"># Міграції</span>
+<span class="cmd">docker compose</span> exec web python inventory_project/manage.py migrate
+
+<span class="comment"># Бекап бази даних</span>
+<span class="cmd">docker compose</span> exec db pg_dump -U postgres inventory_db > backup_$(Get-Date -Format "yyyyMMdd_HHmmss").sql</pre>
+
+        <h3>Моніторинг ресурсів</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Використання ресурсів контейнерами</span>
+<span class="cmd">docker</span> stats --no-stream
+
+<span class="comment"># Місце на диску</span>
+<span class="cmd">docker</span> system df</pre>
+    </div>
+
+    <!-- 12. Troubleshooting -->
+    <div class="section" id="troubleshooting">
+        <h2>12. Проблеми та рішення</h2>
+
+        <h3>Контейнери не запускаються</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Подивитись логи</span>
+<span class="cmd">docker compose</span> logs --tail 100
+
+<span class="comment"># Перевірити чи Docker запущений</span>
+<span class="cmd">docker</span> info
+
+<span class="comment"># Перезапустити Docker Desktop</span>
+<span class="comment"># Правою кнопкою на значок Docker в треї → Restart</span></pre>
+
+        <h3>Порт 8081 зайнятий</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Хто використовує порт 8081</span>
+<span class="cmd">netstat</span> -ano | <span class="cmd">findstr</span> :8081
+
+<span class="comment"># Змінити порт в .env:</span>
+<span class="comment"># APP_PORT=8082</span>
+<span class="comment"># Потім:</span>
+<span class="cmd">docker compose</span> down && <span class="cmd">docker compose</span> up -d</pre>
+
+        <h3>SSH не працює (GitHub Actions)</h3>
+        <ul>
+            <li>Перевірте що OpenSSH Server запущений: <code>Get-Service sshd</code></li>
+            <li>Перевірте що порт 22 відкритий у брандмауері</li>
+            <li>Перевірте що Git Bash встановлений як default shell</li>
+            <li>Перевірте що публічний ключ додано в правильний <code>authorized_keys</code> файл</li>
+            <li>Перевірте що port forwarding налаштований на роутері</li>
+        </ul>
+
+        <h3>GitHub Actions deploy job скіпається</h3>
+        <p>Deploy запускається <strong>тільки</strong> при push у <code>main</code>. Перевірте:</p>
+        <ul>
+            <li>Push зроблений саме в <code>main</code>, не в іншу гілку</li>
+            <li>Це <code>push</code>, а не <code>pull_request</code></li>
+            <li>Всі CI-перевірки пройшли успішно</li>
+        </ul>
+
+        <h3>Міграції не працюють</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Перевірити з'єднання з БД</span>
+<span class="cmd">docker compose</span> exec web python inventory_project/manage.py dbshell
+
+<span class="comment"># Статус міграцій</span>
+<span class="cmd">docker compose</span> exec web python inventory_project/manage.py showmigrations</pre>
+
+        <h3>Не вистачає місця на диску</h3>
+<pre><span class="shell-label">PowerShell</span>
+<span class="comment"># Очистити невикористані Docker-ресурси</span>
+<span class="cmd">docker</span> system prune -a --volumes
+
+<span class="comment"># Тільки образи</span>
+<span class="cmd">docker</span> image prune -a</pre>
+
+        <h3>Динамічний IP змінився</h3>
+        <p>Якщо ваш зовнішній IP змінився, оновіть:</p>
+        <ol>
+            <li><code>DEPLOY_HOST</code> в GitHub Secrets</li>
+            <li><code>ALLOWED_HOSTS</code> в <code>.env</code> на сервері</li>
+            <li>Перезапустіть: <code>docker compose restart web</code></li>
+        </ol>
+
+        <div class="alert alert-info">
+            <strong>Порада:</strong> Використайте DDNS-сервіс (наприклад, <strong>DuckDNS</strong> &mdash; безкоштовний), щоб не оновлювати IP вручну.
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    IT Inventory System &mdash; Windows Deployment Guide &mdash; 2026
+</div>
+
+</body>
+</html>
