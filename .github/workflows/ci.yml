@@ -92,3 +92,132 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: cd frontend && npm ci
       - run: cd frontend && npm run build
+
+  # ══════════════════════════════════════════════
+  # CD — Continuous Delivery
+  # ══════════════════════════════════════════════
+
+  # ── Збірка та публікація Docker-образу backend ──
+  docker-backend:
+    runs-on: ubuntu-latest
+    needs: [backend-lint, backend-test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/backend
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── Збірка та публікація Docker-образу frontend ──
+  docker-frontend:
+    runs-on: ubuntu-latest
+    needs: [frontend-build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/frontend
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VITE_API_URL=/api
+            VITE_WS_URL=
+            VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
+
+  # ── Деплой на сервер ──
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [docker-backend, docker-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH || '/opt/inventory' }}
+
+            # Оновлюємо docker-compose.yml та конфігурацію
+            git pull origin main
+
+            # Завантажуємо нові образи
+            docker compose pull
+
+            # Перезапускаємо сервіси з новими образами
+            docker compose up -d --remove-orphans
+
+            # Виконуємо міграції
+            docker compose exec -T web python inventory_project/manage.py migrate --noinput
+
+            # Збираємо статичні файли
+            docker compose exec -T web python inventory_project/manage.py collectstatic --noinput
+
+            # Перевіряємо здоров'я
+            sleep 10
+            curl -f http://localhost:${APP_PORT:-8081}/api/health/ || exit 1
+
+            # Очищуємо старі образи
+            docker image prune -f

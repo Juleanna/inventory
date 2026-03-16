@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Inventory — CI/CD Pipeline: Інструкція</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-2: #334155;
+            --border: #475569;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-light: #60a5fa;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --code-bg: #0d1117;
+            --purple: #a78bfa;
+            --teal: #2dd4bf;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-light), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        .toc {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .toc h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-light);
+        }
+
+        .toc ol {
+            padding-left: 1.2rem;
+        }
+
+        .toc li {
+            margin-bottom: 0.4rem;
+        }
+
+        .toc a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: var(--accent-light);
+        }
+
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--accent-light);
+        }
+
+        .section h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.75rem;
+            color: var(--purple);
+        }
+
+        .section h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem;
+            color: var(--teal);
+        }
+
+        p {
+            margin-bottom: 0.75rem;
+        }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.88rem;
+            color: var(--teal);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            overflow-x: auto;
+            margin: 0.75rem 0 1rem;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        pre .comment { color: #6a737d; }
+        pre .keyword { color: #ff7b72; }
+        pre .string { color: #a5d6ff; }
+        pre .flag { color: #ffa657; }
+        pre .cmd { color: #79c0ff; }
+
+        ul, ol {
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        li {
+            margin-bottom: 0.4rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.3rem;
+        }
+
+        .badge-green { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+        .badge-yellow { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+        .badge-red { background: rgba(239,68,68,0.15); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
+        .badge-blue { background: rgba(59,130,246,0.15); color: var(--accent-light); border: 1px solid rgba(59,130,246,0.3); }
+        .badge-purple { background: rgba(167,139,250,0.15); color: var(--purple); border: 1px solid rgba(167,139,250,0.3); }
+
+        .alert {
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+
+        .alert-info {
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.3);
+            color: var(--accent-light);
+        }
+
+        .alert-warning {
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.3);
+            color: var(--warning);
+        }
+
+        .alert-success {
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.3);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: var(--error);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        th {
+            background: var(--surface-2);
+            font-weight: 600;
+            color: var(--accent-light);
+        }
+
+        td {
+            background: var(--code-bg);
+        }
+
+        /* Pipeline diagram */
+        .pipeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .pipeline-stage {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .pipeline-stage-label {
+            min-width: 90px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        .pipeline-jobs {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .pipeline-job {
+            background: var(--code-bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-align: center;
+            min-width: 140px;
+            transition: border-color 0.2s;
+        }
+
+        .pipeline-job.lint { border-color: var(--warning); color: var(--warning); }
+        .pipeline-job.test { border-color: var(--accent); color: var(--accent-light); }
+        .pipeline-job.build { border-color: var(--success); color: var(--success); }
+
+        .pipeline-arrow {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            margin-left: 90px;
+            padding-left: 1rem;
+        }
+
+        /* File tree */
+        .file-tree {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            margin: 0.75rem 0 1rem;
+        }
+
+        .file-tree .folder { color: var(--accent-light); }
+        .file-tree .file { color: var(--text-muted); }
+        .file-tree .highlight { color: var(--teal); }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 700px) {
+            .two-col { grid-template-columns: 1fr; }
+            .pipeline-stage { flex-direction: column; align-items: flex-start; }
+            .pipeline-stage-label { text-align: left; min-width: auto; }
+            .pipeline-arrow { margin-left: 0; }
+        }
+
+        .step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.25rem;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>CI/CD Pipeline</h1>
+    <p>IT Inventory System &mdash; GitHub Actions: автоматичне тестування, лінтинг та збірка</p>
+</div>
+
+<div class="container">
+
+    <!-- TOC -->
+    <div class="toc">
+        <h2>Зміст</h2>
+        <ol>
+            <li><a href="#what-is">Що таке CI/CD і навіщо це потрібно</a></li>
+            <li><a href="#architecture">Архітектура пайплайна</a></li>
+            <li><a href="#triggers">Тригери запуску</a></li>
+            <li><a href="#jobs">Опис кожного Job</a></li>
+            <li><a href="#config-files">Файли конфігурації</a></li>
+            <li><a href="#local-run">Локальний запуск перевірок</a></li>
+            <li><a href="#fix-errors">Типові помилки та їх виправлення</a></li>
+            <li><a href="#add-job">Як додати новий Job</a></li>
+            <li><a href="#secrets">Секрети та змінні середовища</a></li>
+            <li><a href="#badges">Бейджі статусу</a></li>
+            <li><a href="#best-practices">Найкращі практики</a></li>
+            <li><a href="#faq">FAQ</a></li>
+        </ol>
+    </div>
+
+    <!-- 1. What is CI/CD -->
+    <div class="section" id="what-is">
+        <h2>1. Що таке CI/CD і навіщо це потрібно</h2>
+
+        <h3>CI &mdash; Continuous Integration (безперервна інтеграція)</h3>
+        <p>Автоматична перевірка кожної зміни в коді: лінтинг, тестування, збірка. Кожен <code>push</code> або <code>pull request</code> запускає набір перевірок, які гарантують, що новий код:</p>
+        <ul>
+            <li>Відповідає стандартам форматування (Black, isort, ESLint)</li>
+            <li>Не містить синтаксичних помилок та bad practices (flake8, TypeScript)</li>
+            <li>Проходить всі тести (pytest, Vitest)</li>
+            <li>Успішно збирається в продакшн-бандл</li>
+        </ul>
+
+        <h3>CD &mdash; Continuous Delivery (безперервна доставка)</h3>
+        <p>Автоматичне розгортання після успішного проходження всіх перевірок. При push у <code>main</code> пайплайн автоматично:</p>
+        <ul>
+            <li>Збирає Docker-образи backend та frontend</li>
+            <li>Публікує їх у GitHub Container Registry (<code>ghcr.io</code>)</li>
+            <li>Деплоїть на продакшн-сервер через SSH</li>
+        </ul>
+
+        <h3>Переваги</h3>
+        <div class="two-col">
+            <div class="alert alert-success">
+                <strong>Якість коду</strong><br>
+                Помилки виявляються автоматично ще до merge. Жоден баг не потрапить у main без проходження перевірок.
+            </div>
+            <div class="alert alert-success">
+                <strong>Єдиний стандарт</strong><br>
+                Всі розробники дотримуються однакових правил форматування та стилю коду.
+            </div>
+            <div class="alert alert-success">
+                <strong>Швидкий зворотний зв'язок</strong><br>
+                Розробник бачить результат перевірок за 2-5 хвилин після push.
+            </div>
+            <div class="alert alert-success">
+                <strong>Безпечний merge</strong><br>
+                Pull Request можна влити тільки якщо всі перевірки пройшли (при налаштуванні branch protection).
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Architecture -->
+    <div class="section" id="architecture">
+        <h2>2. Архітектура пайплайна</h2>
+
+        <p>Пайплайн складається з <strong>8 jobs</strong> (задач), які виконуються в 4 етапи:</p>
+
+        <div class="pipeline">
+            <div class="pipeline-stage">
+                <div class="pipeline-stage-label">Етап 1<br>CI: перевірки</div>
+                <div class="pipeline-jobs">
+                    <div class="pipeline-job lint">backend-lint</div>
+                    <div class="pipeline-job test">backend-test</div>
+                    <div class="pipeline-job lint">frontend-lint</div>
+                    <div class="pipeline-job test">frontend-test</div>
+                </div>
+            </div>
+            <div class="pipeline-arrow">&darr;</div>
+            <div class="pipeline-stage">
+                <div class="pipeline-stage-label">Етап 2<br>CI: збірка</div>
+                <div class="pipeline-jobs">
+                    <div class="pipeline-job build">frontend-build</div>
+                </div>
+            </div>
+            <div class="pipeline-arrow">&darr; <span style="font-size: 0.8rem; color: var(--text-muted);">тільки main</span></div>
+            <div class="pipeline-stage">
+                <div class="pipeline-stage-label">Етап 3<br>CD: Docker</div>
+                <div class="pipeline-jobs">
+                    <div class="pipeline-job" style="border-color: var(--purple); color: var(--purple);">docker-backend</div>
+                    <div class="pipeline-job" style="border-color: var(--purple); color: var(--purple);">docker-frontend</div>
+                </div>
+            </div>
+            <div class="pipeline-arrow">&darr;</div>
+            <div class="pipeline-stage">
+                <div class="pipeline-stage-label">Етап 4<br>CD: деплой</div>
+                <div class="pipeline-jobs">
+                    <div class="pipeline-job" style="border-color: var(--teal); color: var(--teal);">deploy</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Етапи 3-4 (CD)</strong> запускаються тільки при push у <code>main</code>. Pull Request'и та push у <code>develop</code> виконують тільки CI-перевірки (етапи 1-2).
+        </div>
+
+        <table>
+            <tr>
+                <th>Job</th>
+                <th>Тип</th>
+                <th>Інструменти</th>
+                <th>Час</th>
+            </tr>
+            <tr>
+                <td><code>backend-lint</code></td>
+                <td><span class="badge badge-yellow">Лінтинг</span></td>
+                <td>Black, flake8, isort</td>
+                <td>~30с</td>
+            </tr>
+            <tr>
+                <td><code>backend-test</code></td>
+                <td><span class="badge badge-blue">Тести</span></td>
+                <td>pytest + coverage</td>
+                <td>~1-2хв</td>
+            </tr>
+            <tr>
+                <td><code>frontend-lint</code></td>
+                <td><span class="badge badge-yellow">Лінтинг</span></td>
+                <td>ESLint + TypeScript</td>
+                <td>~30с</td>
+            </tr>
+            <tr>
+                <td><code>frontend-test</code></td>
+                <td><span class="badge badge-blue">Тести</span></td>
+                <td>Vitest</td>
+                <td>~30с</td>
+            </tr>
+            <tr>
+                <td><code>frontend-build</code></td>
+                <td><span class="badge badge-green">Збірка</span></td>
+                <td>tsc + Vite</td>
+                <td>~1хв</td>
+            </tr>
+            <tr>
+                <td><code>docker-backend</code></td>
+                <td><span class="badge badge-purple">Docker</span></td>
+                <td>Buildx + GHCR</td>
+                <td>~2-3хв</td>
+            </tr>
+            <tr>
+                <td><code>docker-frontend</code></td>
+                <td><span class="badge badge-purple">Docker</span></td>
+                <td>Buildx + GHCR</td>
+                <td>~1-2хв</td>
+            </tr>
+            <tr>
+                <td><code>deploy</code></td>
+                <td><span class="badge badge-green">Деплой</span></td>
+                <td>SSH + Docker Compose</td>
+                <td>~1хв</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 3. Triggers -->
+    <div class="section" id="triggers">
+        <h2>3. Тригери запуску</h2>
+
+        <p>Пайплайн запускається автоматично при двох подіях:</p>
+
+        <table>
+            <tr>
+                <th>Подія</th>
+                <th>Гілки</th>
+                <th>Коли спрацьовує</th>
+            </tr>
+            <tr>
+                <td><code>push</code></td>
+                <td><code>main</code>, <code>develop</code></td>
+                <td>Кожен push (комміт) у ці гілки</td>
+            </tr>
+            <tr>
+                <td><code>pull_request</code></td>
+                <td><code>main</code></td>
+                <td>Створення або оновлення PR в main</td>
+            </tr>
+        </table>
+
+        <h3>Конфігурація тригерів</h3>
+<pre><span class="keyword">on</span>:
+  <span class="cmd">push</span>:
+    <span class="flag">branches</span>: [main, develop]
+  <span class="cmd">pull_request</span>:
+    <span class="flag">branches</span>: [main]</pre>
+
+        <h3>Як змінити тригери</h3>
+        <p>Додати нову гілку для перевірки:</p>
+<pre><span class="keyword">on</span>:
+  <span class="cmd">push</span>:
+    <span class="flag">branches</span>: [main, develop, <span class="string">feature/*</span>]  <span class="comment"># всі feature-гілки</span></pre>
+
+        <p>Запускати тільки при зміні певних файлів:</p>
+<pre><span class="keyword">on</span>:
+  <span class="cmd">push</span>:
+    <span class="flag">branches</span>: [main]
+    <span class="flag">paths</span>:
+      - <span class="string">'inventory_project/**'</span>   <span class="comment"># тільки при зміні бекенду</span>
+      - <span class="string">'frontend/**'</span>             <span class="comment"># тільки при зміні фронтенду</span></pre>
+
+        <p>Запуск вручну (workflow_dispatch):</p>
+<pre><span class="keyword">on</span>:
+  <span class="cmd">workflow_dispatch</span>:  <span class="comment"># кнопка "Run workflow" у GitHub</span></pre>
+    </div>
+
+    <!-- 4. Jobs -->
+    <div class="section" id="jobs">
+        <h2>4. Опис кожного Job</h2>
+
+        <!-- backend-lint -->
+        <h3>4.1. backend-lint <span class="badge badge-yellow">Лінтинг</span></h3>
+        <p>Перевіряє Python-код на відповідність стандартам форматування.</p>
+
+        <h4>Black &mdash; автоформатер коду</h4>
+        <p>Перевіряє, що весь Python-код відформатовано згідно з PEP 8 (з деякими відхиленнями Black). Параметр <code>--check</code> не змінює файли, а лише повідомляє про невідповідність.</p>
+<pre><span class="cmd">black</span> <span class="flag">--check</span> inventory_project/ <span class="flag">--exclude</span> migrations</pre>
+
+        <h4>flake8 &mdash; статичний аналізатор</h4>
+        <p>Знаходить помилки стилю, невикористані імпорти, надто довгі рядки тощо. Конфігурація в <code>setup.cfg</code>.</p>
+<pre><span class="cmd">flake8</span> inventory_project/
+<span class="comment"># Конфігурація (setup.cfg):
+# max-line-length = 120
+# exclude = migrations,__pycache__,venv,.venv
+# extend-ignore = E203  (конфлікт з Black)</span></pre>
+
+        <h4>isort &mdash; сортування імпортів</h4>
+        <p>Перевіряє порядок імпортів: стандартна бібліотека &rarr; третя сторона &rarr; Django &rarr; DRF &rarr; локальні модулі.</p>
+<pre><span class="cmd">isort</span> <span class="flag">--check-only</span> inventory_project/ <span class="flag">--skip</span> migrations
+<span class="comment"># Конфігурація (setup.cfg):
+# profile = black
+# sections = FUTURE,STDLIB,THIRDPARTY,DJANGO,DRF,FIRSTPARTY,LOCALFOLDER</span></pre>
+
+        <div class="alert alert-info">
+            <strong>Чому E203 ігнорується?</strong> Black форматує слайси як <code>data[start : end]</code> з пробілами, а flake8 вважає це помилкою E203. Ці інструменти конфліктують, тому E203 додано в <code>extend-ignore</code>.
+        </div>
+
+        <!-- backend-test -->
+        <h3>4.2. backend-test <span class="badge badge-blue">Тести</span></h3>
+        <p>Запускає Django-тести з реальною базою даних PostgreSQL та Redis.</p>
+
+        <h4>Сервіси (Service Containers)</h4>
+        <p>GitHub Actions піднімає Docker-контейнери для тестів:</p>
+        <table>
+            <tr>
+                <th>Сервіс</th>
+                <th>Образ</th>
+                <th>Порт</th>
+                <th>Призначення</th>
+            </tr>
+            <tr>
+                <td>PostgreSQL</td>
+                <td><code>postgres:16</code></td>
+                <td>5432</td>
+                <td>Тестова база даних</td>
+            </tr>
+            <tr>
+                <td>Redis</td>
+                <td><code>redis:7</code></td>
+                <td>6379</td>
+                <td>Кеш / брокер Celery</td>
+            </tr>
+        </table>
+
+        <h4>Змінні середовища</h4>
+<pre><span class="flag">SECRET_KEY</span>=<span class="string">test-secret-key-for-ci</span>
+<span class="flag">DB_NAME</span>=<span class="string">inventory_test</span>
+<span class="flag">DB_USER</span>=<span class="string">postgres</span>
+<span class="flag">DB_PASSWORD</span>=<span class="string">postgres</span>
+<span class="flag">DB_HOST</span>=<span class="string">localhost</span>
+<span class="flag">DB_PORT</span>=<span class="string">5432</span>
+<span class="flag">DEBUG</span>=<span class="string">true</span></pre>
+
+        <h4>Кроки виконання</h4>
+        <ol>
+            <li>Встановлення системних залежностей для python-ldap: <code>libldap2-dev</code>, <code>libsasl2-dev</code></li>
+            <li>Встановлення Python 3.12 з кешуванням pip</li>
+            <li>Встановлення залежностей: <code>pip install -r requirements.txt</code></li>
+            <li>Виконання міграцій: <code>python manage.py migrate</code></li>
+            <li>Запуск тестів: <code>python -m pytest --cov=inventory --cov-report=xml -v</code></li>
+        </ol>
+
+        <h4>Покриття коду (Coverage)</h4>
+        <p>Прапорці <code>--cov=inventory</code> та <code>--cov-report=xml</code> генерують звіт покриття у форматі XML. Цей файл можна завантажити в Codecov, SonarCloud або інші сервіси аналітики.</p>
+
+        <!-- frontend-lint -->
+        <h3>4.3. frontend-lint <span class="badge badge-yellow">Лінтинг</span></h3>
+        <p>Перевіряє TypeScript/React код за допомогою ESLint.</p>
+
+        <h4>Конфігурація ESLint</h4>
+        <p>Файл <code>frontend/eslint.config.js</code> використовує flat config:</p>
+        <ul>
+            <li><strong>@eslint/js</strong> &mdash; базові правила JavaScript</li>
+            <li><strong>typescript-eslint</strong> &mdash; правила TypeScript (невикористані змінні, any тощо)</li>
+            <li><strong>eslint-plugin-react-hooks</strong> &mdash; правила React hooks (правила залежностей)</li>
+            <li><strong>eslint-plugin-react-refresh</strong> &mdash; правила React Fast Refresh (HMR)</li>
+        </ul>
+<pre><span class="cmd">cd frontend</span> && <span class="cmd">npm run lint</span>
+<span class="comment"># Еквівалент: eslint . --ext .ts,.tsx</span></pre>
+
+        <!-- frontend-test -->
+        <h3>4.4. frontend-test <span class="badge badge-blue">Тести</span></h3>
+        <p>Запускає юніт-тести фронтенду через Vitest.</p>
+<pre><span class="cmd">cd frontend</span> && <span class="cmd">npx vitest run</span>
+<span class="comment"># run — одноразовий запуск (не watch-режим)</span></pre>
+
+        <!-- frontend-build -->
+        <h3>4.5. frontend-build <span class="badge badge-green">Збірка</span></h3>
+        <p>Фінальна перевірка: чи збирається проєкт без помилок.</p>
+<pre><span class="cmd">cd frontend</span> && <span class="cmd">npm run build</span>
+<span class="comment"># Виконує: tsc -b && vite build
+# 1. tsc -b — TypeScript компіляція (перевірка типів)
+# 2. vite build — продакшн бандл</span></pre>
+
+        <div class="alert alert-warning">
+            <strong>needs: [frontend-lint, frontend-test]</strong> &mdash; цей job запускається тільки після успішного завершення лінтингу та тестів. Якщо хоча б один з них впав, збірка не починається.
+        </div>
+
+        <!-- docker-backend -->
+        <h3>4.6. docker-backend <span class="badge badge-purple">Docker</span></h3>
+        <p>Збирає Docker-образ backend та публікує в GitHub Container Registry.</p>
+        <p><strong>Умова запуску:</strong> тільки при push у <code>main</code>, після успішного <code>backend-lint</code> та <code>backend-test</code>.</p>
+
+        <h4>Що відбувається</h4>
+        <ol>
+            <li><strong>Docker Buildx</strong> &mdash; налаштування розширеного білдера з підтримкою кешування</li>
+            <li><strong>Login до GHCR</strong> &mdash; автентифікація через <code>GITHUB_TOKEN</code> (автоматичний секрет)</li>
+            <li><strong>Metadata</strong> &mdash; генерація тегів: <code>latest</code> + <code>SHA коміту</code></li>
+            <li><strong>Build &amp; Push</strong> &mdash; збірка образу з <code>Dockerfile</code> та публікація</li>
+        </ol>
+
+        <h4>Кешування</h4>
+        <p>Використовується GitHub Actions cache (<code>type=gha</code>) для кешування Docker-шарів між запусками. Це значно прискорює збірку, якщо змінилися тільки верхні шари.</p>
+
+        <h4>Теги образу</h4>
+<pre><span class="comment"># Приклад тегів:</span>
+ghcr.io/<span class="string">username/inventory/backend</span>:<span class="flag">latest</span>
+ghcr.io/<span class="string">username/inventory/backend</span>:<span class="flag">a1b2c3d</span>  <span class="comment"># SHA коміту</span></pre>
+
+        <!-- docker-frontend -->
+        <h3>4.7. docker-frontend <span class="badge badge-purple">Docker</span></h3>
+        <p>Збирає Docker-образ frontend (multi-stage: Node &rarr; Nginx) та публікує в GHCR.</p>
+        <p><strong>Умова запуску:</strong> тільки при push у <code>main</code>, після успішного <code>frontend-build</code>.</p>
+
+        <h4>Build arguments</h4>
+        <p>Передаються змінні середовища для Vite під час збірки:</p>
+        <table>
+            <tr><th>Аргумент</th><th>Значення</th><th>Призначення</th></tr>
+            <tr>
+                <td><code>VITE_API_URL</code></td>
+                <td><code>/api</code></td>
+                <td>Базовий URL API</td>
+            </tr>
+            <tr>
+                <td><code>VITE_WS_URL</code></td>
+                <td>(порожнє)</td>
+                <td>WebSocket URL</td>
+            </tr>
+            <tr>
+                <td><code>VITE_SENTRY_DSN</code></td>
+                <td>з <code>vars.VITE_SENTRY_DSN</code></td>
+                <td>Sentry DSN для моніторингу</td>
+            </tr>
+        </table>
+
+        <!-- deploy -->
+        <h3>4.8. deploy <span class="badge badge-green">Деплой</span></h3>
+        <p>Автоматичний деплой на продакшн-сервер через SSH після збірки Docker-образів.</p>
+        <p><strong>Умова запуску:</strong> тільки при push у <code>main</code>, після успішного <code>docker-backend</code> та <code>docker-frontend</code>.</p>
+
+        <h4>Що відбувається на сервері</h4>
+        <ol>
+            <li><code>git pull origin main</code> &mdash; оновлення <code>docker-compose.yml</code> та конфігурації</li>
+            <li><code>docker compose pull</code> &mdash; завантаження нових образів з GHCR</li>
+            <li><code>docker compose up -d</code> &mdash; перезапуск сервісів</li>
+            <li><code>manage.py migrate</code> &mdash; виконання міграцій БД</li>
+            <li><code>manage.py collectstatic</code> &mdash; збір статичних файлів</li>
+            <li>Health check &mdash; перевірка <code>/api/health/</code></li>
+            <li><code>docker image prune</code> &mdash; очищення старих образів</li>
+        </ol>
+
+        <h4>Необхідні секрети</h4>
+        <table>
+            <tr><th>Секрет</th><th>Опис</th><th>Приклад</th></tr>
+            <tr>
+                <td><code>DEPLOY_HOST</code></td>
+                <td>IP або домен сервера</td>
+                <td><code>192.168.1.100</code></td>
+            </tr>
+            <tr>
+                <td><code>DEPLOY_USER</code></td>
+                <td>SSH-користувач</td>
+                <td><code>deploy</code></td>
+            </tr>
+            <tr>
+                <td><code>DEPLOY_SSH_KEY</code></td>
+                <td>Приватний SSH-ключ</td>
+                <td>Вміст <code>~/.ssh/id_ed25519</code></td>
+            </tr>
+            <tr>
+                <td><code>DEPLOY_PORT</code></td>
+                <td>SSH-порт (опціонально)</td>
+                <td><code>22</code></td>
+            </tr>
+            <tr>
+                <td><code>DEPLOY_PATH</code></td>
+                <td>Шлях до проєкту (опціонально)</td>
+                <td><code>/opt/inventory</code></td>
+            </tr>
+        </table>
+
+        <div class="alert alert-warning">
+            <strong>Environment: production</strong> &mdash; deploy використовує GitHub Environment "production". Це дозволяє налаштувати додатковий захист: ручне підтвердження, обмеження по гілках, таймаути. Налаштовується в Settings &rarr; Environments.
+        </div>
+    </div>
+
+    <!-- 5. Config files -->
+    <div class="section" id="config-files">
+        <h2>5. Файли конфігурації</h2>
+
+        <p>Всі файли, що впливають на роботу CI/CD:</p>
+
+        <div class="file-tree">
+            <span class="folder">inventory/</span><br>
+            &nbsp;&nbsp;<span class="folder">.github/</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">workflows/</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">ci.yml</span> &mdash; головний файл пайплайна<br>
+            &nbsp;&nbsp;<span class="folder">inventory_project/</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">conftest.py</span> &mdash; ініціалізація Django для pytest<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">pytest.ini</span> &mdash; конфігурація pytest<br>
+            &nbsp;&nbsp;<span class="folder">frontend/</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">eslint.config.js</span> &mdash; конфігурація ESLint<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">tsconfig.json</span> &mdash; конфігурація TypeScript<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">vite.config.ts</span> &mdash; конфігурація Vite<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">vitest.config.ts</span> &mdash; конфігурація Vitest (якщо окремий)<br>
+            &nbsp;&nbsp;<span class="highlight">setup.cfg</span> &mdash; конфігурація flake8, isort, pytest<br>
+            &nbsp;&nbsp;<span class="file">requirements.txt</span> &mdash; Python залежності
+        </div>
+
+        <h3>setup.cfg</h3>
+<pre><span class="comment"># Конфігурація pytest</span>
+<span class="keyword">[tool:pytest]</span>
+<span class="flag">DJANGO_SETTINGS_MODULE</span> = <span class="string">inventory_project.settings</span>
+<span class="flag">python_files</span> = <span class="string">tests.py test_*.py *_tests.py</span>
+<span class="flag">python_classes</span> = <span class="string">*Tests Test*</span>
+<span class="flag">python_functions</span> = <span class="string">test_*</span>
+
+<span class="comment"># Конфігурація flake8</span>
+<span class="keyword">[flake8]</span>
+<span class="flag">max-line-length</span> = <span class="string">120</span>
+<span class="flag">exclude</span> = <span class="string">migrations,__pycache__,venv,.venv</span>
+<span class="flag">extend-ignore</span> = <span class="string">E203</span>
+
+<span class="comment"># Конфігурація isort</span>
+<span class="keyword">[isort]</span>
+<span class="flag">profile</span> = <span class="string">black</span>
+<span class="flag">skip</span> = <span class="string">migrations</span>
+<span class="flag">known_django</span> = <span class="string">django</span>
+<span class="flag">known_drf</span> = <span class="string">rest_framework</span>
+<span class="flag">sections</span> = <span class="string">FUTURE,STDLIB,THIRDPARTY,DJANGO,DRF,FIRSTPARTY,LOCALFOLDER</span>
+<span class="flag">line_length</span> = <span class="string">120</span></pre>
+
+        <h3>pytest.ini</h3>
+<pre><span class="keyword">[pytest]</span>
+<span class="flag">DJANGO_SETTINGS_MODULE</span> = <span class="string">inventory_project.settings</span>
+<span class="flag">python_files</span> = <span class="string">tests.py test_*.py *_tests.py</span>
+<span class="flag">python_classes</span> = <span class="string">*Tests Test*</span>
+<span class="flag">python_functions</span> = <span class="string">test_*</span></pre>
+
+        <h3>conftest.py</h3>
+<pre><span class="keyword">import</span> os
+<span class="keyword">import</span> django
+
+<span class="keyword">def</span> <span class="cmd">pytest_configure</span>():
+    os.environ.setdefault(<span class="string">"DJANGO_SETTINGS_MODULE"</span>, <span class="string">"inventory_project.settings"</span>)
+    django.setup()</pre>
+    </div>
+
+    <!-- 6. Local run -->
+    <div class="section" id="local-run">
+        <h2>6. Локальний запуск перевірок</h2>
+
+        <p>Перед push рекомендується запустити ті ж самі перевірки локально, щоб не чекати на CI.</p>
+
+        <h3>Backend</h3>
+<pre><span class="comment"># Форматування (автовиправлення)</span>
+<span class="cmd">python -m black</span> inventory_project/ <span class="flag">--exclude</span> migrations
+
+<span class="comment"># Сортування імпортів (автовиправлення)</span>
+<span class="cmd">python -m isort</span> inventory_project/ <span class="flag">--skip</span> migrations
+
+<span class="comment"># Перевірка стилю (тільки звіт)</span>
+<span class="cmd">python -m flake8</span> inventory_project/
+
+<span class="comment"># Тести з покриттям</span>
+<span class="cmd">cd</span> inventory_project && <span class="cmd">python -m pytest</span> <span class="flag">--cov=inventory -v</span></pre>
+
+        <h3>Frontend</h3>
+<pre><span class="comment"># Лінтинг (з автовиправленням)</span>
+<span class="cmd">cd</span> frontend && <span class="cmd">npm run lint</span> <span class="flag">-- --fix</span>
+
+<span class="comment"># Тести</span>
+<span class="cmd">cd</span> frontend && <span class="cmd">npx vitest run</span>
+
+<span class="comment"># Збірка (перевірка TypeScript + Vite)</span>
+<span class="cmd">cd</span> frontend && <span class="cmd">npm run build</span></pre>
+
+        <h3>Все одразу (bash)</h3>
+<pre><span class="comment">#!/bin/bash</span>
+<span class="comment"># Скрипт для локальної перевірки перед push</span>
+
+<span class="cmd">echo</span> <span class="string">"=== Backend Lint ==="</span>
+python -m black inventory_project/ --exclude migrations
+python -m isort inventory_project/ --skip migrations
+python -m flake8 inventory_project/ || <span class="keyword">exit</span> 1
+
+<span class="cmd">echo</span> <span class="string">"=== Backend Tests ==="</span>
+cd inventory_project && python -m pytest -v || <span class="keyword">exit</span> 1
+cd ..
+
+<span class="cmd">echo</span> <span class="string">"=== Frontend ==="</span>
+cd frontend
+npm run lint || <span class="keyword">exit</span> 1
+npx vitest run || <span class="keyword">exit</span> 1
+npm run build || <span class="keyword">exit</span> 1
+
+<span class="cmd">echo</span> <span class="string">"=== Все перевірки пройшли! ==="</span></pre>
+    </div>
+
+    <!-- 7. Fix errors -->
+    <div class="section" id="fix-errors">
+        <h2>7. Типові помилки та їх виправлення</h2>
+
+        <h3>Backend: Black</h3>
+        <table>
+            <tr><th>Помилка</th><th>Рішення</th></tr>
+            <tr>
+                <td><code>would reformat file.py</code></td>
+                <td>Запустіть <code>python -m black inventory_project/ --exclude migrations</code> &mdash; файли автоматично відформатуються</td>
+            </tr>
+        </table>
+
+        <h3>Backend: flake8</h3>
+        <table>
+            <tr><th>Код</th><th>Опис</th><th>Рішення</th></tr>
+            <tr>
+                <td><code>F401</code></td>
+                <td>Невикористаний імпорт</td>
+                <td>Видалити імпорт, або додати <code># noqa: F401</code> якщо потрібен</td>
+            </tr>
+            <tr>
+                <td><code>E501</code></td>
+                <td>Рядок > 120 символів</td>
+                <td>Розбити рядок на кілька. Black зазвичай виправляє це автоматично</td>
+            </tr>
+            <tr>
+                <td><code>F841</code></td>
+                <td>Невикористана змінна</td>
+                <td>Видалити змінну або замінити на <code>_</code></td>
+            </tr>
+            <tr>
+                <td><code>E722</code></td>
+                <td>Bare except</td>
+                <td>Замінити <code>except:</code> на <code>except Exception:</code></td>
+            </tr>
+            <tr>
+                <td><code>F541</code></td>
+                <td>f-string без плейсхолдерів</td>
+                <td>Видалити <code>f</code> префікс або додати <code>{}</code></td>
+            </tr>
+        </table>
+
+        <h3>Backend: isort</h3>
+        <table>
+            <tr><th>Помилка</th><th>Рішення</th></tr>
+            <tr>
+                <td><code>Imports are incorrectly sorted</code></td>
+                <td>Запустіть <code>python -m isort inventory_project/ --skip migrations</code></td>
+            </tr>
+        </table>
+
+        <h3>Frontend: ESLint</h3>
+        <table>
+            <tr><th>Правило</th><th>Опис</th><th>Рішення</th></tr>
+            <tr>
+                <td><code>@typescript-eslint/no-unused-vars</code></td>
+                <td>Невикористана змінна</td>
+                <td>Видалити або перейменувати на <code>_variable</code></td>
+            </tr>
+            <tr>
+                <td><code>@typescript-eslint/no-explicit-any</code></td>
+                <td>Використання <code>any</code></td>
+                <td>Замінити на конкретний тип або <code>unknown</code></td>
+            </tr>
+            <tr>
+                <td><code>react-hooks/exhaustive-deps</code></td>
+                <td>Неповні залежності useEffect</td>
+                <td>Додати відсутні залежності в масив</td>
+            </tr>
+            <tr>
+                <td><code>react-refresh/only-export-components</code></td>
+                <td>Файл експортує не тільки компоненти</td>
+                <td>Винести хуки/утиліти в окремий файл, або <code>/* eslint-disable */</code></td>
+            </tr>
+        </table>
+
+        <h3>Frontend: TypeScript Build</h3>
+        <table>
+            <tr><th>Помилка</th><th>Рішення</th></tr>
+            <tr>
+                <td><code>TS2345: Argument of type X is not assignable</code></td>
+                <td>Перевірте типи, додайте перетворення або оновіть інтерфейс</td>
+            </tr>
+            <tr>
+                <td><code>TS7006: Parameter implicitly has 'any'</code></td>
+                <td>Додайте явну анотацію типу параметра</td>
+            </tr>
+            <tr>
+                <td><code>TS2322: Type X is not assignable to type Y</code></td>
+                <td>Приведіть типи у відповідність або використовуйте <code>as</code></td>
+            </tr>
+        </table>
+
+        <h3>Backend: Системні залежності</h3>
+        <div class="alert alert-error">
+            <strong>python-ldap не збирається</strong><br>
+            Помилка: <code>fatal error: lber.h: No such file or directory</code><br>
+            Рішення: в CI додано <code>sudo apt-get install -y libldap2-dev libsasl2-dev ldap-utils</code>
+        </div>
+    </div>
+
+    <!-- 8. Add job -->
+    <div class="section" id="add-job">
+        <h2>8. Як додати новий Job</h2>
+
+        <h3>Приклад: сповіщення в Slack/Telegram</h3>
+<pre><span class="comment"># Додати в .github/workflows/ci.yml</span>
+  <span class="keyword">notify</span>:
+    <span class="flag">runs-on</span>: <span class="string">ubuntu-latest</span>
+    <span class="flag">needs</span>: [deploy]
+    <span class="flag">if</span>: <span class="string">always()</span>  <span class="comment"># навіть якщо деплой впав</span>
+    <span class="flag">steps</span>:
+      - <span class="flag">name</span>: <span class="string">Notify Telegram</span>
+        <span class="flag">uses</span>: <span class="string">appleboy/telegram-action@master</span>
+        <span class="flag">with</span>:
+          <span class="flag">to</span>: <span class="string">${{ secrets.TELEGRAM_CHAT_ID }}</span>
+          <span class="flag">token</span>: <span class="string">${{ secrets.TELEGRAM_BOT_TOKEN }}</span>
+          <span class="flag">message</span>: |
+            <span class="string">Deploy ${{ job.status }}: ${{ github.repository }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}</span></pre>
+
+        <h3>Приклад: перевірка безпеки залежностей</h3>
+<pre>  <span class="keyword">security-audit</span>:
+    <span class="flag">runs-on</span>: <span class="string">ubuntu-latest</span>
+    <span class="flag">steps</span>:
+      - <span class="flag">uses</span>: <span class="string">actions/checkout@v4</span>
+      - <span class="flag">uses</span>: <span class="string">actions/setup-python@v5</span>
+        <span class="flag">with</span>:
+          <span class="flag">python-version</span>: <span class="string">'3.12'</span>
+      - <span class="flag">run</span>: <span class="cmd">pip install pip-audit</span>
+      - <span class="flag">run</span>: <span class="cmd">pip-audit -r requirements.txt</span></pre>
+    </div>
+
+    <!-- 9. Secrets -->
+    <div class="section" id="secrets">
+        <h2>9. Секрети та змінні середовища</h2>
+
+        <h3>Поточні змінні (захардкоджені для CI)</h3>
+        <p>Ці значення безпечно використовуються тільки в тестовому оточенні CI:</p>
+        <table>
+            <tr><th>Змінна</th><th>Значення</th><th>Де використовується</th></tr>
+            <tr>
+                <td><code>SECRET_KEY</code></td>
+                <td><code>test-secret-key-for-ci</code></td>
+                <td>Django settings</td>
+            </tr>
+            <tr>
+                <td><code>DB_NAME</code></td>
+                <td><code>inventory_test</code></td>
+                <td>PostgreSQL</td>
+            </tr>
+            <tr>
+                <td><code>DB_USER / DB_PASSWORD</code></td>
+                <td><code>postgres / postgres</code></td>
+                <td>PostgreSQL</td>
+            </tr>
+        </table>
+
+        <h3>Секрети для деплою (обов'язкові)</h3>
+        <table>
+            <tr><th>Секрет</th><th>Опис</th></tr>
+            <tr><td><code>DEPLOY_HOST</code></td><td>IP-адреса або домен продакшн-сервера</td></tr>
+            <tr><td><code>DEPLOY_USER</code></td><td>SSH-користувач на сервері</td></tr>
+            <tr><td><code>DEPLOY_SSH_KEY</code></td><td>Приватний SSH-ключ (вміст файлу, не шлях)</td></tr>
+            <tr><td><code>DEPLOY_PORT</code></td><td>SSH-порт (за замовчуванням 22)</td></tr>
+            <tr><td><code>DEPLOY_PATH</code></td><td>Шлях до проєкту на сервері (за замовчуванням /opt/inventory)</td></tr>
+        </table>
+
+        <h3>Як додати секрети</h3>
+        <div class="step">
+            <span class="step-num">1</span>
+            <div class="step-content">Перейдіть в репозиторій на GitHub &rarr; <strong>Settings</strong> &rarr; <strong>Secrets and variables</strong> &rarr; <strong>Actions</strong></div>
+        </div>
+        <div class="step">
+            <span class="step-num">2</span>
+            <div class="step-content">Натисніть <strong>New repository secret</strong></div>
+        </div>
+        <div class="step">
+            <span class="step-num">3</span>
+            <div class="step-content">Введіть ім'я (наприклад <code>SSH_PRIVATE_KEY</code>) та значення</div>
+        </div>
+        <div class="step">
+            <span class="step-num">4</span>
+            <div class="step-content">Використовуйте в workflow: <code>${{ secrets.SSH_PRIVATE_KEY }}</code></div>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>Ніколи не захардкоджуйте</strong> продакшн-секрети (SSH-ключі, API-токени, паролі) безпосередньо у файлі <code>ci.yml</code>. Завжди використовуйте GitHub Secrets.
+        </div>
+    </div>
+
+    <!-- 10. Badges -->
+    <div class="section" id="badges">
+        <h2>10. Бейджі статусу</h2>
+
+        <p>Додайте бейдж у <code>README.md</code>, щоб бачити статус CI прямо в репозиторії:</p>
+
+<pre><span class="comment"># Markdown</span>
+![CI/CD](https://github.com/<span class="string">YOUR_USERNAME</span>/<span class="string">inventory</span>/actions/workflows/ci.yml/badge.svg)
+
+<span class="comment"># Для конкретної гілки</span>
+![CI/CD](https://github.com/<span class="string">YOUR_USERNAME</span>/<span class="string">inventory</span>/actions/workflows/ci.yml/badge.svg?branch=develop)</pre>
+
+        <p>Результат виглядає так:</p>
+        <div style="margin: 1rem 0; display: flex; gap: 0.5rem;">
+            <span class="badge badge-green" style="font-size: 0.9rem; padding: 0.4rem 0.8rem;">CI/CD: passing</span>
+            <span class="badge badge-red" style="font-size: 0.9rem; padding: 0.4rem 0.8rem;">CI/CD: failing</span>
+        </div>
+    </div>
+
+    <!-- 11. Best practices -->
+    <div class="section" id="best-practices">
+        <h2>11. Найкращі практики</h2>
+
+        <h3>Branch Protection Rules</h3>
+        <p>Налаштуйте захист гілки <code>main</code>, щоб заборонити merge без проходження CI:</p>
+        <div class="step">
+            <span class="step-num">1</span>
+            <div class="step-content">GitHub &rarr; Settings &rarr; Branches &rarr; <strong>Add branch protection rule</strong></div>
+        </div>
+        <div class="step">
+            <span class="step-num">2</span>
+            <div class="step-content">Branch name pattern: <code>main</code></div>
+        </div>
+        <div class="step">
+            <span class="step-num">3</span>
+            <div class="step-content">Увімкніть <strong>"Require status checks to pass before merging"</strong></div>
+        </div>
+        <div class="step">
+            <span class="step-num">4</span>
+            <div class="step-content">Додайте CI jobs як обов'язкові: <code>backend-lint</code>, <code>backend-test</code>, <code>frontend-lint</code>, <code>frontend-test</code>, <code>frontend-build</code></div>
+        </div>
+
+        <h3>Кешування</h3>
+        <p>Пайплайн вже використовує кешування для прискорення:</p>
+        <ul>
+            <li><code>cache: 'pip'</code> &mdash; кешує Python-пакети між запусками</li>
+            <li><code>cache: 'npm'</code> з <code>cache-dependency-path</code> &mdash; кешує node_modules</li>
+        </ul>
+
+        <h3>Рекомендації</h3>
+        <ul>
+            <li>Завжди запускайте лінтери локально перед push</li>
+            <li>Не ігноруйте помилки CI &mdash; виправляйте одразу</li>
+            <li>Пишіть тести для нового функціоналу</li>
+            <li>Тримайте <code>requirements.txt</code> та <code>package.json</code> актуальними</li>
+            <li>Використовуйте <code>develop</code> гілку для розробки, <code>main</code> &mdash; для стабільного коду</li>
+            <li>Регулярно оновлюйте версії actions (<code>actions/checkout@v4</code> тощо)</li>
+        </ul>
+    </div>
+
+    <!-- 12. FAQ -->
+    <div class="section" id="faq">
+        <h2>12. FAQ</h2>
+
+        <h3>Де подивитися результати CI?</h3>
+        <p>GitHub &rarr; ваш репозиторій &rarr; вкладка <strong>Actions</strong>. Там видно всі запуски, їх статус та логи кожного кроку.</p>
+
+        <h3>CI впав, але локально все працює. Чому?</h3>
+        <ul>
+            <li><strong>Різні версії Python/Node</strong> &mdash; CI використовує Python 3.12 та Node 20</li>
+            <li><strong>Не закомічені файли</strong> &mdash; перевірте <code>git status</code></li>
+            <li><strong>Різні ОС</strong> &mdash; CI працює на Ubuntu, а ви можете бути на Windows/macOS</li>
+            <li><strong>Кеш</strong> &mdash; спробуйте очистити кеш в GitHub Actions</li>
+        </ul>
+
+        <h3>Як перезапустити CI без нового коміту?</h3>
+        <p>GitHub &rarr; Actions &rarr; виберіть workflow run &rarr; кнопка <strong>"Re-run all jobs"</strong> або <strong>"Re-run failed jobs"</strong>.</p>
+
+        <h3>Як тимчасово вимкнути CI для коміту?</h3>
+        <p>Додайте <code>[skip ci]</code> або <code>[ci skip]</code> в повідомлення коміту:</p>
+<pre><span class="cmd">git commit</span> -m <span class="string">"Оновлення README [skip ci]"</span></pre>
+
+        <h3>Скільки хвилин GitHub Actions безкоштовно?</h3>
+        <p>Для публічних репозиторіїв &mdash; <strong>необмежено</strong>. Для приватних &mdash; 2000 хвилин/місяць на безкоштовному плані.</p>
+
+        <h3>Як додати покриття коду в PR?</h3>
+        <p>Інтегруйте <a href="https://about.codecov.io/" style="color: var(--accent-light);">Codecov</a> &mdash; додайте крок після тестів:</p>
+<pre>      - <span class="flag">uses</span>: <span class="string">codecov/codecov-action@v4</span>
+        <span class="flag">with</span>:
+          <span class="flag">files</span>: <span class="string">./inventory_project/coverage.xml</span>
+          <span class="flag">token</span>: <span class="string">${{ secrets.CODECOV_TOKEN }}</span></pre>
+    </div>
+
+</div>
+
+<div class="footer">
+    IT Inventory System &mdash; CI/CD Pipeline Guide &mdash; 2026
+</div>
+
+</body>
+</html>
