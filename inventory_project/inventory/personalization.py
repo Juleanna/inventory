@@ -1,11 +1,10 @@
 # inventory/personalization.py
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.db.models import Q, Count, Avg, Sum
+from django.db.models import Q, Count
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import timedelta
 from .models import Equipment, Notification, UserPreferences
-import json
 
 User = get_user_model()
 
@@ -146,7 +145,7 @@ class PersonalizationService:
                     "id": f"maintenance_{eq.id}",
                     "type": "maintenance",
                     "title": f"ТО для {eq.name}",
-                    "description": f"Планове технічне обслуговування",
+                    "description": "Планове технічне обслуговування",
                     "equipment": eq.name,
                     "equipment_id": eq.id,
                     "due_date": (
@@ -319,7 +318,10 @@ class PersonalizationService:
                 {
                     "id": "old_equipment",
                     "title": "Застаріле обладнання",
-                    "description": f"У вас є {old_equipment} одиниць обладнання старше 5 років. Розгляньте можливість оновлення.",
+                    "description": (
+                        f"У вас є {old_equipment} одиниць обладнання старше 5 років."
+                        " Розгляньте можливість оновлення."
+                    ),
                     "icon": "fas fa-exclamation-triangle",
                     "color": "warning",
                     "action": "view_old_equipment",
@@ -337,7 +339,10 @@ class PersonalizationService:
                 {
                     "id": "overdue_maintenance",
                     "title": "Прострочене ТО",
-                    "description": f"{overdue_maintenance} одиниць обладнання потребують термінового технічного обслуговування.",
+                    "description": (
+                        f"{overdue_maintenance} одиниць обладнання"
+                        " потребують термінового технічного обслуговування."
+                    ),
                     "icon": "fas fa-tools",
                     "color": "danger",
                     "action": "schedule_maintenance",
@@ -356,7 +361,10 @@ class PersonalizationService:
                 {
                     "id": "missing_documentation",
                     "title": "Відсутня документація",
-                    "description": f"У {undocumented_equipment} одиниць обладнання відсутні примітки. Додайте опис для кращого управління.",
+                    "description": (
+                        f"У {undocumented_equipment} одиниць обладнання відсутні примітки."
+                        " Додайте опис для кращого управління."
+                    ),
                     "icon": "fas fa-file-alt",
                     "color": "info",
                     "action": "add_documentation",
@@ -373,7 +381,7 @@ class PersonalizationService:
     def _get_user_shortcuts(cls, user):
         """Персональні ярлики користувача"""
         preferences = cls.get_user_preferences(user)
-        shortcuts = preferences.dashboard_shortcuts or {}
+        preferences.dashboard_shortcuts or {}
 
         # Дефолтні ярлики
         default_shortcuts = [

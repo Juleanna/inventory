@@ -1,27 +1,22 @@
 # inventory/admin.py (виправлена версія без помилок)
 from django.contrib import admin
 from django.utils.html import format_html
-from django.urls import reverse, path
 from django.shortcuts import redirect, render
 from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.db import models
-from django.db.models import Count, Sum, Q
+from django.db.models import Sum, Q
 from django.utils import timezone
 from datetime import timedelta
 import csv
-import json
 
-from unfold.admin import ModelAdmin, StackedInline, TabularInline
+from unfold.admin import ModelAdmin
 from unfold.decorators import action, display
 from unfold.contrib.filters.admin import (
     ChoicesDropdownFilter,
     MultipleChoicesDropdownFilter,
-    TextFilter,
-    FieldTextFilter,
     RangeDateFilter,
 )
-from unfold.contrib.import_export.forms import ExportForm, ImportForm
 
 # Note: Some widgets might not be available in current Unfold version
 try:
@@ -29,7 +24,6 @@ try:
 except ImportError:
     WysiwygWidget = None
 
-from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from .models import (
@@ -1101,7 +1095,8 @@ class SystemCategoryAdmin(ModelAdmin):
     @display(description=_("Колір"), ordering="color")
     def color_preview(self, obj):
         return format_html(
-            '<div style="width: 20px; height: 20px; background-color: {}; border: 1px solid #ccc; border-radius: 3px;"></div>',
+            '<div style="width: 20px; height: 20px; background-color: {};'
+            ' border: 1px solid #ccc; border-radius: 3px;"></div>',
             obj.color,
         )
 
@@ -1331,7 +1326,7 @@ class SystemAccountAdmin(ModelAdmin):
             return format_html(
                 '<span class="badge badge-{}">{} ({}%)</span>', color, level, strength
             )
-        except:
+        except Exception:
             return format_html('<span class="text-danger">Помилка дешифрування</span>')
 
     # Кастомні дії

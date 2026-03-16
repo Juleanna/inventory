@@ -1,11 +1,11 @@
 # inventory/tasks.py
 from celery import shared_task
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.conf import settings
-from django.db.models import Q, Count
+from django.db.models import Q
 import logging
 
 from .models import Equipment, Notification
@@ -63,7 +63,10 @@ def check_equipment_expiry():
                         equipment=equipment,
                         title=f"Термін служби обладнання {message_suffix}",
                         defaults={
-                            "message": f"Обладнання '{equipment.name}' ({equipment.serial_number}) під вашою відповідальністю {message_suffix}",
+                            "message": (
+                                f"Обладнання '{equipment.name}' ({equipment.serial_number})"
+                                f" під вашою відповідальністю {message_suffix}"
+                            ),
                             "notification_type": "WARNING" if days > 0 else "ERROR",
                             "priority": "HIGH" if days <= 7 else "MEDIUM",
                         },
@@ -106,7 +109,10 @@ def check_warranty_expiry():
                         equipment=equipment,
                         title=f"Гарантія на обладнання {message_suffix}",
                         defaults={
-                            "message": f"Гарантія на обладнання '{equipment.name}' ({equipment.serial_number}) {message_suffix}",
+                            "message": (
+                                f"Гарантія на обладнання '{equipment.name}'"
+                                f" ({equipment.serial_number}) {message_suffix}"
+                            ),
                             "notification_type": "WARNING",
                             "priority": "MEDIUM",
                         },
@@ -168,7 +174,10 @@ def check_maintenance_schedule():
                     equipment=equipment,
                     title="Планове обслуговування через тиждень",
                     defaults={
-                        "message": f"Для обладнання '{equipment.name}' ({equipment.serial_number}) заплановано обслуговування через тиждень",
+                        "message": (
+                            f"Для обладнання '{equipment.name}' ({equipment.serial_number})"
+                            " заплановано обслуговування через тиждень"
+                        ),
                         "notification_type": "INFO",
                         "priority": "MEDIUM",
                     },
@@ -241,15 +250,15 @@ def generate_daily_report():
 
         report_message = f"""
         Щоденний звіт інвентаризації на {today.strftime('%d.%m.%Y')}:
-        
+
         📊 Загальна статистика:
         • Всього обладнання: {stats['total_equipment']}
         • Робоче: {stats['working_equipment']}
         • На ремонті: {stats['repair_equipment']}
-        
+
         📈 Зміни за сьогодні:
         • Додано нового обладнання: {stats['new_equipment_today']}
-        
+
         ⚠️ Потребує уваги:
         • Закінчується термін служби (30 днів): {stats['expiring_soon']}
         • Прострочене обслуговування: {stats['maintenance_overdue']}
@@ -380,7 +389,10 @@ def update_equipment_metrics():
                     equipment=equipment,
                     title="Обладнання не відповідає",
                     defaults={
-                        "message": f"Обладнання '{equipment.name}' ({equipment.serial_number}) не передавало дані більше 7 днів",
+                        "message": (
+                            f"Обладнання '{equipment.name}' ({equipment.serial_number})"
+                            " не передавало дані більше 7 днів"
+                        ),
                         "notification_type": "WARNING",
                         "priority": "MEDIUM",
                     },
@@ -531,14 +543,14 @@ def monitor_equipment_health():
             if equipment.current_user:
                 title = f"Обладнання не відповідає: {equipment.name}"
                 message = f"""
-                Обладнання "{equipment.name}" ({equipment.serial_number}) 
+                Обладнання "{equipment.name}" ({equipment.serial_number})
                 не передавало дані {days_stale} днів.
-                
+
                 Можливі причини:
                 • Вимкнено або не працює
                 • Проблеми з мережею
                 • Агент не запущений
-                
+
                 Локація: {equipment.location}
                 """
 
@@ -566,7 +578,7 @@ def monitor_equipment_health():
 def generate_weekly_summary():
     """Генерувати тижневу зводку"""
     try:
-        from django.db.models import Count
+        pass
 
         today = timezone.now().date()
         week_ago = today - timedelta(days=7)
@@ -594,13 +606,13 @@ def generate_weekly_summary():
 
         summary_message = f"""
         Тижнева зводка інвентаризації ({week_ago.strftime('%d.%m')} - {today.strftime('%d.%m.%Y')})
-        
+
         📊 Статистика:
         • Додано нового обладнання: {weekly_stats['new_equipment']}
         • Відремонтовано: {weekly_stats['equipment_repaired']}
         • Проведено ТО: {weekly_stats['maintenance_completed']}
         • Створено сповіщень: {weekly_stats['notifications_created']}
-        
+
         💡 Рекомендації:
         • Перевірити прострочене ТО
         • Оновити інформацію про гарантії
@@ -649,13 +661,13 @@ def detect_equipment_anomalies():
                 notification = NotificationService.create_notification(
                     user=user,
                     title=f"Обладнання без користувача: {equipment.name}",
-                    message=f"""
-                    Обладнання "{equipment.name}" ({equipment.serial_number}) 
-                    не має призначеного користувача вже {(timezone.now().date() - equipment.created_at.date()).days} днів.
-                    
-                    Локація: {equipment.location}
-                    Статус: {equipment.get_status_display()}
-                    """,
+                    message=(
+                        f'Обладнання "{equipment.name}" ({equipment.serial_number})'
+                        f" не має призначеного користувача вже"
+                        f" {(timezone.now().date() - equipment.created_at.date()).days} днів.\n"
+                        f"Локація: {equipment.location}\n"
+                        f"Статус: {equipment.get_status_display()}"
+                    ),
                     notification_type="WARNING",
                     priority="LOW",
                     equipment=equipment,
@@ -674,7 +686,7 @@ def detect_equipment_anomalies():
         )
 
         for dup in duplicate_serials:
-            duplicates = Equipment.objects.filter(serial_number=dup["serial_number"])
+            Equipment.objects.filter(serial_number=dup["serial_number"])
 
             # Повідомити адміністраторів
             admins = User.objects.filter(is_staff=True, is_active=True)
@@ -684,9 +696,9 @@ def detect_equipment_anomalies():
                     user=admin,
                     title="Знайдено дублікати серійних номерів",
                     message=f"""
-                    Серійний номер "{dup['serial_number']}" використовується 
+                    Серійний номер "{dup['serial_number']}" використовується
                     для {dup['count']} одиниць обладнання.
-                    
+
                     Необхідно перевірити та виправити дублікати.
                     """,
                     notification_type="ERROR",

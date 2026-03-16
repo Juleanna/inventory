@@ -51,7 +51,7 @@ def validate_ip_address(value):
     import ipaddress
 
     try:
-        ip = ipaddress.ip_address(value)
+        ipaddress.ip_address(value)
         # Можна додати перевірку на приватні мережі
         # if ip.is_private:
         #     pass  # Дозволити приватні IP

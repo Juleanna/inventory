@@ -158,7 +158,10 @@ def scan_qr_code(request):
                 user=equipment.responsible_person,
                 equipment=equipment,
                 title="Обладнання відскановане",
-                message=f"Обладнання '{equipment.name}' було відскановане користувачем {request.user.get_full_name() or request.user.username}",
+                message=(
+                    f"Обладнання '{equipment.name}' було відскановане"
+                    f" користувачем {request.user.get_full_name() or request.user.username}"
+                ),
                 notification_type="INFO",
                 priority="LOW",
             )
@@ -211,7 +214,9 @@ def update_equipment_location(request):
 
         # Логування
         logger.info(
-            f"Місцезнаходження обладнання {equipment.serial_number} змінено з '{old_location}' на '{new_location}' користувачем {request.user.username}"
+            f"Місцезнаходження обладнання {equipment.serial_number}"
+            f" змінено з '{old_location}' на '{new_location}'"
+            f" користувачем {request.user.username}"
         )
 
         # Створити уведомлення
@@ -223,7 +228,11 @@ def update_equipment_location(request):
                 user=equipment.responsible_person,
                 equipment=equipment,
                 title="Змінено місцезнаходження",
-                message=f"Місцезнаходження обладнання '{equipment.name}' змінено з '{old_location}' на '{new_location}' користувачем {request.user.get_full_name() or request.user.username}",
+                message=(
+                    f"Місцезнаходження обладнання '{equipment.name}'"
+                    f" змінено з '{old_location}' на '{new_location}'"
+                    f" користувачем {request.user.get_full_name() or request.user.username}"
+                ),
                 notification_type="INFO",
                 priority="MEDIUM",
             )
@@ -285,7 +294,10 @@ def report_issue(request):
                 user=equipment.responsible_person,
                 equipment=equipment,
                 title=title,
-                message=f"Користувач {request.user.get_full_name() or request.user.username} повідомив про проблему з обладнанням '{equipment.name}':\n\n{issue_description}",
+                message=(
+                    f"Користувач {request.user.get_full_name() or request.user.username}"
+                    f" повідомив про проблему з обладнанням '{equipment.name}':\n\n{issue_description}"
+                ),
                 notification_type="WARNING",
                 priority="HIGH",
             )
@@ -297,14 +309,19 @@ def report_issue(request):
                 user=admin,
                 equipment=equipment,
                 title=f"{title} (від користувача)",
-                message=f"Користувач {request.user.get_full_name() or request.user.username} повідомив про проблему:\n\nОбладнання: {equipment.name} ({equipment.serial_number})\nТип: {issue_type}\nОпис: {issue_description}",
+                message=(
+                    f"Користувач {request.user.get_full_name() or request.user.username}"
+                    f" повідомив про проблему:\n\nОбладнання: {equipment.name}"
+                    f" ({equipment.serial_number})\nТип: {issue_type}\nОпис: {issue_description}"
+                ),
                 notification_type="WARNING",
                 priority="MEDIUM",
             )
 
         # Логування
         logger.warning(
-            f"Повідомлення про проблему з обладнанням {equipment.serial_number} від користувача {request.user.username}: {issue_description}"
+            f"Повідомлення про проблему з обладнанням {equipment.serial_number}"
+            f" від користувача {request.user.username}: {issue_description}"
         )
 
         return Response(

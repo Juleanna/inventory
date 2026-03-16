@@ -1,10 +1,7 @@
 # inventory/middleware.py
 from django.core.cache import cache
 from django.http import JsonResponse
-from django.utils import timezone
-from datetime import timedelta
 import time
-import hashlib
 
 
 class RateLimitMiddleware:

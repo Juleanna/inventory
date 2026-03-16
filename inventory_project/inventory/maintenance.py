@@ -2,8 +2,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from datetime import datetime, timedelta
-from django.core.cache import cache
+from datetime import timedelta
 from .models import Equipment, Notification
 import uuid
 
@@ -523,7 +522,10 @@ class MaintenanceService:
             Notification.objects.create(
                 user=manager,
                 title=f"Новий запит на ТО: {request.title}",
-                message=f"Користувач {request.requester.get_full_name()} створив запит на ТО для {request.equipment.name}",
+                message=(
+                    f"Користувач {request.requester.get_full_name()}"
+                    f" створив запит на ТО для {request.equipment.name}"
+                ),
                 notification_type="INFO",
                 priority=request.priority,
                 equipment=request.equipment,

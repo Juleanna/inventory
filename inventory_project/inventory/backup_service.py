@@ -7,7 +7,6 @@ import os
 import json
 import zipfile
 import logging
-from pathlib import Path
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -35,7 +34,6 @@ def create_full_backup(created_by=None, include_models=None):
         Notification,
         Software,
         PeripheralDevice,
-        EquipmentDocument,
     )
     from .spare_parts import (
         SparePart,
@@ -226,10 +224,6 @@ def restore_from_backup(filename, models_to_restore=None, mode="merge"):
     results = {}
 
     with zipfile.ZipFile(fpath, "r") as zf:
-        available_files = {
-            info.filename.replace(".json", ""): info.filename for info in zf.infolist()
-        }
-
         with transaction.atomic():
             for key in restore_order:
                 json_file = f"{key}.json"

@@ -2,11 +2,9 @@
 import io
 import logging
 from decimal import Decimal
-from datetime import timedelta
 
 from django.db import models
-from django.db.models import Q, Sum, Count, Avg, F
-from django.utils import timezone
+from django.db.models import Q
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 
@@ -412,7 +410,7 @@ class GlobalSearchView(APIView):
                         "id": c.id,
                         "title": c.title,
                         "subtitle": f"{c.contract_number} • {c.counterparty}",
-                        "url": f"/contracts",
+                        "url": "/contracts",
                     }
                     for c in contracts_qs
                 ]
@@ -918,8 +916,6 @@ class ExportReportView(APIView):
                 Spacer,
             )
             from reportlab.lib.styles import getSampleStyleSheet
-            from reportlab.pdfbase import pdfmetrics
-            from reportlab.pdfbase.ttfonts import TTFont
         except ImportError:
             return Response({"error": "reportlab не встановлено"}, status=400)
 

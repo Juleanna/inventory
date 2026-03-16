@@ -8,7 +8,7 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_project.settings")
 django.setup()
 
-from django.core.asgi import get_asgi_application
+from django.core.asgi import get_asgi_application  # noqa: E402
 
 try:
     from channels.routing import ProtocolTypeRouter, URLRouter

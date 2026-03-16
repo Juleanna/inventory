@@ -1,22 +1,14 @@
 from django.contrib import admin
 from .models import CustomUser, UserProfile
-from unfold.admin import ModelAdmin, StackedInline, TabularInline
-from unfold.decorators import display, action
+from unfold.admin import ModelAdmin
+from unfold.decorators import display
 from unfold.contrib.filters.admin import (
     ChoicesDropdownFilter,
-    MultipleChoicesDropdownFilter,
-    TextFilter,
-    FieldTextFilter,
     RangeDateFilter,
 )
 from simple_history.admin import SimpleHistoryAdmin
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
-from django.contrib.auth.forms import PasswordChangeForm
-from django.shortcuts import render
-from django.contrib.auth import update_session_auth_hash
-from django.http import HttpResponseRedirect
-from django.urls import path
 from django.utils.html import format_html
 from django.urls import reverse
 

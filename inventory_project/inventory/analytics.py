@@ -1,5 +1,5 @@
 # inventory/analytics.py
-from django.db.models import Count, Sum, Avg, Q, F
+from django.db.models import Count, Sum, Avg, Q
 from django.utils import timezone
 from datetime import timedelta, datetime
 from rest_framework.decorators import api_view, permission_classes

@@ -1,9 +1,9 @@
 # Налаштування Django для Docker середовища
 import os
-from .settings import *
+from .settings import *  # noqa: F403
 
 # Django Celery додатки вже додані в base settings, перевіряємо що вони є
-INSTALLED_APPS = list(INSTALLED_APPS)
+INSTALLED_APPS = list(INSTALLED_APPS)  # noqa: F405
 # django_celery_beat та django_celery_results вже в основних налаштуваннях
 
 # Завантажуємо Docker-специфічні змінні
@@ -58,7 +58,7 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = "/app/media/"
 
 # Додаємо WhiteNoise для обслуговування статичних файлів
-MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")  # noqa: F405
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Налаштування логування для Docker з правильними шляхами

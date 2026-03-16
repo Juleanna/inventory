@@ -1,37 +1,41 @@
-from rest_framework import status, permissions
-from rest_framework.viewsets import ModelViewSet
-from django.db import models
-from rest_framework.views import APIView
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.decorators import (
-    api_view,
-    permission_classes,
-    authentication_classes,
-    action,
-    parser_classes,
-)
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.serializers import Serializer, CharField
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
-from django.http import HttpResponse
-from django.template.loader import render_to_string
 from datetime import datetime, timedelta
-from django.utils import timezone
-import json
 import io
+
 import xlsxwriter
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
+from django.contrib.auth import get_user_model
+from django.db import models, connection
+from django.http import HttpResponse, JsonResponse
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from rest_framework import status, permissions
+from rest_framework.decorators import (
+    api_view,
+    permission_classes,
+    action,
+    parser_classes,
+)
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.serializers import Serializer, CharField
+from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
+from rest_framework_simplejwt.tokens import RefreshToken
+from django_filters.rest_framework import DjangoFilterBackend
 
+from .dashboard import DashboardService, ReportService
+from .filters import EquipmentFilter
+from .maintenance import (
+    MaintenanceService,
+    MaintenanceRequest,
+    MaintenanceSchedule,
+)
 from .models import (
     Equipment,
     Notification,
@@ -40,23 +44,14 @@ from .models import (
     PeripheralDevice,
     EquipmentDocument,
 )
+from .offline import OfflineDataManager, OfflineSearchHelper
+from .personalization import PersonalizationService
 from .serializers import (
     EquipmentSerializer,
     NotificationSerializer,
     LicenseSerializer,
     SoftwareSerializer,
     PeripheralDeviceSerializer,
-)
-from .filters import EquipmentFilter
-from .dashboard import DashboardService, ReportService
-from .offline import OfflineDataManager, OfflineSearchHelper
-from .personalization import PersonalizationService
-from .two_factor import TwoFactorAuthService
-from .maintenance import (
-    MaintenanceService,
-    MaintenanceRequest,
-    MaintenanceSchedule,
-    MaintenanceTask,
 )
 from .spare_parts import (
     SparePartsService,
@@ -68,12 +63,9 @@ from .spare_parts import (
     PurchaseOrderItem,
     StorageLocation,
 )
-from django.views.decorators.cache import cache_page
-from django.utils.decorators import method_decorator
-from django.db import connection
+from .two_factor import TwoFactorAuthService
 
-# Health check endpoint (без DRF для уникнення JWT перевірки)
-from django.http import JsonResponse
+User = get_user_model()
 
 
 def health_check(request):
@@ -481,7 +473,7 @@ def register(request):
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
         data = serializer.validated_data
-        user = User.objects.create_user(
+        User.objects.create_user(
             username=data["username"],
             password=data["password"],
             email=data.get("email", ""),
@@ -533,20 +525,12 @@ def get_notifications(request):
     return Response(notifications_data)
 
 
-@api_view(["PATCH"])
-@permission_classes([IsAuthenticated])
-def mark_notifications_read(request):
-    user = request.user
-    Notification.objects.filter(user=user, read=False).update(read=True)
-    return Response({"message": "Все уведомления помечены как прочитанные"})
-
-
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_equipment(request):
     serializer = EquipmentSerializer(data=request.data)
     if serializer.is_valid():
-        equipment = serializer.save()
+        serializer.save()
         Notification.objects.create(
             user=request.user,
             message="Новый предмет добавлен в инвентарь",
@@ -1082,7 +1066,7 @@ def check_expired_equipment():
         if item.current_user:
             Notification.objects.create(
                 user=item.current_user,
-                title=f"Термін служби обладнання закінчився",
+                title="Термін служби обладнання закінчився",
                 message=f"Термін служби обладнання {item.name} закінчився.",
             )
 
@@ -1761,18 +1745,18 @@ def quick_report(request):
 
     report_message = f"""
     Швидкий звіт про проблему від {request.user.get_full_name() or request.user.username}:
-    
+
     Тип: {dict([
         ('hardware', 'Проблема з обладнанням'),
         ('software', 'Проблема з ПЗ'),
         ('network', 'Мережева проблема'),
         ('other', 'Інше')
     ]).get(report_type, 'Невідомо')}
-    
+
     Опис: {description}
-    
+
     Локація: {location or 'Не вказано'}
-    
+
     Час: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     """
 
@@ -1784,7 +1768,7 @@ def quick_report(request):
             "network": "Мережа",
             "other": "Проблема",
         }
-        notification = Notification.objects.create(
+        Notification.objects.create(
             user=admin,
             title=f"Швидкий звіт: {report_types.get(report_type, 'Проблема')}",
             message=report_message,
@@ -1878,9 +1862,7 @@ class UserPreferencesView(APIView):
         }
 
         try:
-            preferences = PersonalizationService.update_user_preferences(
-                request.user, filtered_data
-            )
+            PersonalizationService.update_user_preferences(request.user, filtered_data)
 
             return Response(
                 {"success": True, "message": "Налаштування оновлено успішно"}
@@ -3744,7 +3726,7 @@ def get_spare_parts_for_equipment(request, equipment_id):
 @permission_classes([IsAuthenticated])
 def spare_parts_analytics(request):
     """Аналітика по запчастинах"""
-    from django.db.models import Sum, Count, Avg
+    from django.db.models import Sum, Count
     from django.utils import timezone
     from datetime import timedelta
 

@@ -5,10 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from django.db.models import Q, Count
-from django.utils import timezone
-from django.core.exceptions import PermissionDenied
-from datetime import timedelta
+from django.db.models import Count
 
 from .password_management import (
     SystemCategory,
@@ -261,7 +258,7 @@ class SystemAccountViewSet(viewsets.ModelViewSet):
                     "days_until_expiry": account.days_until_expiry(),
                 }
             )
-        except Exception as e:
+        except Exception:
             return Response(
                 {"error": "Помилка дешифрування пароля"},
                 status=status.HTTP_400_BAD_REQUEST,

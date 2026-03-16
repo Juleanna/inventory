@@ -398,7 +398,8 @@ class Equipment(models.Model):
                 old_obj = Equipment.objects.get(pk=self.pk)
                 if old_obj.status != self.status:
                     logger.info(
-                        f"Статус обладнання {self.name} ({self.serial_number}) змінено з {old_obj.status} на {self.status}"
+                        f"Статус обладнання {self.name} ({self.serial_number})"
+                        f" змінено з {old_obj.status} на {self.status}"
                     )
             except Equipment.DoesNotExist:
                 pass
@@ -967,11 +968,3 @@ class CustomDashboard(models.Model):
 
 
 # Імпорт моделей управління паролями
-from .password_management import (
-    SystemCategory,
-    System,
-    SystemAccount,
-    PasswordAccessLog,
-    PasswordEncryptionService,
-    PasswordManagementService,
-)

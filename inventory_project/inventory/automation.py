@@ -1,5 +1,4 @@
 # inventory/automation.py — Автоматичні правила обробки обладнання
-import json
 import logging
 from datetime import timedelta
 
@@ -182,7 +181,10 @@ class AutomationEngine:
                 try:
                     send_mail(
                         subject=f"IT Inventory: {rule.name}",
-                        message=f'Обладнання "{equipment.name}" ({equipment.serial_number}) відповідає правилу "{rule.name}".',
+                        message=(
+                            f'Обладнання "{equipment.name}" ({equipment.serial_number})'
+                            f' відповідає правилу "{rule.name}".'
+                        ),
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         recipient_list=[equipment.current_user.email],
                         fail_silently=True,

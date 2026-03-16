@@ -2,10 +2,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from django.core.cache import cache
 from decimal import Decimal
-from datetime import datetime, timedelta
-from .models import Equipment, Notification
+from .models import Equipment
 import uuid
 
 User = get_user_model()

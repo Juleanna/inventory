@@ -3,11 +3,9 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from unfold.admin import ModelAdmin
-from unfold.decorators import display, action
+from unfold.decorators import display
 from unfold.contrib.filters.admin import (
-    ChoicesDropdownFilter,
     RangeDateFilter,
-    TextFilter,
 )
 from .models import License
 

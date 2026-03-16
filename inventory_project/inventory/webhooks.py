@@ -3,15 +3,14 @@ import json
 import hashlib
 import hmac
 import logging
-from datetime import timedelta
 
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 
-from rest_framework import viewsets, serializers, status
+from rest_framework import viewsets, serializers
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 
 import requests as http_requests

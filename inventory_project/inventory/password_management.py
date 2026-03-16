@@ -7,14 +7,10 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from simple_history.models import HistoricalRecords
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from django.conf import settings
 import base64
 import secrets
-import json
 import logging
-import os
 from datetime import timedelta
 
 # Налаштування логера
@@ -408,7 +404,8 @@ class SystemAccount(models.Model):
                 old_obj = SystemAccount.objects.get(pk=self.pk)
                 if old_obj.username != self.username:
                     logger.info(
-                        f"Змінено ім'я користувача з {old_obj.username} на {self.username} для системи {self.system.name}"
+                        f"Змінено ім'я користувача з {old_obj.username} на {self.username}"
+                        f" для системи {self.system.name}"
                     )
             except SystemAccount.DoesNotExist:
                 pass

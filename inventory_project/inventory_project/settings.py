@@ -428,7 +428,7 @@ SIMPLE_JWT.update(
 # Django Celery додано до INSTALLED_APPS вище
 
 # Імпортуємо розширену UNFOLD конфігурацію
-from .unfold_config import UNFOLD as UNFOLD_CONFIG
+from .unfold_config import UNFOLD as UNFOLD_CONFIG  # noqa: E402
 
 # Застосовуємо розширену конфігурацію
 UNFOLD = UNFOLD_CONFIG
@@ -449,7 +449,7 @@ if not PASSWORD_ENCRYPTION_KEY:
 if DEBUG:
     # Django Debug Toolbar (тільки якщо встановлено)
     try:
-        import debug_toolbar
+        pass
 
         INSTALLED_APPS += ["debug_toolbar"]
         MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]

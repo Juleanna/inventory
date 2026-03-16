@@ -1,10 +1,8 @@
 # inventory/dashboard.py - Аналітика та дашборд
-from django.db import models
-from django.db.models import Count, Sum, Q, F, Avg
+from django.db.models import Count, Sum, Q
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
-import json
 from typing import Dict, List, Any
 
 from .models import Equipment, Notification
@@ -192,7 +190,7 @@ class DashboardService:
     @staticmethod
     def get_equipment_age_distribution() -> Dict[str, Any]:
         """Розподіл обладнання по віку"""
-        today = timezone.now().date()
+        timezone.now().date()
         age_ranges = {
             "0-1 years": 0,
             "1-2 years": 0,

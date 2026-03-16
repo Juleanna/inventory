@@ -4,7 +4,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.template.loader import render_to_string
 from django.db.models import Q
-from datetime import datetime, timedelta
+from datetime import timedelta
 import logging
 
 from .models import Equipment, Notification
@@ -67,17 +67,19 @@ class NotificationService:
             )
 
             # Текстова версія
+            eq = notification.equipment
+            equipment_line = f"Обладнання: {eq.name} ({eq.serial_number})" if eq else ""
             plain_message = f"""
             Привіт {user.get_full_name() or user.username}!
-            
+
             {notification.message}
-            
-            {f"Обладнання: {notification.equipment.name} ({notification.equipment.serial_number})" if notification.equipment else ""}
-            
+
+            {equipment_line}
+
             Дата: {notification.created_at.strftime('%d.%m.%Y %H:%M')}
             Тип: {notification.get_notification_type_display()}
             Пріоритет: {notification.get_priority_display()}
-            
+
             ---
             Система інвентаризації IT-обладнання
             """
@@ -141,9 +143,9 @@ class NotificationService:
                 if not recent_notification:
                     title = f"Закінчується гарантія на {equipment.name}"
                     message = f"""
-                    Гарантія на обладнання "{equipment.name}" (серійний номер: {equipment.serial_number}) 
+                    Гарантія на обладнання "{equipment.name}" (серійний номер: {equipment.serial_number})
                     закінчується через {days_left} днів ({equipment.warranty_until.strftime('%d.%m.%Y')}).
-                    
+
                     Локація: {equipment.location}
                     Виробник: {equipment.manufacturer}
                     """
@@ -210,9 +212,9 @@ class NotificationService:
                 if not recent_notification:
                     title = f"Потребує ТО: {equipment.name}"
                     message = f"""
-                    Обладнання "{equipment.name}" (серійний номер: {equipment.serial_number}) 
+                    Обладнання "{equipment.name}" (серійний номер: {equipment.serial_number})
                     потребує технічного обслуговування.
-                    
+
                     {"Прострочено на " + str(days_overdue) + " днів" if days_overdue > 0 else "Час планового ТО"}
                     Останнє ТО: {equipment.last_maintenance_date or "Невідомо"}
                     Локація: {equipment.location}
@@ -278,11 +280,11 @@ class NotificationService:
                 if not recent_notification:
                     title = f"Розглянути заміну: {equipment.name}"
                     message = f"""
-                    Обладнання "{equipment.name}" (серійний номер: {equipment.serial_number}) 
+                    Обладнання "{equipment.name}" (серійний номер: {equipment.serial_number})
                     використовується вже {age:.1f} років.
-                    
+
                     Рекомендується розглянути можливість заміни або модернізації.
-                    
+
                     Дата покупки: {equipment.purchase_date}
                     Поточна вартість: {equipment.get_depreciation_value() or "Невідомо"}
                     Локація: {equipment.location}
@@ -368,15 +370,15 @@ class NotificationService:
 
                 plain_message = f"""
                 Щоденний дайджест інвентаризації - {today.strftime('%d.%m.%Y')}
-                
+
                 Привіт {user.get_full_name() or user.username}!
-                
+
                 Загальна статистика вашого обладнання:
                 • Всього одиниць: {total_equipment}
                 • Потребує ТО: {needs_maintenance}
                 • Гарантія закінчується (30 днів): {warranty_expiring}
                 • Нових сповіщень: {unread_notifications}
-                
+
                 ---
                 Система інвентаризації IT-обладнання
                 """

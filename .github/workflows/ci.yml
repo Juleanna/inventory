@@ -17,7 +17,7 @@ jobs:
           cache: 'pip'
       - run: pip install black flake8 isort
       - run: black --check inventory_project/ --exclude migrations
-      - run: flake8 inventory_project/ --max-line-length=120 --exclude=migrations,__pycache__
+      - run: flake8 inventory_project/
       - run: isort --check-only inventory_project/ --skip migrations
 
   backend-test:

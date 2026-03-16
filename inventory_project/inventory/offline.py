@@ -1,7 +1,7 @@
 # inventory/offline.py
-import json
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
+from django.db import models
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import Equipment, Notification
@@ -294,7 +294,7 @@ class OfflineDataManager:
             elif action_type == "create_maintenance_request":
                 # Створити запит на обслуговування
                 equipment_id = action_data.get("equipment_id")
-                description = action_data.get("description")
+                action_data.get("description")
 
                 # Це буде реалізовано в модулі обслуговування
                 return True
@@ -332,7 +332,7 @@ class OfflineDataManager:
                 )
                 stats["cached_at"] = metadata["cached_at"]
                 stats["expires_at"] = metadata["expires_at"]
-            except:
+            except Exception:
                 pass
 
         return stats
