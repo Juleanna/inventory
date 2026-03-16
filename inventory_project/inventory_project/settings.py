@@ -451,7 +451,7 @@ if not PASSWORD_ENCRYPTION_KEY:
 if DEBUG:
     # Django Debug Toolbar (тільки якщо встановлено)
     try:
-        pass
+        import debug_toolbar  # noqa: F401
 
         INSTALLED_APPS += ["debug_toolbar"]
         MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
