@@ -253,7 +253,7 @@ export default function OrdersPage() {
                             <TableHead className="text-xs">Отрим.</TableHead>
                             <TableHead className="text-xs">Ціна</TableHead>
                             <TableHead className="text-xs w-8">
-                              <Package className="h-3 w-3" title="Додати до запасів" />
+                              <Package className="h-3 w-3" />
                             </TableHead>
                           </TableRow>
                         </TableHeader>
@@ -461,7 +461,7 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
                       <TableHead className="text-xs w-16">К-сть</TableHead>
                       <TableHead className="text-xs w-24">Ціна</TableHead>
                       <TableHead className="text-xs w-16">
-                        <Package className="h-3 w-3" title="Додати до запасів" />
+                        <Package className="h-3 w-3" />
                       </TableHead>
                       <TableHead className="text-xs w-10" />
                     </TableRow>

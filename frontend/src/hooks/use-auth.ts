@@ -3,6 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth-store'
 import type { LoginCredentials, RegisterData } from '@/types'
+
+interface SimpleUser {
+  id: number
+  username: string
+  first_name: string
+  last_name: string
+  email: string
+  is_active?: boolean
+}
 import { toast } from 'sonner'
 
 export function useLogin() {
@@ -58,10 +67,10 @@ export function useProfile() {
 export function useUsersList() {
   return useQuery({
     queryKey: ['users'],
-    queryFn: () => authApi.listUsers().then((r) => {
+    queryFn: (): Promise<SimpleUser[]> => authApi.listUsers().then((r) => {
       const data = r.data
       // API повертає {count, results} або масив
-      return Array.isArray(data) ? data : (data as { results: unknown[] }).results ?? []
+      return Array.isArray(data) ? data : (data as { results: SimpleUser[] }).results ?? []
     }),
   })
 }

@@ -32,8 +32,8 @@ export default function DepreciationPage() {
   }
 
   const sortedItems = data?.items ? [...data.items].sort((a, b) => {
-    const av = (a as Record<string, unknown>)[sortField] as number
-    const bv = (b as Record<string, unknown>)[sortField] as number
+    const av = (a as unknown as Record<string, unknown>)[sortField] as number
+    const bv = (b as unknown as Record<string, unknown>)[sortField] as number
     return sortDir === 'asc' ? av - bv : bv - av
   }) : []
 
@@ -137,7 +137,7 @@ export default function DepreciationPage() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="category" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(v: number) => `${fmt(v)} ₴`} />
+                      <Tooltip formatter={(v: number | undefined) => `${fmt(v ?? 0)} ₴`} />
                       <Legend />
                       <Bar dataKey="purchase_value" name="Первісна" fill="#3b82f6" />
                       <Bar dataKey="book_value" name="Залишкова" fill="#22c55e" />

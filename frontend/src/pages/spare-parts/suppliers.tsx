@@ -219,7 +219,7 @@ function SupplierFormDialog({
       createSupplier.mutate(payload, {
         onSuccess: () => {
           onOpenChange(false)
-          setForm({ name: '', contact_person: '', email: '', phone: '', address: '', website: '', tax_id: '', rating: '', notes: '' })
+          setForm({ short_name: '', name: '', contact_person: '', email: '', phone: '', address: '', website: '', tax_id: '', rating: '', notes: '' })
         },
       })
     }

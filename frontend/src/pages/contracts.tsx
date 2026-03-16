@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useContracts, useCreateContract, useDeleteContract } from '@/hooks/use-contracts'
+import type { Contract } from '@/api/contracts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -80,13 +81,13 @@ export default function ContractsPage() {
     }
   }
 
-  const activeCount = contracts.filter(c => c.status === 'ACTIVE').length
-  const expiringCount = contracts.filter(c => {
+  const activeCount = contracts.filter((c: Contract) => c.status === 'ACTIVE').length
+  const expiringCount = contracts.filter((c: Contract) => {
     if (!c.end_date) return false
     const daysLeft = (new Date(c.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
     return daysLeft > 0 && daysLeft <= 30
   }).length
-  const totalAmount = contracts.reduce((sum, c) => sum + (c.amount ? parseFloat(c.amount) : 0), 0)
+  const totalAmount = contracts.reduce((sum: number, c: Contract) => sum + (c.amount ? parseFloat(c.amount) : 0), 0)
 
   return (
     <div>
@@ -159,7 +160,7 @@ export default function ContractsPage() {
                   <TableRow key={i}>{Array.from({ length: 9 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}</TableRow>
                 ))
               ) : contracts.length > 0 ? (
-                contracts.map(c => (
+                contracts.map((c: Contract) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-mono text-xs">{c.contract_number}</TableCell>
                     <TableCell className="font-medium">{c.title}</TableCell>

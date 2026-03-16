@@ -76,7 +76,7 @@ export default function EquipmentComparePage() {
   }
 
   const items = compareData || []
-  const allValues = (key: string) => items.map(item => (item as Record<string, unknown>)[key])
+  const allValues = (key: string) => items.map(item => (item as unknown as Record<string, unknown>)[key])
   const hasDifference = (key: string) => {
     const vals = allValues(key).map(v => v ?? '')
     return new Set(vals.map(String)).size > 1
@@ -160,7 +160,7 @@ export default function EquipmentComparePage() {
                         <TableRow key={field.key}>
                           <TableCell className="font-medium text-sm sticky left-0 bg-card z-10">{field.label}</TableCell>
                           {items.map(eq => {
-                            const val = (eq as Record<string, unknown>)[field.key]
+                            const val = (eq as unknown as Record<string, unknown>)[field.key]
                             const display = val === null || val === undefined || val === '' ? '—' : String(val)
                             return (
                               <TableCell key={eq.id} className={`text-sm ${isDiff ? 'bg-yellow-50 dark:bg-yellow-950/20' : ''}`}>

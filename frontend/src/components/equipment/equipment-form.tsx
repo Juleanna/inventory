@@ -273,7 +273,7 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
                       placeholder="Не призначено"
                       searchPlaceholder="Введіть ім'я..."
                       emptyText="Користувача не знайдено"
-                      options={users?.map((u) => ({
+                      options={users?.map((u: { id: number; username: string; first_name: string; last_name: string; email: string; is_active: boolean }) => ({
                         value: String(u.id),
                         label: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username,
                       })) || []}
@@ -287,7 +287,7 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
                       placeholder="Не призначено"
                       searchPlaceholder="Введіть ім'я..."
                       emptyText="Користувача не знайдено"
-                      options={users?.map((u) => ({
+                      options={users?.map((u: { id: number; username: string; first_name: string; last_name: string; email: string; is_active: boolean }) => ({
                         value: String(u.id),
                         label: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username,
                       })) || []}

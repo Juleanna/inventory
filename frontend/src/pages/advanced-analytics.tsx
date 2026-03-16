@@ -125,7 +125,7 @@ export default function AdvancedAnalyticsPage() {
                 <YAxis fontSize={12} />
                 <Tooltip
                   contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,.1)' }}
-                  formatter={(value: number) => [`${value} од.`, 'Кількість']}
+                  formatter={(value: number | undefined) => { const v = value ?? 0; return [`${v} од.`, 'Кількість'] }}
                 />
                 <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -174,14 +174,14 @@ export default function AdvancedAnalyticsPage() {
                   cy="50%"
                   outerRadius={100}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                   labelLine={false}
                 >
                   {pieData.map((_, idx) => (
                     <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => [`${value.toLocaleString('uk-UA')} ₴`, 'Вартість']} />
+                <Tooltip formatter={(value: number | undefined) => { const v = value ?? 0; return [`${v.toLocaleString('uk-UA')} ₴`, 'Вартість'] }} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -224,7 +224,7 @@ export default function AdvancedAnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="month" fontSize={12} />
                 <YAxis fontSize={12} />
-                <Tooltip formatter={(value: number) => [`${value.toLocaleString('uk-UA')} ₴`, 'Прогноз']} />
+                <Tooltip formatter={(value: number | undefined) => { const v = value ?? 0; return [`${v.toLocaleString('uk-UA')} ₴`, 'Прогноз'] }} />
                 <Bar dataKey="predicted_cost" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Прогноз ₴" />
               </BarChart>
             </ResponsiveContainer>
