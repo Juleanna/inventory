@@ -86,12 +86,11 @@ services:
       - REDIS_URL=redis://redis:6379/1
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SKIP_MIGRATIONS=true
     volumes:
       - logs_volume:/app/logs
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
+      web:
         condition: service_healthy
     networks:
       - inventory_network
@@ -112,6 +111,7 @@ services:
       - REDIS_URL=redis://redis:6379/1
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SKIP_MIGRATIONS=true
     volumes:
       - logs_volume:/app/logs
     depends_on:

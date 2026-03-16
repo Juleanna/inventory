@@ -35,18 +35,20 @@ if [ "$REDIS_URL" ]; then
     wait_for_redis
 fi
 
-# Застосовуємо міграції
-echo "Застосовуємо міграції..."
-python manage.py migrate --noinput
+# Міграції, статика та суперкористувач — тільки для web-контейнера
+if [ "$SKIP_MIGRATIONS" != "true" ]; then
+    # Застосовуємо міграції
+    echo "Застосовуємо міграції..."
+    python manage.py migrate --noinput
 
-# Збираємо статичні файли
-echo "Збираємо статичні файли..."
-python manage.py collectstatic --noinput --clear
+    # Збираємо статичні файли
+    echo "Збираємо статичні файли..."
+    python manage.py collectstatic --noinput --clear
 
-# Створюємо суперкористувача, якщо він не існує
-if [ "$DJANGO_SUPERUSER_EMAIL" ] && [ "$DJANGO_SUPERUSER_USERNAME" ] && [ "$DJANGO_SUPERUSER_PASSWORD" ]; then
-    echo "Створюємо суперкористувача..."
-    python manage.py shell -c "
+    # Створюємо суперкористувача, якщо він не існує
+    if [ "$DJANGO_SUPERUSER_EMAIL" ] && [ "$DJANGO_SUPERUSER_USERNAME" ] && [ "$DJANGO_SUPERUSER_PASSWORD" ]; then
+        echo "Створюємо суперкористувача..."
+        python manage.py shell -c "
 from django.contrib.auth import get_user_model;
 User = get_user_model();
 if not User.objects.filter(username='$DJANGO_SUPERUSER_USERNAME').exists():
@@ -55,6 +57,9 @@ if not User.objects.filter(username='$DJANGO_SUPERUSER_USERNAME').exists():
 else:
     print('Суперкористувач вже існує')
 "
+    fi
+else
+    echo "Пропускаємо міграції (SKIP_MIGRATIONS=true)"
 fi
 
 # Запускаємо команду
