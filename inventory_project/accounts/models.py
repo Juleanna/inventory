@@ -1,9 +1,11 @@
 # accounts/models.py (покращена версія)
-from django.db import models
+from simple_history.models import HistoricalRecords
+
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils.translation import gettext_lazy as _
-from simple_history.models import HistoricalRecords
+
 from inventory.validators import validate_phone_number
 
 
@@ -275,9 +277,11 @@ class CustomUser(AbstractUser):
 
     def get_equipment_needing_attention(self):
         """Обладнання що потребує уваги"""
-        from inventory.models import Equipment
-        from django.utils import timezone
         from datetime import timedelta
+
+        from django.utils import timezone
+
+        from inventory.models import Equipment
 
         user_equipment = Equipment.objects.filter(
             models.Q(current_user=self) | models.Q(responsible_person=self)

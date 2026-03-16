@@ -1,9 +1,11 @@
 # inventory/offline.py
-from django.core.cache import cache
+from datetime import datetime, timedelta
+
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.db import models
 from django.utils import timezone
-from datetime import datetime, timedelta
+
 from .models import Equipment, Notification
 
 User = get_user_model()
@@ -153,7 +155,7 @@ class OfflineDataManager:
     @classmethod
     def _get_reference_data(cls):
         """Отримати довідкову інформацію"""
-        from .models import Manufacturer, Category, Department
+        from .models import Category, Department, Manufacturer
 
         return {
             "manufacturers": [

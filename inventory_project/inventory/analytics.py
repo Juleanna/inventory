@@ -1,16 +1,18 @@
 # inventory/analytics.py
-from django.db.models import Count, Sum, Avg, Q
+import logging
+from datetime import datetime, timedelta
+from decimal import Decimal
+
+from django.contrib.auth import get_user_model
+from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
-from datetime import timedelta, datetime
+
+from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
-from decimal import Decimal
-import logging
 
 from .models import Equipment, Notification
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 logger = logging.getLogger("inventory")

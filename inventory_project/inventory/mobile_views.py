@@ -1,13 +1,15 @@
 # inventory/mobile_views.py
+import logging
+from datetime import timedelta
+
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+from django.utils import timezone
+
+from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth import get_user_model
-from django.utils import timezone
-from datetime import timedelta
-from django.db.models import Q
-import logging
 
 from .models import Equipment, Notification
 from .serializers import EquipmentSerializer

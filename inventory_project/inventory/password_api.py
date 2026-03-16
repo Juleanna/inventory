@@ -1,20 +1,21 @@
 # inventory/password_api.py - API для управління паролями підсистем
 
-from rest_framework import viewsets, status, permissions
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
+
 from django.db.models import Count
 
+from rest_framework import permissions, serializers, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.response import Response
+
 from .password_management import (
-    SystemCategory,
-    System,
-    SystemAccount,
     PasswordAccessLog,
     PasswordManagementService,
+    System,
+    SystemAccount,
+    SystemCategory,
 )
-from rest_framework import serializers
 
 
 class SystemCategorySerializer(serializers.ModelSerializer):

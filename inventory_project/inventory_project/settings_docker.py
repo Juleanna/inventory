@@ -1,5 +1,6 @@
 # Налаштування Django для Docker середовища
 import os
+
 from .settings import *  # noqa: F403
 
 # Django Celery додатки вже додані в base settings, перевіряємо що вони є

@@ -1,10 +1,12 @@
 # inventory/consumers.py — WebSocket consumer для real-time сповіщень
 import json
 import logging
-from channels.generic.websocket import AsyncWebSocketConsumer
+
 from channels.db import database_sync_to_async
-from django.contrib.auth import get_user_model
+from channels.generic.websocket import AsyncWebSocketConsumer
 from rest_framework_simplejwt.tokens import AccessToken
+
+from django.contrib.auth import get_user_model
 
 logger = logging.getLogger("inventory")
 User = get_user_model()

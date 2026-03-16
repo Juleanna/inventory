@@ -3,20 +3,21 @@ import io
 import logging
 from decimal import Decimal
 
+from django_filters.rest_framework import DjangoFilterBackend
+
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Q
 from django.http import HttpResponse
-from django.contrib.auth import get_user_model
 
-from rest_framework import viewsets, serializers, status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.pagination import PageNumberPagination
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Equipment, UserActivity
 
@@ -908,14 +909,14 @@ class ExportReportView(APIView):
         try:
             from reportlab.lib import colors
             from reportlab.lib.pagesizes import A4, landscape
+            from reportlab.lib.styles import getSampleStyleSheet
             from reportlab.platypus import (
+                Paragraph,
                 SimpleDocTemplate,
+                Spacer,
                 Table,
                 TableStyle,
-                Paragraph,
-                Spacer,
             )
-            from reportlab.lib.styles import getSampleStyleSheet
         except ImportError:
             return Response({"error": "reportlab не встановлено"}, status=400)
 

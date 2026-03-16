@@ -1,67 +1,69 @@
-from datetime import datetime, timedelta
 import io
+from datetime import datetime, timedelta
 
 import xlsxwriter
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
+from django_filters.rest_framework import DjangoFilterBackend
 from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from django.contrib.auth import get_user_model
-from django.db import models, connection
+from django.db import connection, models
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from rest_framework import status, permissions
+
+from rest_framework import permissions, status
 from rest_framework.decorators import (
-    api_view,
-    permission_classes,
     action,
+    api_view,
     parser_classes,
+    permission_classes,
 )
-from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.serializers import Serializer, CharField
+from rest_framework.serializers import CharField, Serializer
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-from rest_framework_simplejwt.tokens import RefreshToken
-from django_filters.rest_framework import DjangoFilterBackend
 
 from .dashboard import DashboardService, ReportService
 from .filters import EquipmentFilter
 from .maintenance import (
-    MaintenanceService,
     MaintenanceRequest,
     MaintenanceSchedule,
+    MaintenanceService,
 )
 from .models import (
     Equipment,
-    Notification,
-    License,
-    Software,
-    PeripheralDevice,
     EquipmentDocument,
+    License,
+    Notification,
+    PeripheralDevice,
+    Software,
 )
 from .offline import OfflineDataManager, OfflineSearchHelper
 from .personalization import PersonalizationService
 from .serializers import (
     EquipmentSerializer,
-    NotificationSerializer,
     LicenseSerializer,
-    SoftwareSerializer,
+    NotificationSerializer,
     PeripheralDeviceSerializer,
+    SoftwareSerializer,
 )
 from .spare_parts import (
-    SparePartsService,
+    PurchaseOrder,
+    PurchaseOrderItem,
     SparePart,
     SparePartCategory,
     SparePartMovement,
-    Supplier,
-    PurchaseOrder,
-    PurchaseOrderItem,
+    SparePartsService,
     StorageLocation,
+    Supplier,
 )
 from .two_factor import TwoFactorAuthService
 
@@ -2069,7 +2071,7 @@ class AdvancedSearchView(APIView):
         ).order_by(sort_field)
 
         # Пагінація
-        from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+        from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
         paginator = Paginator(equipment_qs, page_size)
 
@@ -3726,9 +3728,10 @@ def get_spare_parts_for_equipment(request, equipment_id):
 @permission_classes([IsAuthenticated])
 def spare_parts_analytics(request):
     """Аналітика по запчастинах"""
-    from django.db.models import Sum, Count
-    from django.utils import timezone
     from datetime import timedelta
+
+    from django.db.models import Count, Sum
+    from django.utils import timezone
 
     # Базова статистика
     total_parts = SparePart.objects.count()

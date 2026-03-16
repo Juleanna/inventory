@@ -1,19 +1,19 @@
 # inventory/webhooks.py — Webhook інтеграція (Slack/Teams)
-import json
 import hashlib
 import hmac
+import json
 import logging
 
+import requests as http_requests
+
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth import get_user_model
 
-from rest_framework import viewsets, serializers
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
-
-import requests as http_requests
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 logger = logging.getLogger("inventory")
 User = get_user_model()

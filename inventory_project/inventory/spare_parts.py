@@ -1,10 +1,12 @@
 # inventory/spare_parts.py
-from django.db import models
-from django.contrib.auth import get_user_model
-from django.utils import timezone
-from decimal import Decimal
-from .models import Equipment
 import uuid
+from decimal import Decimal
+
+from django.contrib.auth import get_user_model
+from django.db import models
+from django.utils import timezone
+
+from .models import Equipment
 
 User = get_user_model()
 

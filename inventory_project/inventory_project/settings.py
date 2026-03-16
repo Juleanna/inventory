@@ -11,14 +11,16 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
-from dotenv import load_dotenv
-from pathlib import Path
-from decouple import config
-from django.urls import reverse_lazy
-from django.utils.translation import gettext_lazy as _
 
 # JWT налаштування
 from datetime import timedelta
+from pathlib import Path
+
+from decouple import config
+from dotenv import load_dotenv
+
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
 # Загружаем .env
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -468,8 +470,8 @@ if DEBUG:
 SENTRY_DSN = config("SENTRY_DSN", default="")
 if SENTRY_DSN:
     import sentry_sdk
-    from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.django import DjangoIntegration
 
     sentry_sdk.init(
         dsn=SENTRY_DSN,

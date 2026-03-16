@@ -3,16 +3,16 @@
 Сервіс резервного копіювання з підтримкою Google Drive.
 """
 
-import os
 import json
-import zipfile
 import logging
+import os
+import zipfile
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core import serializers
 from django.utils import timezone
-from django.contrib.auth import get_user_model
 
 logger = logging.getLogger("inventory")
 
@@ -29,21 +29,22 @@ def create_full_backup(created_by=None, include_models=None):
     Створити повний бекап бази даних у ZIP-архів.
     Повертає dict з інформацією про бекап.
     """
+    from licenses.models import License
+
     from .models import (
         Equipment,
         Notification,
-        Software,
         PeripheralDevice,
+        Software,
     )
+    from .password_management import System, SystemAccount, SystemCategory
     from .spare_parts import (
+        PurchaseOrder,
         SparePart,
         SparePartCategory,
-        Supplier,
-        PurchaseOrder,
         StorageLocation,
+        Supplier,
     )
-    from .password_management import SystemCategory, System, SystemAccount
-    from licenses.models import License
 
     backup_dir = get_backup_dir()
     timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
@@ -176,16 +177,17 @@ def restore_from_backup(filename, models_to_restore=None, mode="merge"):
         raise FileNotFoundError("Файл не знайдено")
 
     # Мапа ім'я_файлу -> модель (для режиму replace)
-    from .models import Equipment, Notification, Software, PeripheralDevice
+    from licenses.models import License
+
+    from .models import Equipment, Notification, PeripheralDevice, Software
+    from .password_management import System, SystemAccount, SystemCategory
     from .spare_parts import (
+        PurchaseOrder,
         SparePart,
         SparePartCategory,
-        Supplier,
-        PurchaseOrder,
         StorageLocation,
+        Supplier,
     )
-    from .password_management import SystemCategory, System, SystemAccount
-    from licenses.models import License
 
     model_map = {
         "equipment": Equipment,
@@ -386,8 +388,8 @@ def authorize_gdrive(auth_code):
 
 def _get_gdrive_service():
     """Отримати сервіс Google Drive API."""
-    from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
 
     token_path = _get_gdrive_token_path()

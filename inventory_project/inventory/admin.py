@@ -1,22 +1,22 @@
 # inventory/admin.py (виправлена версія без помилок)
-from django.contrib import admin
-from django.utils.html import format_html
-from django.shortcuts import redirect, render
-from django.contrib import messages
-from django.http import HttpResponse
-from django.db import models
-from django.db.models import Sum, Q
-from django.utils import timezone
-from datetime import timedelta
 import csv
+from datetime import timedelta
 
 from unfold.admin import ModelAdmin
-from unfold.decorators import action, display
 from unfold.contrib.filters.admin import (
     ChoicesDropdownFilter,
     MultipleChoicesDropdownFilter,
     RangeDateFilter,
 )
+from unfold.decorators import action, display
+
+from django.contrib import admin, messages
+from django.db import models
+from django.db.models import Q, Sum
+from django.http import HttpResponse
+from django.shortcuts import redirect, render
+from django.utils import timezone
+from django.utils.html import format_html
 
 # Note: Some widgets might not be available in current Unfold version
 try:
@@ -26,34 +26,35 @@ except ImportError:
 
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import (
-    Equipment,
-    Notification,
-    Software,
-    PeripheralDevice,
-    EquipmentDocument,
-    UserPreferences,
-    UserActivity,
-    CustomDashboard,
-)
-from .spare_parts import (
-    Supplier,
-    SparePartCategory,
-    SparePart,
-    SparePartMovement,
-    PurchaseOrder,
-    PurchaseOrderItem,
-    StorageLocation,
-)
+from django.utils.translation import gettext_lazy as _
+
 from .maintenance import MaintenanceRequest, MaintenanceSchedule, MaintenanceTask
+from .models import (
+    CustomDashboard,
+    Equipment,
+    EquipmentDocument,
+    Notification,
+    PeripheralDevice,
+    Software,
+    UserActivity,
+    UserPreferences,
+)
 from .password_management import (
-    SystemCategory,
-    System,
-    SystemAccount,
     PasswordAccessLog,
     PasswordManagementService,
+    System,
+    SystemAccount,
+    SystemCategory,
 )
-from django.utils.translation import gettext_lazy as _
+from .spare_parts import (
+    PurchaseOrder,
+    PurchaseOrderItem,
+    SparePart,
+    SparePartCategory,
+    SparePartMovement,
+    StorageLocation,
+    Supplier,
+)
 
 
 class EquipmentLocationFilter(admin.SimpleListFilter):

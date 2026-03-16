@@ -1,80 +1,78 @@
 # inventory/urls.py (оновлена версія)
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from . import views
-from . import analytics
-from . import mobile_views
-from .views import (
-    EquipmentViewSet,
-    NotificationViewSet,
-    LicenseViewSet,
-    SoftwareViewSet,
-    PeripheralDeviceViewSet,
-    DashboardView,
-    AnalyticsView,
-    ReportsView,
-    ExportView,
-    # Нові views для запчастин
-    SparePartsViewSet,
-    SuppliersViewSet,
-    PurchaseOrdersViewSet,
-    SparePartCategoriesViewSet,
-    StorageLocationsViewSet,
-    # 2FA views
-    TwoFactorSetupView,
-    TwoFactorVerifyView,
-    TwoFactorStatusView,
-    # Maintenance views
-    MaintenanceRequestViewSet,
-    MaintenanceDashboardView,
-    AssignTechnicianView,
-    StartMaintenanceView,
-    CompleteMaintenanceView,
-    MaintenanceScheduleView,
-    MaintenanceScheduleDetailView,
-    # Персоналізація
-    PersonalizedDashboardView,
-    UserPreferencesView,
-)
-from .password_api import (
-    SystemCategoryViewSet,
-    SystemViewSet,
-    SystemAccountViewSet,
-    PasswordAccessLogViewSet,
-)
-from .backup_views import (
-    BackupListView,
-    BackupCreateView,
-    BackupDownloadView,
-    BackupDeleteView,
-    BackupContentsView,
-    BackupRestoreView,
-    BackupUploadGDriveView,
-    GDriveDeleteView,
-    GDriveStatusView,
-    GDriveAuthorizeView,
-    GDriveUploadCredentialsView,
-    BackupSettingsView,
-)
+from django.urls import include, path
+
+from rest_framework.routers import DefaultRouter
+
+from . import analytics, mobile_views, views
 from .advanced_views import (
-    ContractViewSet,
-    EquipmentTemplateViewSet,
     ActivityLogView,
-    GlobalSearchView,
-    DepreciationReportView,
-    EquipmentCompareView,
-    LocationMapView,
-    EmailSettingsView,
-    LdapSettingsView,
-    DashboardWidgetsView as AdvancedDashboardWidgetsView,
-    ExportReportView,
     BulkOperationsView,
+    ContractViewSet,
     CsvImportView,
 )
-from .webhooks import WebhookViewSet
+from .advanced_views import DashboardWidgetsView as AdvancedDashboardWidgetsView
+from .advanced_views import (
+    DepreciationReportView,
+    EmailSettingsView,
+    EquipmentCompareView,
+    EquipmentTemplateViewSet,
+    ExportReportView,
+    GlobalSearchView,
+    LdapSettingsView,
+    LocationMapView,
+)
 from .automation import AutomationRuleViewSet
+from .backup_views import (
+    BackupContentsView,
+    BackupCreateView,
+    BackupDeleteView,
+    BackupDownloadView,
+    BackupListView,
+    BackupRestoreView,
+    BackupSettingsView,
+    BackupUploadGDriveView,
+    GDriveAuthorizeView,
+    GDriveDeleteView,
+    GDriveStatusView,
+    GDriveUploadCredentialsView,
+)
+from .password_api import (
+    PasswordAccessLogViewSet,
+    SystemAccountViewSet,
+    SystemCategoryViewSet,
+    SystemViewSet,
+)
+from .views import (  # Нові views для запчастин; 2FA views; Maintenance views; Персоналізація
+    AnalyticsView,
+    AssignTechnicianView,
+    CompleteMaintenanceView,
+    DashboardView,
+    EquipmentViewSet,
+    ExportView,
+    LicenseViewSet,
+    MaintenanceDashboardView,
+    MaintenanceRequestViewSet,
+    MaintenanceScheduleDetailView,
+    MaintenanceScheduleView,
+    NotificationViewSet,
+    PeripheralDeviceViewSet,
+    PersonalizedDashboardView,
+    PurchaseOrdersViewSet,
+    ReportsView,
+    SoftwareViewSet,
+    SparePartCategoriesViewSet,
+    SparePartsViewSet,
+    StartMaintenanceView,
+    StorageLocationsViewSet,
+    SuppliersViewSet,
+    TwoFactorSetupView,
+    TwoFactorStatusView,
+    TwoFactorVerifyView,
+    UserPreferencesView,
+)
+from .webhooks import WebhookViewSet
 
 # API роутер для ViewSets
 router = DefaultRouter()

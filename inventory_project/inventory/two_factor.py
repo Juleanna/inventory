@@ -1,15 +1,17 @@
 # inventory/two_factor.py
-import pyotp
-import qrcode
-from io import BytesIO
 import base64
-from django.contrib.auth import get_user_model
-from django.core.cache import cache
-from django.conf import settings
-from django.utils import timezone
-from datetime import timedelta
 import secrets
 import string
+from datetime import timedelta
+from io import BytesIO
+
+import pyotp
+import qrcode
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.cache import cache
+from django.utils import timezone
 
 User = get_user_model()
 

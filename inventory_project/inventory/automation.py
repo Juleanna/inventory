@@ -2,18 +2,18 @@
 import logging
 from datetime import timedelta
 
-from django.db import models
-from django.utils import timezone
+from celery import shared_task
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
-from django.conf import settings
+from django.db import models
+from django.utils import timezone
 
-from rest_framework import viewsets, serializers, status
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
-
-from celery import shared_task
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from .models import Equipment, Notification
 

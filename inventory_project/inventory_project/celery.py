@@ -1,6 +1,8 @@
 # inventory_project/celery.py
 import os
+
 from celery import Celery
+
 from django.conf import settings
 
 # Встановити модуль налаштувань Django для програми 'celery'

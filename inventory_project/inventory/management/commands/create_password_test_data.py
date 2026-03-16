@@ -1,14 +1,16 @@
 # inventory/management/commands/create_password_test_data.py
 
-from django.core.management.base import BaseCommand
+import random
+
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
+
 from inventory.password_management import (
-    SystemCategory,
+    PasswordEncryptionService,
     System,
     SystemAccount,
-    PasswordEncryptionService,
+    SystemCategory,
 )
-import random
 
 User = get_user_model()
 

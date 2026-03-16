@@ -1,14 +1,16 @@
 # inventory/notifications.py - Система автоматичних сповіщень
-from django.core.mail import send_mail
-from django.conf import settings
-from django.utils import timezone
-from django.template.loader import render_to_string
-from django.db.models import Q
-from datetime import timedelta
 import logging
+from datetime import timedelta
+
+from accounts.models import CustomUser
+
+from django.conf import settings
+from django.core.mail import send_mail
+from django.db.models import Q
+from django.template.loader import render_to_string
+from django.utils import timezone
 
 from .models import Equipment, Notification
-from accounts.models import CustomUser
 
 logger = logging.getLogger("inventory")
 

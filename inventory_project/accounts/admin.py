@@ -1,16 +1,18 @@
-from django.contrib import admin
-from .models import CustomUser, UserProfile
+from import_export.admin import ImportExportModelAdmin
+from simple_history.admin import SimpleHistoryAdmin
 from unfold.admin import ModelAdmin
-from unfold.decorators import display
 from unfold.contrib.filters.admin import (
     ChoicesDropdownFilter,
     RangeDateFilter,
 )
-from simple_history.admin import SimpleHistoryAdmin
-from django.utils.translation import gettext_lazy as _
-from import_export.admin import ImportExportModelAdmin
-from django.utils.html import format_html
+from unfold.decorators import display
+
+from django.contrib import admin
 from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
+
+from .models import CustomUser, UserProfile
 
 # Удаляем регистрацию, если она уже существует
 try:

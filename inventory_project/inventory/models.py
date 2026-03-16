@@ -1,27 +1,30 @@
 # inventory/models.py (покращена версія)
-from django.db import models
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
-from simple_history.models import HistoricalRecords
-from licenses.models import License
-from io import BytesIO
-import barcode
-from barcode.writer import ImageWriter
-from django.core.files.base import ContentFile
-import qrcode
-from django.contrib.auth import get_user_model
-from decimal import Decimal
 import logging
+from decimal import Decimal
+from io import BytesIO
+
+import barcode
+import qrcode
+from barcode.writer import ImageWriter
+from licenses.models import License
+from simple_history.models import HistoricalRecords
+
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
+from django.db import models
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+
 from .validators import (
-    validate_serial_number,
-    validate_mac_address,
-    validate_ip_address,
-    validate_price,
-    validate_future_date,
-    validate_warranty_date,
     validate_equipment_name,
+    validate_future_date,
+    validate_ip_address,
     validate_location,
+    validate_mac_address,
+    validate_price,
+    validate_serial_number,
+    validate_warranty_date,
 )
 
 # Налаштування логера

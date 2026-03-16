@@ -1,12 +1,14 @@
 # inventory/dashboard.py - Аналітика та дашборд
-from django.db.models import Count, Sum, Q
-from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
+from accounts.models import CustomUser
+
+from django.db.models import Count, Q, Sum
+from django.utils import timezone
 
 from .models import Equipment, Notification
-from accounts.models import CustomUser
 
 
 class DashboardService:

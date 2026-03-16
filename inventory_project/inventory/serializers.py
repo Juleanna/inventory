@@ -1,6 +1,8 @@
-from rest_framework import serializers
-from .models import Equipment, Notification, Software, PeripheralDevice
 from licenses.models import License
+
+from rest_framework import serializers
+
+from .models import Equipment, Notification, PeripheralDevice, Software
 
 
 class EquipmentSerializer(serializers.ModelSerializer):

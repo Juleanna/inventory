@@ -1,5 +1,6 @@
 # inventory/validators.py
 import re
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -78,8 +79,9 @@ def validate_future_date(value):
 
 def validate_warranty_date(value):
     """Перевірка дати гарантії"""
-    from django.utils import timezone
     from datetime import timedelta
+
+    from django.utils import timezone
 
     if value:
         # Гарантія не може бути більше 10 років

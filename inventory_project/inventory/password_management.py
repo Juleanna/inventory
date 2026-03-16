@@ -1,17 +1,19 @@
 # inventory/password_management.py - Модуль управління паролями підсистем
 
-from django.db import models
+import base64
+import logging
+import secrets
+from datetime import timedelta
+
+from cryptography.fernet import Fernet
+from simple_history.models import HistoricalRecords
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
+from django.db import models
 from django.utils import timezone
-from simple_history.models import HistoricalRecords
-from cryptography.fernet import Fernet
-from django.conf import settings
-import base64
-import secrets
-import logging
-from datetime import timedelta
+from django.utils.translation import gettext_lazy as _
 
 # Налаштування логера
 logger = logging.getLogger("password_management")

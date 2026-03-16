@@ -1,9 +1,11 @@
 # inventory/personalization.py
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.db.models import Q, Count
+from django.db.models import Count, Q
 from django.utils import timezone
-from datetime import timedelta
+
 from .models import Equipment, Notification, UserPreferences
 
 User = get_user_model()

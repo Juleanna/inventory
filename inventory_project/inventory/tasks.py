@@ -1,12 +1,14 @@
 # inventory/tasks.py
-from celery import shared_task
-from django.utils import timezone
+import logging
 from datetime import timedelta
+
+from celery import shared_task
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
-from django.conf import settings
 from django.db.models import Q
-import logging
+from django.utils import timezone
 
 from .models import Equipment, Notification
 from .notifications import NotificationService
@@ -411,17 +413,18 @@ def update_equipment_metrics():
 def backup_critical_data():
     """Автоматичне резервне копіювання критичних даних з підтримкою Google Drive."""
     try:
-        from .backup_service import (
-            create_full_backup,
-            cleanup_old_backups,
-            upload_to_gdrive,
-            is_gdrive_authorized,
-        )
         import json
         import os
 
         # Завантажити налаштування
         from django.conf import settings as dj_settings
+
+        from .backup_service import (
+            cleanup_old_backups,
+            create_full_backup,
+            is_gdrive_authorized,
+            upload_to_gdrive,
+        )
 
         settings_path = os.path.join(dj_settings.BASE_DIR, "backup_settings.json")
         backup_settings = {
