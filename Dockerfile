@@ -13,6 +13,8 @@ RUN apt-get update \
         postgresql-client \
         gettext \
         curl \
+        libldap2-dev \
+        libsasl2-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
