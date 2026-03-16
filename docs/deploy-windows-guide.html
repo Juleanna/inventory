@@ -553,7 +553,8 @@
 <span class="comment"># App port</span>
 <span class="flag">APP_PORT</span>=<span class="string">8081</span>
 
-<span class="comment"># Superuser</span>
+<span class="comment"># Superuser (опціонально — для автостворення при старті)</span>
+<span class="comment"># Якщо не задано, створіть вручну: docker compose exec web ... createsuperuser</span>
 <span class="flag">DJANGO_SUPERUSER_USERNAME</span>=<span class="string">admin</span>
 <span class="flag">DJANGO_SUPERUSER_EMAIL</span>=<span class="string">admin@example.com</span>
 <span class="flag">DJANGO_SUPERUSER_PASSWORD</span>=<span class="string">ваш-пароль-адміністратора</span></pre>
@@ -600,16 +601,15 @@
 <span class="comment"># 3. Перевірити що все піднялось</span>
 <span class="cmd">docker compose</span> ps
 
-<span class="comment"># 4. Міграції</span>
-<span class="cmd">docker compose</span> exec -T web python inventory_project/manage.py migrate --noinput
+<span class="comment"># Міграції, збірка статики та collectstatic виконуються автоматично</span>
+<span class="comment"># при старті web-контейнера (entrypoint.sh)</span>
 
-<span class="comment"># 5. Статичні файли</span>
-<span class="cmd">docker compose</span> exec -T web python inventory_project/manage.py collectstatic --noinput
+<span class="comment"># 4. Створити суперкористувача (перший раз)</span>
+<span class="cmd">docker compose</span> exec web python inventory_project/manage.py createsuperuser --username admin --email admin@example.com --noinput
+<span class="comment"># Задати пароль:</span>
+<span class="cmd">docker compose</span> exec web python inventory_project/manage.py changepassword admin
 
-<span class="comment"># 6. Створити суперкористувача (перший раз)</span>
-<span class="cmd">docker compose</span> exec -T web python inventory_project/manage.py createsuperuser --noinput
-
-<span class="comment"># 7. Перевірка</span>
+<span class="comment"># 5. Перевірка</span>
 <span class="cmd">curl</span> http://localhost:8081/api/health/</pre>
     </div>
 
@@ -874,7 +874,9 @@ DEPLOY_PORT         Updated just now</span></pre>
 <span class="cmd">docker compose</span> exec web python inventory_project/manage.py shell
 
 <span class="comment"># Створити суперкористувача вручну</span>
-<span class="cmd">docker compose</span> exec web python inventory_project/manage.py createsuperuser
+<span class="cmd">docker compose</span> exec web python inventory_project/manage.py createsuperuser --username admin --email admin@example.com --noinput
+<span class="comment"># Задати пароль для створеного користувача:</span>
+<span class="cmd">docker compose</span> exec web python inventory_project/manage.py changepassword admin
 
 <span class="comment"># Міграції</span>
 <span class="cmd">docker compose</span> exec web python inventory_project/manage.py migrate
