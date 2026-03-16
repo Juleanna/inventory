@@ -115,7 +115,7 @@ class EquipmentViewSet(ModelViewSet):
 
     queryset = (
         Equipment.objects.select_related("current_user", "responsible_person")
-        .prefetch_related("documents", "history_set")
+        .prefetch_related("documents")
         .all()
     )
     serializer_class = EquipmentSerializer
