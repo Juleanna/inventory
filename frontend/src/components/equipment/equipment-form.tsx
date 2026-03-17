@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCreateEquipment, useUpdateEquipment } from '@/hooks/use-equipment'
 import { useUsersList } from '@/hooks/use-auth'
 import { useSuppliersList } from '@/hooks/use-spare-parts'
@@ -68,48 +68,55 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
   const { data: suppliers } = useSuppliersList({ page_size: 500 })
   const isEdit = !!equipment
 
-  const [form, setForm] = useState(() =>
-    equipment ? {
-      name: equipment.name || '',
-      category: equipment.category || '',
-      model: equipment.model || '',
-      manufacturer: equipment.manufacturer || '',
-      serial_number: equipment.serial_number || '',
-      inventory_number: equipment.inventory_number || '',
-      asset_tag: equipment.asset_tag || '',
-      location: equipment.location || '',
-      building: equipment.building || '',
-      floor: equipment.floor || '',
-      room: equipment.room || '',
-      status: equipment.status || 'WORKING',
-      priority: equipment.priority || 'MEDIUM',
-      current_user: equipment.current_user ? String(equipment.current_user) : '',
-      responsible_person: equipment.responsible_person ? String(equipment.responsible_person) : '',
-      purchase_price: equipment.purchase_price ? String(equipment.purchase_price) : '',
-      purchase_date: equipment.purchase_date || '',
-      warranty_until: equipment.warranty_until || '',
-      expiry_date: equipment.expiry_date || '',
-      depreciation_rate: equipment.depreciation_rate ? String(equipment.depreciation_rate) : '',
-      supplier: equipment.supplier || '',
-      cpu: equipment.cpu || '',
-      ram: equipment.ram || '',
-      storage: equipment.storage || '',
-      gpu: equipment.gpu || '',
-      motherboard: equipment.motherboard || '',
-      motherboard_serial: equipment.motherboard_serial || '',
-      disk_model: equipment.disk_model || '',
-      display: equipment.display || '',
-      network_adapter: equipment.network_adapter || '',
-      power_supply: equipment.power_supply || '',
-      bios_version: equipment.bios_version || '',
-      ip_address: equipment.ip_address || '',
-      mac_address: equipment.mac_address || '',
-      hostname: equipment.hostname || '',
-      operating_system: equipment.operating_system || '',
-      description: equipment.description || '',
-      notes: equipment.notes || '',
+  const buildForm = (eq?: Equipment | null) =>
+    eq ? {
+      name: eq.name || '',
+      category: eq.category || '',
+      model: eq.model || '',
+      manufacturer: eq.manufacturer || '',
+      serial_number: eq.serial_number || '',
+      inventory_number: eq.inventory_number || '',
+      asset_tag: eq.asset_tag || '',
+      location: eq.location || '',
+      building: eq.building || '',
+      floor: eq.floor || '',
+      room: eq.room || '',
+      status: eq.status || 'WORKING',
+      priority: eq.priority || 'MEDIUM',
+      current_user: eq.current_user ? String(eq.current_user) : '',
+      responsible_person: eq.responsible_person ? String(eq.responsible_person) : '',
+      purchase_price: eq.purchase_price ? String(eq.purchase_price) : '',
+      purchase_date: eq.purchase_date || '',
+      warranty_until: eq.warranty_until || '',
+      expiry_date: eq.expiry_date || '',
+      depreciation_rate: eq.depreciation_rate ? String(eq.depreciation_rate) : '',
+      supplier: eq.supplier || '',
+      cpu: eq.cpu || '',
+      ram: eq.ram || '',
+      storage: eq.storage || '',
+      gpu: eq.gpu || '',
+      motherboard: eq.motherboard || '',
+      motherboard_serial: eq.motherboard_serial || '',
+      disk_model: eq.disk_model || '',
+      display: eq.display || '',
+      network_adapter: eq.network_adapter || '',
+      power_supply: eq.power_supply || '',
+      bios_version: eq.bios_version || '',
+      ip_address: eq.ip_address || '',
+      mac_address: eq.mac_address || '',
+      hostname: eq.hostname || '',
+      operating_system: eq.operating_system || '',
+      description: eq.description || '',
+      notes: eq.notes || '',
     } : emptyForm
-  )
+
+  const [form, setForm] = useState(() => buildForm(equipment))
+
+  useEffect(() => {
+    if (open) {
+      setForm(buildForm(equipment))
+    }
+  }, [open, equipment])
 
   const update = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }))
