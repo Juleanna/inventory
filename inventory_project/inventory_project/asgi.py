@@ -2,6 +2,7 @@
 ASGI config for inventory_project project.
 """
 
+import logging
 import os
 
 import django
@@ -11,10 +12,12 @@ django.setup()
 
 from django.core.asgi import get_asgi_application  # noqa: E402
 
-try:
-    from channels.routing import ProtocolTypeRouter, URLRouter
+logger = logging.getLogger("inventory")
 
-    from inventory.routing import websocket_urlpatterns
+try:
+    from channels.routing import ProtocolTypeRouter, URLRouter  # noqa: E402
+
+    from inventory.routing import websocket_urlpatterns  # noqa: E402
 
     application = ProtocolTypeRouter(
         {
@@ -22,6 +25,7 @@ try:
             "websocket": URLRouter(websocket_urlpatterns),
         }
     )
-except ImportError:
-    # channels not installed — fallback to standard ASGI
+    logger.info("ASGI: Django Channels enabled with WebSocket support")
+except Exception as e:
+    logger.warning("ASGI: Channels not available (%s), falling back to HTTP-only", e)
     application = get_asgi_application()
