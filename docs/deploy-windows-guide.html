@@ -604,9 +604,11 @@
 <span class="comment"># Міграції, збірка статики та collectstatic виконуються автоматично</span>
 <span class="comment"># при старті web-контейнера (entrypoint.sh)</span>
 
-<span class="comment"># 4. Створити суперкористувача (перший раз)</span>
+<span class="comment"># 4. Суперкористувач</span>
+<span class="comment"># Якщо в .env.docker задано DJANGO_SUPERUSER_USERNAME/EMAIL/PASSWORD —</span>
+<span class="comment"># суперкористувач створюється автоматично при першому запуску.</span>
+<span class="comment"># Якщо ні — створіть вручну:</span>
 <span class="cmd">docker compose</span> exec web python inventory_project/manage.py createsuperuser --username admin --email admin@example.com --noinput
-<span class="comment"># Задати пароль:</span>
 <span class="cmd">docker compose</span> exec web python inventory_project/manage.py changepassword admin
 
 <span class="comment"># 5. Перевірка</span>
@@ -873,9 +875,8 @@ DEPLOY_PORT         Updated just now</span></pre>
 <span class="comment"># Django shell</span>
 <span class="cmd">docker compose</span> exec web python inventory_project/manage.py shell
 
-<span class="comment"># Створити суперкористувача вручну</span>
+<span class="comment"># Створити суперкористувача вручну (якщо не задано DJANGO_SUPERUSER_* в .env.docker)</span>
 <span class="cmd">docker compose</span> exec web python inventory_project/manage.py createsuperuser --username admin --email admin@example.com --noinput
-<span class="comment"># Задати пароль для створеного користувача:</span>
 <span class="cmd">docker compose</span> exec web python inventory_project/manage.py changepassword admin
 
 <span class="comment"># Міграції</span>
