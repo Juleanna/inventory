@@ -2,6 +2,9 @@ import apiClient from './client'
 import type { AuthTokens, LoginCredentials, RegisterData, User } from '@/types'
 
 export const authApi = {
+  getPublicSettings: () =>
+    apiClient.get<{ allow_registration: boolean }>('/public-settings/'),
+
   login: (credentials: LoginCredentials) =>
     apiClient.post<AuthTokens>('/login/', credentials),
 

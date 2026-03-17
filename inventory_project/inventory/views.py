@@ -1,6 +1,8 @@
 import io
 from datetime import datetime, timedelta
 
+from django.conf import settings
+
 import xlsxwriter
 from django_filters.rest_framework import DjangoFilterBackend
 from reportlab.lib import colors
@@ -468,10 +470,22 @@ def agent_report(request):
     )
 
 
+# Публічні налаштування (доступні без авторизації)
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def public_settings(request):
+    return Response({"allow_registration": settings.ALLOW_REGISTRATION})
+
+
 # Реєстрація нового користувача
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def register(request):
+    if not settings.ALLOW_REGISTRATION:
+        return Response(
+            {"detail": "Реєстрація вимкнена. Зверніться до адміністратора."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
         data = serializer.validated_data

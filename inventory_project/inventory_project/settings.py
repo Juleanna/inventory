@@ -240,6 +240,13 @@ SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 
+# Дозволити самостійну реєстрацію користувачів (True/False)
+ALLOW_REGISTRATION = os.environ.get("ALLOW_REGISTRATION", "False").lower() in (
+    "true",
+    "1",
+    "yes",
+)
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),

@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useRegister } from '@/hooks/use-auth'
+import { authApi } from '@/api/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Monitor, Loader2, User, Mail, Lock } from 'lucide-react'
 
 export default function RegisterPage() {
+  const navigate = useNavigate()
   const [form, setForm] = useState({
     username: '',
     email: '',
@@ -17,6 +19,12 @@ export default function RegisterPage() {
     password2: '',
   })
   const register = useRegister()
+
+  useEffect(() => {
+    authApi.getPublicSettings().then(res => {
+      if (!res.data.allow_registration) navigate('/login', { replace: true })
+    }).catch(() => navigate('/login', { replace: true }))
+  }, [navigate])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

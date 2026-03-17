@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useLogin } from '@/hooks/use-auth'
+import { authApi } from '@/api/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,7 +11,12 @@ import { Monitor, Loader2, Lock, User } from 'lucide-react'
 export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [allowRegistration, setAllowRegistration] = useState(false)
   const login = useLogin()
+
+  useEffect(() => {
+    authApi.getPublicSettings().then(res => setAllowRegistration(res.data.allow_registration)).catch(() => {})
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -75,12 +81,14 @@ export default function LoginPage() {
               {login.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Увійти
             </Button>
-            <p className="text-sm text-muted-foreground">
-              Немає облікового запису?{' '}
-              <Link to="/register" className="font-medium text-primary hover:underline">
-                Зареєструватися
-              </Link>
-            </p>
+            {allowRegistration && (
+              <p className="text-sm text-muted-foreground">
+                Немає облікового запису?{' '}
+                <Link to="/register" className="font-medium text-primary hover:underline">
+                  Зареєструватися
+                </Link>
+              </p>
+            )}
           </CardFooter>
         </form>
       </Card>

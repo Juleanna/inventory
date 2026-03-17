@@ -142,6 +142,7 @@ urlpatterns = [
     # Основне API
     path("api/", include(router.urls)),
     # Аутентифікація
+    path("api/public-settings/", views.public_settings, name="public-settings"),
     path("api/register/", views.register, name="register"),
     path("api/login/", views.login, name="login"),
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
