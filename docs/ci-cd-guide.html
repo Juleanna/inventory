@@ -1216,7 +1216,13 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.className = 'copy-btn';
         btn.textContent = 'Копіювати';
         btn.addEventListener('click', function() {
-            var text = pre.textContent || pre.innerText;
+            var clone = pre.cloneNode(true);
+            clone.querySelectorAll('.copy-btn').forEach(function(b) { b.remove(); });
+            var label = clone.querySelector('.shell-label');
+            if (label) label.remove();
+            clone.querySelectorAll('.comment, .output').forEach(function(el) { el.remove(); });
+            var lines = (clone.textContent || clone.innerText).split('\n').filter(function(l) { return l.trim() !== ''; });
+            var text = lines.join('\n');
             navigator.clipboard.writeText(text.trim()).then(function() {
                 btn.textContent = 'Скопійовано!';
                 btn.classList.add('copied');

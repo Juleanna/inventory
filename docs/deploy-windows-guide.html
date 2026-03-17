@@ -978,16 +978,21 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.className = 'copy-btn';
         btn.textContent = 'Копіювати';
         btn.addEventListener('click', function() {
-            // Отримати текст без shell-label
+            // Клонуємо pre для обробки
             var clone = pre.cloneNode(true);
+            // Видаляємо кнопку копіювання з клону
+            var btns = clone.querySelectorAll('.copy-btn');
+            btns.forEach(function(b) { b.remove(); });
+            // Видаляємо shell-label
             var label = clone.querySelector('.shell-label');
             if (label) label.remove();
-            // Отримати чистий текст без HTML-тегів
+            // Видаляємо коментарі (span.comment) та рядки з output
+            clone.querySelectorAll('.comment, .output').forEach(function(el) { el.remove(); });
+            // Отримати чистий текст
             var text = clone.textContent || clone.innerText;
-            // Прибрати рядки з коментарями-виводом (починаються з #)
+            // Прибрати порожні рядки та зайві пробіли
             var lines = text.split('\n').filter(function(line) {
-                var trimmed = line.trim();
-                return trimmed !== '' && !trimmed.startsWith('# Очікуваний') && !trimmed.startsWith('# Status') && !trimmed.startsWith('# ------') && !trimmed.startsWith('# Running');
+                return line.trim() !== '';
             });
             var cleanText = lines.join('\n').trim();
 
