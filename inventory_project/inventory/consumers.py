@@ -3,7 +3,7 @@ import json
 import logging
 
 from channels.db import database_sync_to_async
-from channels.generic.websocket import AsyncWebSocketConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer
 from rest_framework_simplejwt.tokens import AccessToken
 
 from django.contrib.auth import get_user_model
@@ -12,7 +12,7 @@ logger = logging.getLogger("inventory")
 User = get_user_model()
 
 
-class NotificationConsumer(AsyncWebSocketConsumer):
+class NotificationConsumer(AsyncWebsocketConsumer):
     """WebSocket consumer для сповіщень в реальному часі"""
 
     async def connect(self):
