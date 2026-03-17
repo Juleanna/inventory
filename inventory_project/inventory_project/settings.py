@@ -45,6 +45,7 @@ ALLOWED_HOSTS = config(
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",  # ASGI server — must be before django.contrib.staticfiles
     "unfold",  # before django.contrib.admin
     "unfold.contrib.simple_history",
     "unfold.contrib.filters",  # optional, if special filters are needed
