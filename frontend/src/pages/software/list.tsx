@@ -24,24 +24,26 @@ import { AppWindow, Plus, Trash2, Pencil, Loader2, ChevronRight, ChevronDown, Mo
 import type { Software, Equipment } from '@/types'
 import { cn } from '@/lib/utils'
 
-function exportSoftwareCsv(software: Software[]) {
-  const BOM = '\uFEFF'
-  const header = ['Назва', 'Версія', 'Виробник', 'Ліцензія', 'Встановлено на']
-  const rows = software.map((sw) => [
-    sw.name,
-    sw.version,
-    sw.vendor || '',
-    sw.license ? (LICENSE_TYPE_LABELS[sw.license.license_type] || sw.license.license_type) : '',
-    sw.installed_on?.map((eq) => eq.name).join('; ') || '',
-  ])
-  const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
-  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'software.csv'
-  a.click()
-  URL.revokeObjectURL(url)
+import apiClient from '@/api/client'
+import { toast } from 'sonner'
+
+async function exportSoftware(format: 'excel' | 'pdf') {
+  try {
+    const response = await apiClient.get('/export/', {
+      params: { export_format: format, type: 'software' },
+      responseType: 'blob',
+    })
+    const ext = format === 'excel' ? 'xlsx' : 'pdf'
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `software.${ext}`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    toast.success(`Експорт ${format === 'excel' ? 'Excel' : 'PDF'} завершено`)
+  } catch {
+    toast.error('Помилка експорту')
+  }
 }
 
 export default function SoftwareListPage() {
@@ -185,9 +187,13 @@ export default function SoftwareListPage() {
                 Видалити ({selectedIds.size})
               </Button>
             )}
-            <Button variant="outline" onClick={() => data?.results && exportSoftwareCsv(data.results)}>
+            <Button variant="outline" onClick={() => exportSoftware('excel')}>
               <Download className="mr-2 h-4 w-4" />
-              CSV
+              Excel
+            </Button>
+            <Button variant="outline" onClick={() => exportSoftware('pdf')}>
+              <Download className="mr-2 h-4 w-4" />
+              PDF
             </Button>
             <Button onClick={handleAdd}>
               <Plus className="mr-2 h-4 w-4" />

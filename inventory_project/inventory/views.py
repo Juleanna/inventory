@@ -1226,6 +1226,8 @@ class ExportView(APIView):
             self._create_financial_excel(workbook)
         elif report_type == "maintenance":
             self._create_maintenance_excel(workbook)
+        elif report_type == "software":
+            self._create_software_excel(workbook)
 
         workbook.close()
         output.seek(0)
@@ -1387,6 +1389,39 @@ class ExportView(APIView):
             worksheet.write(row, 6, item["days_since_maintenance"] or "")
             worksheet.write(row, 7, item["current_user"] or "")
 
+    def _create_software_excel(self, workbook):
+        """Створити звіт ПЗ в Excel"""
+        from .models import Software
+
+        worksheet = workbook.add_worksheet("Програмне забезпечення")
+        headers = ["Назва", "Версія", "Виробник", "Ліцензія", "Встановлено на"]
+        header_format = workbook.add_format(
+            {"bold": True, "bg_color": "#D7E4BC", "border": 1}
+        )
+        for col, header in enumerate(headers):
+            worksheet.write(0, col, header, header_format)
+
+        software = Software.objects.select_related("license").prefetch_related(
+            "installed_on"
+        ).all()
+
+        for row, sw in enumerate(software, 1):
+            worksheet.write(row, 0, sw.name)
+            worksheet.write(row, 1, sw.version)
+            worksheet.write(row, 2, sw.vendor or "")
+            worksheet.write(
+                row, 3,
+                str(sw.license.license_type) if sw.license else "",
+            )
+            equipment_names = ", ".join(eq.name for eq in sw.installed_on.all())
+            worksheet.write(row, 4, equipment_names)
+
+        worksheet.set_column(0, 0, 30)
+        worksheet.set_column(1, 1, 15)
+        worksheet.set_column(2, 2, 20)
+        worksheet.set_column(3, 3, 15)
+        worksheet.set_column(4, 4, 40)
+
     @staticmethod
     def _register_cyrillic_font():
         """Реєструє шрифт з підтримкою кирилиці"""
@@ -1444,6 +1479,8 @@ class ExportView(APIView):
             elements = self._create_financial_pdf_elements(styles, font_name, font_bold)
         elif report_type == "maintenance":
             elements = self._create_maintenance_pdf_elements(styles, font_name, font_bold)
+        elif report_type == "software":
+            elements = self._create_software_pdf_elements(styles, font_name, font_bold)
 
         doc.build(elements)
         buffer.seek(0)
@@ -1579,6 +1616,47 @@ class ExportView(APIView):
 
             elements.append(table)
 
+        return elements
+
+    def _create_software_pdf_elements(self, styles, font_name, font_bold):
+        """Створити PDF для звіту ПЗ"""
+        from .models import Software
+
+        elements = []
+        title = Paragraph("Програмне забезпечення", styles["CyrTitle"])
+        elements.append(title)
+
+        software = Software.objects.select_related("license").prefetch_related(
+            "installed_on"
+        ).all()
+
+        table_data = [["Назва", "Версія", "Виробник", "Ліцензія", "Встановлено на"]]
+        for sw in software[:100]:
+            equipment_names = ", ".join(eq.name for eq in sw.installed_on.all())
+            table_data.append([
+                sw.name[:30],
+                sw.version,
+                (sw.vendor or "")[:20],
+                str(sw.license.license_type) if sw.license else "",
+                equipment_names[:30],
+            ])
+
+        table = Table(table_data, colWidths=[120, 60, 90, 70, 120])
+        table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4472C4")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (-1, 0), font_bold),
+                ("FONTNAME", (0, 1), (-1, -1), font_name),
+                ("FONTSIZE", (0, 0), (-1, 0), 9),
+                ("FONTSIZE", (0, 1), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F2F2F2")]),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ])
+        )
+        elements.append(table)
         return elements
 
 

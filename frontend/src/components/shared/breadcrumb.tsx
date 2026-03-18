@@ -4,6 +4,8 @@ import { ChevronRight, Home } from 'lucide-react'
 const ROUTE_LABELS: Record<string, string> = {
   '': 'Дашборд',
   equipment: 'Обладнання',
+  software: 'Програмне забезпечення',
+  peripherals: 'Периферія',
   maintenance: 'Обслуговування',
   schedule: 'Розклад',
   'spare-parts': 'Запчастини',
@@ -11,8 +13,12 @@ const ROUTE_LABELS: Record<string, string> = {
   orders: 'Замовлення',
   passwords: 'Паролі',
   analytics: 'Аналітика',
+  depreciation: 'Амортизація',
   notifications: 'Сповіщення',
   settings: 'Налаштування',
+  users: 'Користувачі',
+  licenses: 'Ліцензії',
+  backups: 'Резервні копії',
 }
 
 export function Breadcrumb() {
