@@ -23,9 +23,18 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useColumnVisibility } from '@/hooks/use-column-visibility'
+import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { AppWindow, Plus, Trash2, Pencil, Loader2, ChevronRight, ChevronDown, Monitor, ArrowUp, ArrowDown, ArrowUpDown, Download, FileSpreadsheet, FileText } from 'lucide-react'
 import type { Software, Equipment } from '@/types'
 import { cn } from '@/lib/utils'
+
+const SOFTWARE_COLUMNS = [
+  { key: 'name' as const, label: 'Назва' },
+  { key: 'version' as const, label: 'Версія' },
+  { key: 'vendor' as const, label: 'Виробник' },
+  { key: 'license' as const, label: 'Ліцензія' },
+]
 
 import apiClient from '@/api/client'
 import { toast } from 'sonner'
@@ -85,6 +94,13 @@ export default function SoftwareListPage() {
   const deleteSoftware = useDeleteSoftware()
   const bulkDelete = useBulkDeleteSoftware()
   const totalPages = data ? Math.ceil(data.count / pageSize) : 0
+
+  const { isColumnVisible, toggleColumn, allColumns } = useColumnVisibility(
+    'software-columns',
+    SOFTWARE_COLUMNS,
+  )
+
+  const visibleDataColCount = ['version', 'vendor', 'license'].filter(k => isColumnVisible(k as any)).length + 1 // +1 for name
 
   const { equipmentMap, unlinkedSoftware } = useMemo(() => {
     const eqMap = new Map<number, { equipment: Equipment; software: Software[] }>()
@@ -208,6 +224,7 @@ export default function SoftwareListPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['name']} />
             <Button onClick={handleAdd}>
               <Plus className="mr-2 h-4 w-4" />
               Додати
@@ -241,13 +258,13 @@ export default function SoftwareListPage() {
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleOrdering('name')}>
                     <div className="flex items-center gap-1">Назва {getSortIcon('name')}</div>
                   </TableHead>
-                  <TableHead className="hidden sm:table-cell cursor-pointer select-none" onClick={() => toggleOrdering('version')}>
+                  {isColumnVisible('version') && <TableHead className="cursor-pointer select-none" onClick={() => toggleOrdering('version')}>
                     <div className="flex items-center gap-1">Версія {getSortIcon('version')}</div>
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => toggleOrdering('vendor')}>
+                  </TableHead>}
+                  {isColumnVisible('vendor') && <TableHead className="cursor-pointer select-none" onClick={() => toggleOrdering('vendor')}>
                     <div className="flex items-center gap-1">Виробник {getSortIcon('vendor')}</div>
-                  </TableHead>
-                  <TableHead className="hidden lg:table-cell">Ліцензія</TableHead>
+                  </TableHead>}
+                  {isColumnVisible('license') && <TableHead>Ліцензія</TableHead>}
                   <TableHead className="w-20" />
                 </TableRow>
               </TableHeader>
@@ -266,7 +283,7 @@ export default function SoftwareListPage() {
                           ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                       </TableCell>
-                      <TableCell colSpan={4} className="py-2 cursor-pointer" onClick={() => toggleExpand(eq.id)}>
+                      <TableCell colSpan={visibleDataColCount} className="py-2 cursor-pointer" onClick={() => toggleExpand(eq.id)}>
                         <div className="flex items-center gap-2">
                           <Monitor className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">{eq.name}</span>
@@ -291,11 +308,11 @@ export default function SoftwareListPage() {
                         </TableCell>
                         <TableCell />
                         <TableCell className="pl-10"><span className="text-sm">{sw.name}</span></TableCell>
-                        <TableCell className="hidden sm:table-cell font-mono text-sm">{sw.version}</TableCell>
-                        <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{sw.vendor}</TableCell>
-                        <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                        {isColumnVisible('version') && <TableCell className="font-mono text-sm">{sw.version}</TableCell>}
+                        {isColumnVisible('vendor') && <TableCell className="text-sm text-muted-foreground">{sw.vendor}</TableCell>}
+                        {isColumnVisible('license') && <TableCell className="text-sm text-muted-foreground">
                           {sw.license ? (LICENSE_TYPE_LABELS[sw.license.license_type] || sw.license.license_type) : '—'}
-                        </TableCell>
+                        </TableCell>}
                         <TableCell>
                           <div className="flex gap-1">
                             <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleEdit(sw)}>
@@ -325,7 +342,7 @@ export default function SoftwareListPage() {
                           ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                       </TableCell>
-                      <TableCell colSpan={4} className="py-2 cursor-pointer" onClick={() => toggleExpand('unlinked')}>
+                      <TableCell colSpan={visibleDataColCount} className="py-2 cursor-pointer" onClick={() => toggleExpand('unlinked')}>
                         <div className="flex items-center gap-2">
                           <AppWindow className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium text-muted-foreground">Не прив'язано до обладнання</span>
@@ -350,11 +367,11 @@ export default function SoftwareListPage() {
                         </TableCell>
                         <TableCell />
                         <TableCell className="pl-10"><span className="text-sm">{sw.name}</span></TableCell>
-                        <TableCell className="hidden sm:table-cell font-mono text-sm">{sw.version}</TableCell>
-                        <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{sw.vendor}</TableCell>
-                        <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                        {isColumnVisible('version') && <TableCell className="font-mono text-sm">{sw.version}</TableCell>}
+                        {isColumnVisible('vendor') && <TableCell className="text-sm text-muted-foreground">{sw.vendor}</TableCell>}
+                        {isColumnVisible('license') && <TableCell className="text-sm text-muted-foreground">
                           {sw.license ? (LICENSE_TYPE_LABELS[sw.license.license_type] || sw.license.license_type) : '—'}
-                        </TableCell>
+                        </TableCell>}
                         <TableCell>
                           <div className="flex gap-1">
                             <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleEdit(sw)}>

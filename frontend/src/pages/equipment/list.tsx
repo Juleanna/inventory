@@ -33,9 +33,20 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, MoreHorizontal, Eye, Pencil, Trash2, Monitor, Download, FileSpreadsheet, FileText, ArrowUpDown, ArrowUp, ArrowDown, QrCode, Printer, RefreshCw } from 'lucide-react'
 import { CATEGORY_LABELS, STATUS_LABELS, STATUS_COLORS, CATEGORY_OPTIONS, STATUS_OPTIONS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { useColumnVisibility } from '@/hooks/use-column-visibility'
+import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { EquipmentFormDialog } from '@/components/equipment/equipment-form'
 import { toast } from 'sonner'
 import type { Equipment } from '@/types'
+
+const EQUIPMENT_COLUMNS = [
+  { key: 'name' as const, label: 'Назва' },
+  { key: 'category' as const, label: 'Категорія' },
+  { key: 'serial' as const, label: 'Серійний номер' },
+  { key: 'inventory' as const, label: 'Інв. номер' },
+  { key: 'status' as const, label: 'Статус' },
+  { key: 'location' as const, label: 'Місцезнаходження' },
+]
 
 function TableSkeleton() {
   return (
@@ -100,6 +111,12 @@ export default function EquipmentListPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [sortField, setSortField] = useState<SortField | null>(null)
   const [sortDir, setSortDir] = useState<SortDir>('asc')
+
+  const { isColumnVisible, toggleColumn, allColumns } = useColumnVisibility(
+    'equipment-columns',
+    EQUIPMENT_COLUMNS,
+    ['name', 'category', 'serial', 'status', 'location'],
+  )
 
   const debouncedSearch = useDebounce(search)
   const debouncedLocation = useDebounce(location)
@@ -288,6 +305,7 @@ export default function EquipmentListPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['name']} />
             <Button onClick={() => setFormOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Додати
@@ -392,18 +410,18 @@ export default function EquipmentListPage() {
                       <SortIcon field="name" current={sortField} direction={sortDir} />
                     </span>
                   </TableHead>
-                  <TableHead
-                    className="hidden md:table-cell cursor-pointer select-none"
+                  {isColumnVisible('category') && <TableHead
+                    className="cursor-pointer select-none"
                     onClick={() => handleSort('category')}
                   >
                     <span className="flex items-center">
                       Категорія
                       <SortIcon field="category" current={sortField} direction={sortDir} />
                     </span>
-                  </TableHead>
-                  <TableHead className="hidden sm:table-cell">Серійний номер</TableHead>
-                  <TableHead className="hidden xl:table-cell">Інв. номер</TableHead>
-                  <TableHead
+                  </TableHead>}
+                  {isColumnVisible('serial') && <TableHead>Серійний номер</TableHead>}
+                  {isColumnVisible('inventory') && <TableHead>Інв. номер</TableHead>}
+                  {isColumnVisible('status') && <TableHead
                     className="cursor-pointer select-none"
                     onClick={() => handleSort('status')}
                   >
@@ -411,8 +429,8 @@ export default function EquipmentListPage() {
                       Статус
                       <SortIcon field="status" current={sortField} direction={sortDir} />
                     </span>
-                  </TableHead>
-                  <TableHead className="hidden lg:table-cell">Місцезнаходження</TableHead>
+                  </TableHead>}
+                  {isColumnVisible('location') && <TableHead>Місцезнаходження</TableHead>}
                   <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
@@ -436,23 +454,23 @@ export default function EquipmentListPage() {
                         ) : null
                       })()}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    {isColumnVisible('category') && <TableCell>
                       {CATEGORY_LABELS[item.category] || item.category}
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell font-mono text-sm">
+                    </TableCell>}
+                    {isColumnVisible('serial') && <TableCell className="font-mono text-sm">
                       {item.serial_number}
-                    </TableCell>
-                    <TableCell className="hidden xl:table-cell font-mono text-sm">
+                    </TableCell>}
+                    {isColumnVisible('inventory') && <TableCell className="font-mono text-sm">
                       {item.inventory_number || '—'}
-                    </TableCell>
-                    <TableCell>
+                    </TableCell>}
+                    {isColumnVisible('status') && <TableCell>
                       <Badge variant="secondary" className={cn('text-xs', STATUS_COLORS[item.status])}>
                         {STATUS_LABELS[item.status] || item.status}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                    </TableCell>}
+                    {isColumnVisible('location') && <TableCell className="text-sm text-muted-foreground">
                       {item.location}
-                    </TableCell>
+                    </TableCell>}
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

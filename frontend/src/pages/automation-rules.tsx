@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { automationApi, TRIGGER_TYPES, ACTION_TYPES, type AutomationRule } from '@/api/automation'
 import { useAuthStore } from '@/stores/auth-store'
+import { useColumnVisibility } from '@/hooks/use-column-visibility'
+import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { PageHeader } from '@/components/shared/page-header'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Card, CardContent } from '@/components/ui/card'
@@ -28,7 +30,16 @@ import {
 import { Zap, Plus, Play, Trash2, Pencil, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
+const AUTOMATION_COLUMNS = [
+  { key: 'name' as const, label: 'Назва' },
+  { key: 'trigger' as const, label: 'Тригер' },
+  { key: 'actions' as const, label: 'Дії' },
+  { key: 'runCount' as const, label: 'Запусків' },
+  { key: 'active' as const, label: 'Активне' },
+]
+
 export default function AutomationRulesPage() {
+  const { allColumns, isColumnVisible, toggleColumn } = useColumnVisibility('automation-rules-columns', AUTOMATION_COLUMNS)
   const { isAuthenticated } = useAuthStore()
   const queryClient = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
@@ -96,6 +107,7 @@ export default function AutomationRulesPage() {
         <Button onClick={() => setShowCreate(true)}>
           <Plus className="mr-2 h-4 w-4" /> Нове правило
         </Button>
+        <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['name']} />
       </div>
 
       {isLoading ? (
@@ -113,31 +125,31 @@ export default function AutomationRulesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Назва</TableHead>
-                  <TableHead>Тригер</TableHead>
-                  <TableHead>Дії</TableHead>
-                  <TableHead>Запусків</TableHead>
-                  <TableHead>Активне</TableHead>
+                  {isColumnVisible('name') && <TableHead>Назва</TableHead>}
+                  {isColumnVisible('trigger') && <TableHead>Тригер</TableHead>}
+                  {isColumnVisible('actions') && <TableHead>Дії</TableHead>}
+                  {isColumnVisible('runCount') && <TableHead>Запусків</TableHead>}
+                  {isColumnVisible('active') && <TableHead>Активне</TableHead>}
                   <TableHead className="w-[140px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rules.map(rule => (
                   <TableRow key={rule.id}>
-                    <TableCell>
+                    {isColumnVisible('name') && <TableCell>
                       <div>
                         <p className="font-medium">{rule.name}</p>
                         {rule.description && (
                           <p className="text-xs text-muted-foreground line-clamp-1">{rule.description}</p>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell>
+                    </TableCell>}
+                    {isColumnVisible('trigger') && <TableCell>
                       <Badge variant="secondary">
                         {TRIGGER_TYPES.find(t => t.value === rule.trigger_type)?.label || rule.trigger_type}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
+                    </TableCell>}
+                    {isColumnVisible('actions') && <TableCell>
                       <div className="flex gap-1 flex-wrap">
                         {rule.actions.map((a, i) => (
                           <Badge key={i} variant="outline" className="text-xs">
@@ -145,11 +157,11 @@ export default function AutomationRulesPage() {
                           </Badge>
                         ))}
                       </div>
-                    </TableCell>
-                    <TableCell>{rule.run_count}</TableCell>
-                    <TableCell>
+                    </TableCell>}
+                    {isColumnVisible('runCount') && <TableCell>{rule.run_count}</TableCell>}
+                    {isColumnVisible('active') && <TableCell>
                       <Switch checked={rule.active} onCheckedChange={() => toggleActive(rule)} />
-                    </TableCell>
+                    </TableCell>}
                     <TableCell>
                       <div className="flex gap-1">
                         <Button

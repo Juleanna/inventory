@@ -23,8 +23,18 @@ import { MovementsTable } from '@/components/spare-parts/movements-table'
 import { SparePartsAnalyticsSection } from '@/components/spare-parts/analytics-section'
 import { Card, CardContent } from '@/components/ui/card'
 import { Package, Truck, ShoppingCart, Plus, Loader2, Download, AlertTriangle } from 'lucide-react'
+import { useColumnVisibility } from '@/hooks/use-column-visibility'
+import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { SPARE_PART_CONDITION_LABELS } from '@/lib/constants'
 import type { SparePart } from '@/types'
+
+const SPARE_PARTS_COLUMNS = [
+  { key: 'name' as const, label: 'Назва' },
+  { key: 'partNumber' as const, label: 'Артикул' },
+  { key: 'quantity' as const, label: 'Кількість' },
+  { key: 'price' as const, label: 'Ціна' },
+  { key: 'location' as const, label: 'Місце' },
+]
 
 function exportSparePartsCsv(parts: SparePart[]) {
   const BOM = '\uFEFF'
@@ -55,6 +65,11 @@ export default function SparePartsListPage() {
   })
   const totalPages = data ? Math.ceil(data.count / 25) : 0
 
+  const { isColumnVisible, toggleColumn, allColumns } = useColumnVisibility(
+    'spare-parts-columns',
+    SPARE_PARTS_COLUMNS,
+  )
+
   // Low stock count
   const lowStockCount = data?.results?.filter((p) => p.quantity_in_stock <= p.minimum_stock_level).length || 0
   const outOfStockCount = data?.results?.filter((p) => p.quantity_in_stock === 0).length || 0
@@ -79,6 +94,7 @@ export default function SparePartsListPage() {
                 CSV
               </Button>
             )}
+            <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['name']} />
             <Button onClick={() => setShowCreate(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Додати
@@ -163,10 +179,10 @@ export default function SparePartsListPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Назва</TableHead>
-                  <TableHead className="hidden md:table-cell">Артикул</TableHead>
-                  <TableHead>Кількість</TableHead>
-                  <TableHead className="hidden sm:table-cell">Ціна</TableHead>
-                  <TableHead className="hidden lg:table-cell">Місце</TableHead>
+                  {isColumnVisible('partNumber') && <TableHead>Артикул</TableHead>}
+                  {isColumnVisible('quantity') && <TableHead>Кількість</TableHead>}
+                  {isColumnVisible('price') && <TableHead>Ціна</TableHead>}
+                  {isColumnVisible('location') && <TableHead>Місце</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -176,10 +192,10 @@ export default function SparePartsListPage() {
                       <Link to={`/spare-parts/${part.id}`} className="font-medium hover:underline text-primary">{part.name}</Link>
                       <p className="text-xs text-muted-foreground">{part.manufacturer}</p>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell font-mono text-sm">
+                    {isColumnVisible('partNumber') && <TableCell className="font-mono text-sm">
                       {part.part_number}
-                    </TableCell>
-                    <TableCell>
+                    </TableCell>}
+                    {isColumnVisible('quantity') && <TableCell>
                       <Badge
                         variant={part.quantity_in_stock <= part.minimum_stock_level ? 'destructive' : 'secondary'}
                       >
@@ -188,13 +204,13 @@ export default function SparePartsListPage() {
                       {part.quantity_in_stock <= part.minimum_stock_level && (
                         <span className="ml-2 text-xs text-destructive">Мін: {part.minimum_stock_level}</span>
                       )}
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
+                    </TableCell>}
+                    {isColumnVisible('price') && <TableCell>
                       {part.unit_price} грн
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                    </TableCell>}
+                    {isColumnVisible('location') && <TableCell className="text-sm text-muted-foreground">
                       {part.storage_name || part.storage_location}
-                    </TableCell>
+                    </TableCell>}
                   </TableRow>
                 ))}
               </TableBody>

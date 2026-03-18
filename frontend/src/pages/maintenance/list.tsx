@@ -38,9 +38,19 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Wrench, Calendar, Play, CheckCircle, Plus, Loader2, UserPlus, Clock, AlertTriangle, X, Eye, RefreshCw } from 'lucide-react'
 import { maintenanceApi } from '@/api/maintenance'
 import { toast } from 'sonner'
+import { useColumnVisibility } from '@/hooks/use-column-visibility'
+import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { MAINTENANCE_STATUS_LABELS, PRIORITY_LABELS, PRIORITY_COLORS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import type { MaintenanceRequest } from '@/types'
+
+const MAINTENANCE_COLUMNS = [
+  { key: 'equipment' as const, label: 'Обладнання' },
+  { key: 'type' as const, label: 'Тип' },
+  { key: 'status' as const, label: 'Статус' },
+  { key: 'priority' as const, label: 'Пріоритет' },
+  { key: 'date' as const, label: 'Дата' },
+]
 
 const REQUEST_TYPE_LABELS: Record<string, string> = {
   SCHEDULED: 'Планове ТО',
@@ -88,6 +98,11 @@ export default function MaintenanceListPage() {
 
   const totalPages = data ? Math.ceil(data.count / 25) : 0
   const hasFilters = !!status || !!priority
+
+  const { isColumnVisible, toggleColumn, allColumns } = useColumnVisibility(
+    'maintenance-columns',
+    MAINTENANCE_COLUMNS,
+  )
 
   const upcomingSchedules = useMemo(() => {
     const list = (schedulesData as Record<string, unknown>)?.schedules as Record<string, unknown>[] | undefined
@@ -148,6 +163,7 @@ export default function MaintenanceListPage() {
                 Розклад
               </Link>
             </Button>
+            <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['equipment']} />
           </div>
         }
       />
@@ -264,10 +280,10 @@ export default function MaintenanceListPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Обладнання</TableHead>
-                  <TableHead>Тип</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead className="hidden md:table-cell">Пріоритет</TableHead>
-                  <TableHead className="hidden lg:table-cell">Дата</TableHead>
+                  {isColumnVisible('type') && <TableHead>Тип</TableHead>}
+                  {isColumnVisible('status') && <TableHead>Статус</TableHead>}
+                  {isColumnVisible('priority') && <TableHead>Пріоритет</TableHead>}
+                  {isColumnVisible('date') && <TableHead>Дата</TableHead>}
                   <TableHead className="w-28">Дії</TableHead>
                 </TableRow>
               </TableHeader>
@@ -278,22 +294,22 @@ export default function MaintenanceListPage() {
                       <span className="font-medium">{request.equipment_details?.name || `#${request.equipment}`}</span>
                       <p className="text-xs text-muted-foreground">{request.title}</p>
                     </TableCell>
-                    <TableCell className="text-sm">
+                    {isColumnVisible('type') && <TableCell className="text-sm">
                       {REQUEST_TYPE_LABELS[request.request_type] || request.request_type}
-                    </TableCell>
-                    <TableCell>
+                    </TableCell>}
+                    {isColumnVisible('status') && <TableCell>
                       <Badge variant="secondary">
                         {MAINTENANCE_STATUS_LABELS[request.status] || request.status}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    </TableCell>}
+                    {isColumnVisible('priority') && <TableCell>
                       <Badge variant="secondary" className={cn('text-xs', PRIORITY_COLORS[request.priority])}>
                         {PRIORITY_LABELS[request.priority] || request.priority}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                    </TableCell>}
+                    {isColumnVisible('date') && <TableCell className="text-sm text-muted-foreground">
                       {request.scheduled_date || new Date(request.created_at).toLocaleDateString('uk-UA')}
-                    </TableCell>
+                    </TableCell>}
                     <TableCell>
                       <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDetailRequest(request)} title="Деталі">

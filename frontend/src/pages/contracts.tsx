@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useContracts, useCreateContract, useDeleteContract } from '@/hooks/use-contracts'
+import { useColumnVisibility } from '@/hooks/use-column-visibility'
+import { ColumnVisibility } from '@/components/shared/column-visibility'
 import type { Contract } from '@/api/contracts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -48,7 +50,19 @@ const TYPE_COLORS: Record<string, string> = {
   OTHER: 'bg-gray-100 text-gray-800',
 }
 
+const CONTRACT_COLUMNS = [
+  { key: 'number' as const, label: 'Номер' },
+  { key: 'title' as const, label: 'Назва' },
+  { key: 'type' as const, label: 'Тип' },
+  { key: 'counterparty' as const, label: 'Контрагент' },
+  { key: 'startDate' as const, label: 'Початок' },
+  { key: 'endDate' as const, label: 'Завершення' },
+  { key: 'amount' as const, label: 'Сума' },
+  { key: 'status' as const, label: 'Статус' },
+]
+
 export default function ContractsPage() {
+  const { allColumns, isColumnVisible, toggleColumn } = useColumnVisibility('contracts-columns', CONTRACT_COLUMNS)
   const [page] = useState(1)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
@@ -92,7 +106,10 @@ export default function ContractsPage() {
   return (
     <div>
       <PageHeader title="Договори та документи" description="Управління договорами, гарантіями та контрактами">
-        <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Новий договір</Button>
+        <div className="flex gap-2">
+          <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['number']} />
+          <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Новий договір</Button>
+        </div>
       </PageHeader>
 
       {/* Stats */}
@@ -143,33 +160,33 @@ export default function ContractsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Номер</TableHead>
-                <TableHead>Назва</TableHead>
-                <TableHead>Тип</TableHead>
-                <TableHead>Контрагент</TableHead>
-                <TableHead>Початок</TableHead>
-                <TableHead>Завершення</TableHead>
-                <TableHead className="text-right">Сума</TableHead>
-                <TableHead>Статус</TableHead>
+                {isColumnVisible('number') && <TableHead>Номер</TableHead>}
+                {isColumnVisible('title') && <TableHead>Назва</TableHead>}
+                {isColumnVisible('type') && <TableHead>Тип</TableHead>}
+                {isColumnVisible('counterparty') && <TableHead>Контрагент</TableHead>}
+                {isColumnVisible('startDate') && <TableHead>Початок</TableHead>}
+                {isColumnVisible('endDate') && <TableHead>Завершення</TableHead>}
+                {isColumnVisible('amount') && <TableHead className="text-right">Сума</TableHead>}
+                {isColumnVisible('status') && <TableHead>Статус</TableHead>}
                 <TableHead className="w-[100px]">Дії</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>{Array.from({ length: 9 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}</TableRow>
+                  <TableRow key={i}>{Array.from({ length: CONTRACT_COLUMNS.filter(c => isColumnVisible(c.key)).length + 1 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}</TableRow>
                 ))
               ) : contracts.length > 0 ? (
                 contracts.map((c: Contract) => (
                   <TableRow key={c.id}>
-                    <TableCell className="font-mono text-xs">{c.contract_number}</TableCell>
-                    <TableCell className="font-medium">{c.title}</TableCell>
-                    <TableCell><Badge variant="secondary" className={TYPE_COLORS[c.contract_type] || ''}>{c.contract_type_display || c.contract_type}</Badge></TableCell>
-                    <TableCell>{c.counterparty}</TableCell>
-                    <TableCell className="text-sm">{new Date(c.start_date).toLocaleDateString('uk-UA')}</TableCell>
-                    <TableCell className="text-sm">{c.end_date ? new Date(c.end_date).toLocaleDateString('uk-UA') : '—'}</TableCell>
-                    <TableCell className="text-right font-mono">{c.amount ? `${parseFloat(c.amount).toLocaleString()} грн` : '—'}</TableCell>
-                    <TableCell><Badge variant="secondary" className={STATUS_COLORS[c.status] || ''}>{c.status_display || c.status}</Badge></TableCell>
+                    {isColumnVisible('number') && <TableCell className="font-mono text-xs">{c.contract_number}</TableCell>}
+                    {isColumnVisible('title') && <TableCell className="font-medium">{c.title}</TableCell>}
+                    {isColumnVisible('type') && <TableCell><Badge variant="secondary" className={TYPE_COLORS[c.contract_type] || ''}>{c.contract_type_display || c.contract_type}</Badge></TableCell>}
+                    {isColumnVisible('counterparty') && <TableCell>{c.counterparty}</TableCell>}
+                    {isColumnVisible('startDate') && <TableCell className="text-sm">{new Date(c.start_date).toLocaleDateString('uk-UA')}</TableCell>}
+                    {isColumnVisible('endDate') && <TableCell className="text-sm">{c.end_date ? new Date(c.end_date).toLocaleDateString('uk-UA') : '—'}</TableCell>}
+                    {isColumnVisible('amount') && <TableCell className="text-right font-mono">{c.amount ? `${parseFloat(c.amount).toLocaleString()} грн` : '—'}</TableCell>}
+                    {isColumnVisible('status') && <TableCell><Badge variant="secondary" className={STATUS_COLORS[c.status] || ''}>{c.status_display || c.status}</Badge></TableCell>}
                     <TableCell>
                       <div className="flex gap-1">
                         {c.file && (
@@ -185,7 +202,7 @@ export default function ContractsPage() {
                   </TableRow>
                 ))
               ) : (
-                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Немає договорів</TableCell></TableRow>
+                <TableRow><TableCell colSpan={CONTRACT_COLUMNS.filter(c => isColumnVisible(c.key)).length + 1} className="text-center py-8 text-muted-foreground">Немає договорів</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

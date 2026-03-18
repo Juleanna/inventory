@@ -22,9 +22,18 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useColumnVisibility } from '@/hooks/use-column-visibility'
+import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { Usb, Plus, Trash2, Pencil, Loader2, QrCode, ArrowUp, ArrowDown, ArrowUpDown, X, Shuffle, ChevronRight, ChevronDown, Monitor, Download, FileSpreadsheet, FileText } from 'lucide-react'
 import { PERIPHERAL_TYPE_LABELS } from '@/lib/constants'
 import type { PeripheralDevice, Equipment } from '@/types'
+
+const PERIPHERALS_COLUMNS = [
+  { key: 'name' as const, label: 'Назва' },
+  { key: 'type' as const, label: 'Тип' },
+  { key: 'inventory' as const, label: 'Інв. номер' },
+  { key: 'serial' as const, label: 'Серійний номер' },
+]
 import apiClient from '@/api/client'
 import { toast } from 'sonner'
 
@@ -73,6 +82,13 @@ export default function PeripheralsListPage() {
   const bulkDelete = useBulkDeletePeripherals()
   const regenerateCodes = useRegeneratePeripheralCodes()
   const totalPages = data ? Math.ceil(data.count / pageSize) : 0
+
+  const { isColumnVisible, toggleColumn, allColumns } = useColumnVisibility(
+    'peripherals-columns',
+    PERIPHERALS_COLUMNS,
+  )
+
+  const visibleDataColCount = ['type', 'inventory', 'serial'].filter(k => isColumnVisible(k as any)).length + 1 // +1 for name
 
   const hasFilters = !!filterType
 
@@ -213,6 +229,7 @@ export default function PeripheralsListPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['name']} />
             <Button onClick={handleAdd}>
               <Plus className="mr-2 h-4 w-4" />
               Додати
@@ -275,13 +292,13 @@ export default function PeripheralsListPage() {
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleOrdering('name')}>
                     <div className="flex items-center gap-1">Назва {getSortIcon('name')}</div>
                   </TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleOrdering('type')}>
+                  {isColumnVisible('type') && <TableHead className="cursor-pointer select-none" onClick={() => toggleOrdering('type')}>
                     <div className="flex items-center gap-1">Тип {getSortIcon('type')}</div>
-                  </TableHead>
-                  <TableHead className="hidden sm:table-cell">Інв. номер</TableHead>
-                  <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => toggleOrdering('serial_number')}>
+                  </TableHead>}
+                  {isColumnVisible('inventory') && <TableHead>Інв. номер</TableHead>}
+                  {isColumnVisible('serial') && <TableHead className="cursor-pointer select-none" onClick={() => toggleOrdering('serial_number')}>
                     <div className="flex items-center gap-1">Серійний номер {getSortIcon('serial_number')}</div>
-                  </TableHead>
+                  </TableHead>}
                   <TableHead className="w-28" />
                 </TableRow>
               </TableHeader>
@@ -300,7 +317,7 @@ export default function PeripheralsListPage() {
                           ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                       </TableCell>
-                      <TableCell colSpan={4} className="py-2 cursor-pointer" onClick={() => toggleExpand(eq.id)}>
+                      <TableCell colSpan={visibleDataColCount} className="py-2 cursor-pointer" onClick={() => toggleExpand(eq.id)}>
                         <div className="flex items-center gap-2">
                           <Monitor className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">{eq.name}</span>
@@ -325,15 +342,15 @@ export default function PeripheralsListPage() {
                         </TableCell>
                         <TableCell />
                         <TableCell className="pl-10"><span className="text-sm font-medium">{dev.name}</span></TableCell>
-                        <TableCell>
+                        {isColumnVisible('type') && <TableCell>
                           <Badge variant="secondary" className="text-xs">
                             {PERIPHERAL_TYPE_LABELS[dev.type] || dev.type}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell font-mono text-sm text-muted-foreground">
+                        </TableCell>}
+                        {isColumnVisible('inventory') && <TableCell className="font-mono text-sm text-muted-foreground">
                           {dev.inventory_number || '—'}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell font-mono text-sm">{dev.serial_number}</TableCell>
+                        </TableCell>}
+                        {isColumnVisible('serial') && <TableCell className="font-mono text-sm">{dev.serial_number}</TableCell>}
                         <TableCell>
                           <div className="flex gap-1">
                             <Button size="icon" variant="ghost" className="h-7 w-7" title="QR / Штрих-код" onClick={() => setCodesDevice(dev)}>
@@ -366,7 +383,7 @@ export default function PeripheralsListPage() {
                           ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                       </TableCell>
-                      <TableCell colSpan={4} className="py-2 cursor-pointer" onClick={() => toggleExpand('unlinked')}>
+                      <TableCell colSpan={visibleDataColCount} className="py-2 cursor-pointer" onClick={() => toggleExpand('unlinked')}>
                         <div className="flex items-center gap-2">
                           <Usb className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium text-muted-foreground">Не підключено до обладнання</span>
@@ -391,15 +408,15 @@ export default function PeripheralsListPage() {
                         </TableCell>
                         <TableCell />
                         <TableCell className="pl-10"><span className="text-sm font-medium">{dev.name}</span></TableCell>
-                        <TableCell>
+                        {isColumnVisible('type') && <TableCell>
                           <Badge variant="secondary" className="text-xs">
                             {PERIPHERAL_TYPE_LABELS[dev.type] || dev.type}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell font-mono text-sm text-muted-foreground">
+                        </TableCell>}
+                        {isColumnVisible('inventory') && <TableCell className="font-mono text-sm text-muted-foreground">
                           {dev.inventory_number || '—'}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell font-mono text-sm">{dev.serial_number}</TableCell>
+                        </TableCell>}
+                        {isColumnVisible('serial') && <TableCell className="font-mono text-sm">{dev.serial_number}</TableCell>}
                         <TableCell>
                           <div className="flex gap-1">
                             <Button size="icon" variant="ghost" className="h-7 w-7" title="QR / Штрих-код" onClick={() => setCodesDevice(dev)}>

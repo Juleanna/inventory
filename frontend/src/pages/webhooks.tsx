@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { webhooksApi, WEBHOOK_EVENTS, type WebhookConfig, type WebhookLog } from '@/api/webhooks'
 import { useAuthStore } from '@/stores/auth-store'
+import { useColumnVisibility } from '@/hooks/use-column-visibility'
+import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { PageHeader } from '@/components/shared/page-header'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Card, CardContent } from '@/components/ui/card'
@@ -25,7 +27,15 @@ import {
 import { Webhook, Plus, Trash2, Pencil, Loader2, Send, CheckCircle, XCircle, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 
+const WEBHOOK_COLUMNS = [
+  { key: 'name' as const, label: 'Назва' },
+  { key: 'url' as const, label: 'URL' },
+  { key: 'events' as const, label: 'Події' },
+  { key: 'active' as const, label: 'Активний' },
+]
+
 export default function WebhooksPage() {
+  const { allColumns, isColumnVisible, toggleColumn } = useColumnVisibility('webhooks-columns', WEBHOOK_COLUMNS)
   const { isAuthenticated } = useAuthStore()
   const queryClient = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
@@ -90,10 +100,11 @@ export default function WebhooksPage() {
     <div>
       <PageHeader title="Вебхуки" description="Налаштування сповіщень для зовнішніх систем" />
 
-      <div className="mb-4">
+      <div className="mb-4 flex gap-2">
         <Button onClick={() => setShowCreate(true)}>
           <Plus className="mr-2 h-4 w-4" /> Новий webhook
         </Button>
+        <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['name']} />
       </div>
 
       {isLoading ? (
@@ -111,21 +122,21 @@ export default function WebhooksPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Назва</TableHead>
-                  <TableHead>URL</TableHead>
-                  <TableHead>Події</TableHead>
-                  <TableHead>Активний</TableHead>
+                  {isColumnVisible('name') && <TableHead>Назва</TableHead>}
+                  {isColumnVisible('url') && <TableHead>URL</TableHead>}
+                  {isColumnVisible('events') && <TableHead>Події</TableHead>}
+                  {isColumnVisible('active') && <TableHead>Активний</TableHead>}
                   <TableHead className="w-[180px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {webhooks.map(wh => (
                   <TableRow key={wh.id}>
-                    <TableCell className="font-medium">{wh.name}</TableCell>
-                    <TableCell>
+                    {isColumnVisible('name') && <TableCell className="font-medium">{wh.name}</TableCell>}
+                    {isColumnVisible('url') && <TableCell>
                       <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{wh.url}</code>
-                    </TableCell>
-                    <TableCell>
+                    </TableCell>}
+                    {isColumnVisible('events') && <TableCell>
                       <div className="flex gap-1 flex-wrap">
                         {wh.events.slice(0, 2).map(e => (
                           <Badge key={e} variant="outline" className="text-xs">
@@ -136,10 +147,10 @@ export default function WebhooksPage() {
                           <Badge variant="secondary" className="text-xs">+{wh.events.length - 2}</Badge>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell>
+                    </TableCell>}
+                    {isColumnVisible('active') && <TableCell>
                       <Switch checked={wh.active} onCheckedChange={() => toggleActive(wh)} />
-                    </TableCell>
+                    </TableCell>}
                     <TableCell>
                       <div className="flex gap-1">
                         <Button

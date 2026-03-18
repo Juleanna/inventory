@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useColumnVisibility } from '@/hooks/use-column-visibility'
+import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePurchaseOrder, useSuppliersList, useSparePartsList } from '@/hooks/use-spare-parts'
 import { PageHeader } from '@/components/shared/page-header'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
@@ -41,7 +43,16 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
 }
 
+const ORDER_COLUMNS = [
+  { key: 'number' as const, label: 'Номер' },
+  { key: 'supplier' as const, label: 'Постачальник' },
+  { key: 'status' as const, label: 'Статус' },
+  { key: 'amount' as const, label: 'Сума' },
+  { key: 'date' as const, label: 'Дата' },
+]
+
 export default function OrdersPage() {
+  const { allColumns, isColumnVisible, toggleColumn } = useColumnVisibility('orders-columns', ORDER_COLUMNS)
   const [status, setStatus] = useState<string>('')
   const [page, setPage] = useState(1)
   const [showCreate, setShowCreate] = useState(false)
@@ -71,6 +82,7 @@ export default function OrdersPage() {
               <Plus className="mr-2 h-4 w-4" />
               Створити
             </Button>
+            <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['number']} />
             <Button variant="outline" asChild>
               <Link to="/spare-parts">
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -108,11 +120,11 @@ export default function OrdersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Номер</TableHead>
-                  <TableHead>Постачальник</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead className="hidden md:table-cell">Сума</TableHead>
-                  <TableHead className="hidden lg:table-cell">Дата</TableHead>
+                  {isColumnVisible('number') && <TableHead>Номер</TableHead>}
+                  {isColumnVisible('supplier') && <TableHead>Постачальник</TableHead>}
+                  {isColumnVisible('status') && <TableHead>Статус</TableHead>}
+                  {isColumnVisible('amount') && <TableHead>Сума</TableHead>}
+                  {isColumnVisible('date') && <TableHead>Дата</TableHead>}
                   <TableHead className="w-40">Дії</TableHead>
                 </TableRow>
               </TableHeader>
@@ -121,17 +133,17 @@ export default function OrdersPage() {
                   const nextStatuses = STATUS_FLOW[order.status] || []
                   return (
                     <TableRow key={order.id} className="cursor-pointer" onClick={() => setDetailOrder(order)}>
-                      <TableCell className="font-mono font-medium">{order.order_number}</TableCell>
-                      <TableCell>{order.supplier_details?.name || `#${order.supplier}`}</TableCell>
-                      <TableCell>
+                      {isColumnVisible('number') && <TableCell className="font-mono font-medium">{order.order_number}</TableCell>}
+                      {isColumnVisible('supplier') && <TableCell>{order.supplier_details?.name || `#${order.supplier}`}</TableCell>}
+                      {isColumnVisible('status') && <TableCell>
                         <Badge variant="secondary" className={STATUS_COLORS[order.status]}>
                           {ORDER_STATUS_LABELS[order.status] || order.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">{order.total_amount} грн</TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                      </TableCell>}
+                      {isColumnVisible('amount') && <TableCell>{order.total_amount} грн</TableCell>}
+                      {isColumnVisible('date') && <TableCell className="text-sm text-muted-foreground">
                         {new Date(order.created_at).toLocaleDateString('uk-UA')}
-                      </TableCell>
+                      </TableCell>}
                       <TableCell>
                         <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDetailOrder(order)} title="Деталі">

@@ -22,9 +22,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { useColumnVisibility } from '@/hooks/use-column-visibility'
+import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { FileKey, Plus, Trash2, Pencil, Loader2, Download, X } from 'lucide-react'
 import type { License } from '@/types'
 import { cn } from '@/lib/utils'
+
+const LICENSES_COLUMNS = [
+  { key: 'type' as const, label: 'Тип ліцензії' },
+  { key: 'key' as const, label: 'Ключ' },
+  { key: 'cost' as const, label: 'Вартість' },
+  { key: 'validity' as const, label: 'Термін дії' },
+  { key: 'programs' as const, label: 'Програми' },
+  { key: 'status' as const, label: 'Статус' },
+]
 
 function getLicenseStatus(lic: License) {
   if (lic.is_perpetual) return 'perpetual'
@@ -104,6 +115,11 @@ export default function LicensesListPage() {
   })
   const deleteLicense = useDeleteLicense()
 
+  const { isColumnVisible, toggleColumn, allColumns } = useColumnVisibility(
+    'licenses-columns',
+    LICENSES_COLUMNS,
+  )
+
   const filteredResults = data?.results?.filter((lic) => {
     if (typeFilter && lic.license_type !== typeFilter) return false
     if (!statusFilter) return true
@@ -129,6 +145,7 @@ export default function LicensesListPage() {
                 CSV
               </Button>
             )}
+            <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['type']} />
             <Button onClick={() => setShowCreate(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Додати
@@ -198,11 +215,11 @@ export default function LicensesListPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Тип ліцензії</TableHead>
-                  <TableHead>Ключ</TableHead>
-                  <TableHead className="hidden sm:table-cell">Вартість</TableHead>
-                  <TableHead className="hidden md:table-cell">Термін дії</TableHead>
-                  <TableHead className="hidden lg:table-cell">Програми</TableHead>
-                  <TableHead>Статус</TableHead>
+                  {isColumnVisible('key') && <TableHead>Ключ</TableHead>}
+                  {isColumnVisible('cost') && <TableHead>Вартість</TableHead>}
+                  {isColumnVisible('validity') && <TableHead>Термін дії</TableHead>}
+                  {isColumnVisible('programs') && <TableHead>Програми</TableHead>}
+                  {isColumnVisible('status') && <TableHead>Статус</TableHead>}
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -210,23 +227,23 @@ export default function LicensesListPage() {
                 {pagedResults!.map((lic) => (
                   <TableRow key={lic.id}>
                     <TableCell className="font-medium">{formatLicenseType(lic)}</TableCell>
-                    <TableCell className="font-mono text-sm">{maskKey(lic.key)}</TableCell>
-                    <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                    {isColumnVisible('key') && <TableCell className="font-mono text-sm">{maskKey(lic.key)}</TableCell>}
+                    {isColumnVisible('cost') && <TableCell className="text-sm text-muted-foreground">
                       {lic.cost ? `${lic.cost} грн` : '—'}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                    </TableCell>}
+                    {isColumnVisible('validity') && <TableCell className="text-sm text-muted-foreground">
                       {lic.is_perpetual ? 'Безстрокова' :
                         lic.start_date && lic.end_date
                           ? `${new Date(lic.start_date).toLocaleDateString('uk-UA')} — ${new Date(lic.end_date).toLocaleDateString('uk-UA')}`
                           : lic.trial_days ? `${lic.trial_days} днів`
                           : '—'}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                    </TableCell>}
+                    {isColumnVisible('programs') && <TableCell className="text-sm text-muted-foreground">
                       {lic.software_list?.length
                         ? lic.software_list.map((s) => s.name).join(', ')
                         : '—'}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(lic)}</TableCell>
+                    </TableCell>}
+                    {isColumnVisible('status') && <TableCell>{getStatusBadge(lic)}</TableCell>}
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Button

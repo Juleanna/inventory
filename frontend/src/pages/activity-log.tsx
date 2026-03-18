@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useActivityLog } from '@/hooks/use-activity-log'
+import { useColumnVisibility } from '@/hooks/use-column-visibility'
+import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,7 +36,17 @@ const MODEL_LABELS: Record<string, string> = {
   Contract: 'Договори',
 }
 
+const ACTIVITY_COLUMNS = [
+  { key: 'time' as const, label: 'Час' },
+  { key: 'user' as const, label: 'Користувач' },
+  { key: 'action' as const, label: 'Дія' },
+  { key: 'object' as const, label: "Об'єкт" },
+  { key: 'ip' as const, label: 'IP-адреса' },
+  { key: 'details' as const, label: 'Деталі' },
+]
+
 export default function ActivityLogPage() {
+  const { allColumns, isColumnVisible, toggleColumn } = useColumnVisibility('activity-log-columns', ACTIVITY_COLUMNS)
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState({
     action_type: '',
@@ -65,7 +77,9 @@ export default function ActivityLogPage() {
 
   return (
     <div>
-      <PageHeader title="Журнал дій" description="Історія всіх дій користувачів у системі" />
+      <PageHeader title="Журнал дій" description="Історія всіх дій користувачів у системі" actions={
+        <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['time']} />
+      } />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -141,20 +155,20 @@ export default function ActivityLogPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[180px]">Час</TableHead>
-                <TableHead>Користувач</TableHead>
-                <TableHead>Дія</TableHead>
-                <TableHead>Об'єкт</TableHead>
-                <TableHead>IP-адреса</TableHead>
-                <TableHead>Деталі</TableHead>
+                {isColumnVisible('time') && <TableHead className="w-[180px]">Час</TableHead>}
+                {isColumnVisible('user') && <TableHead>Користувач</TableHead>}
+                {isColumnVisible('action') && <TableHead>Дія</TableHead>}
+                {isColumnVisible('object') && <TableHead>Об'єкт</TableHead>}
+                {isColumnVisible('ip') && <TableHead>IP-адреса</TableHead>}
+                {isColumnVisible('details') && <TableHead>Деталі</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 10 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                    {ACTIVITY_COLUMNS.filter(c => isColumnVisible(c.key)).map((c) => (
+                      <TableCell key={c.key}><Skeleton className="h-4 w-full" /></TableCell>
                     ))}
                   </TableRow>
                 ))
@@ -163,30 +177,30 @@ export default function ActivityLogPage() {
                   const actionInfo = ACTION_TYPES[entry.action_type] || { label: entry.action_type_display || entry.action_type, color: 'bg-gray-100 text-gray-800' }
                   return (
                     <TableRow key={entry.id}>
-                      <TableCell className="text-xs">
+                      {isColumnVisible('time') && <TableCell className="text-xs">
                         <div>{new Date(entry.timestamp).toLocaleDateString('uk-UA')}</div>
                         <div className="text-muted-foreground">{formatDistanceToNow(new Date(entry.timestamp), { addSuffix: true, locale: uk })}</div>
-                      </TableCell>
-                      <TableCell className="font-medium text-sm">{entry.user_name}</TableCell>
-                      <TableCell>
+                      </TableCell>}
+                      {isColumnVisible('user') && <TableCell className="font-medium text-sm">{entry.user_name}</TableCell>}
+                      {isColumnVisible('action') && <TableCell>
                         <Badge variant="secondary" className={actionInfo.color}>{actionInfo.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">
+                      </TableCell>}
+                      {isColumnVisible('object') && <TableCell className="text-sm">
                         {entry.target_name && <div>{entry.target_name}</div>}
                         {entry.target_model && <div className="text-xs text-muted-foreground">{MODEL_LABELS[entry.target_model] || entry.target_model}</div>}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground font-mono">{entry.ip_address || '—'}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
+                      </TableCell>}
+                      {isColumnVisible('ip') && <TableCell className="text-xs text-muted-foreground font-mono">{entry.ip_address || '—'}</TableCell>}
+                      {isColumnVisible('details') && <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
                         {entry.metadata && Object.keys(entry.metadata).length > 0
                           ? JSON.stringify(entry.metadata).slice(0, 60)
                           : '—'}
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   )
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={ACTIVITY_COLUMNS.filter(c => isColumnVisible(c.key)).length} className="text-center py-8 text-muted-foreground">
                     Немає записів
                   </TableCell>
                 </TableRow>
