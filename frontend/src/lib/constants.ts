@@ -224,11 +224,16 @@ export const MOVEMENT_TYPE_LABELS: Record<string, string> = {
 export const LICENSE_TYPE_LABELS: Record<string, string> = {
   COMMERCIAL: 'Комерційна',
   FREEWARE: 'Freeware',
+  EULA: 'EULA (безкоштовне пропрієтарне)',
   SHAREWARE: 'Shareware',
   OPEN_SOURCE: 'Open Source',
   TRIAL: 'Trial (пробна)',
   OEM: 'OEM',
   VOLUME: 'Volume License (корпоративна)',
+  SUBSCRIPTION: 'Підписка (SaaS)',
+  SITE: 'Site License',
+  EDUCATIONAL: 'Навчальна / Академічна',
+  GOVERNMENT: 'Державна',
 }
 
 export const OPEN_SOURCE_TYPE_LABELS: Record<string, string> = {

@@ -10,11 +10,16 @@ class License(models.Model):
     LICENSE_TYPE_CHOICES = [
         ("COMMERCIAL", "Комерційна"),
         ("FREEWARE", "Freeware"),
+        ("EULA", "EULA (безкоштовне пропрієтарне)"),
         ("SHAREWARE", "Shareware"),
         ("OPEN_SOURCE", "Open Source"),
         ("TRIAL", "Trial (пробна)"),
         ("OEM", "OEM"),
         ("VOLUME", "Volume License (корпоративна)"),
+        ("SUBSCRIPTION", "Підписка (SaaS)"),
+        ("SITE", "Site License"),
+        ("EDUCATIONAL", "Навчальна / Академічна"),
+        ("GOVERNMENT", "Державна"),
     ]
 
     OPEN_SOURCE_LICENSE_CHOICES = [
