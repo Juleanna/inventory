@@ -432,8 +432,11 @@ class Equipment(models.Model):
                 barcode_format = barcode.get("code128", code, writer=ImageWriter())
                 buffer = BytesIO()
                 barcode_format.write(buffer)
+                safe_name = code.replace("/", "_").replace("\\", "_")
                 self.barcode_image.save(
-                    f"{code}_barcode.png", ContentFile(buffer.getvalue()), save=False
+                    f"{safe_name}_barcode.png",
+                    ContentFile(buffer.getvalue()),
+                    save=False,
                 )
                 buffer.close()
             except Exception as e:
@@ -458,8 +461,11 @@ class Equipment(models.Model):
                 img = qr.make_image(fill_color="black", back_color="white")
                 buffer = BytesIO()
                 img.save(buffer, format="PNG")
+                safe_name = code.replace("/", "_").replace("\\", "_")
                 self.qrcode_image.save(
-                    f"{code}_qrcode.png", ContentFile(buffer.getvalue()), save=False
+                    f"{safe_name}_qrcode.png",
+                    ContentFile(buffer.getvalue()),
+                    save=False,
                 )
                 buffer.close()
             except Exception as e:
@@ -658,8 +664,11 @@ class PeripheralDevice(models.Model):
                 barcode_format = barcode.get("code128", code, writer=ImageWriter())
                 buffer = BytesIO()
                 barcode_format.write(buffer)
+                safe_name = code.replace("/", "_").replace("\\", "_")
                 self.barcode_image.save(
-                    f"{code}_barcode.png", ContentFile(buffer.getvalue()), save=False
+                    f"{safe_name}_barcode.png",
+                    ContentFile(buffer.getvalue()),
+                    save=False,
                 )
                 buffer.close()
             except Exception as e:
@@ -683,8 +692,11 @@ class PeripheralDevice(models.Model):
                 img = qr.make_image(fill_color="black", back_color="white")
                 buffer = BytesIO()
                 img.save(buffer, format="PNG")
+                safe_name = code.replace("/", "_").replace("\\", "_")
                 self.qrcode_image.save(
-                    f"{code}_qrcode.png", ContentFile(buffer.getvalue()), save=False
+                    f"{safe_name}_qrcode.png",
+                    ContentFile(buffer.getvalue()),
+                    save=False,
                 )
                 buffer.close()
             except Exception as e:
