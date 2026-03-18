@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Shuffle, Copy, Eye, EyeOff } from 'lucide-react'
+import { toast } from 'sonner'
 import { DEPARTMENT_LABELS, POSITION_LABELS, EMPLOYMENT_TYPE_LABELS } from '@/lib/constants'
 import type { User } from '@/types'
 
@@ -37,10 +38,29 @@ const emptyForm = {
   is_active: true,
 }
 
+function generatePassword(length = 12): string {
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  const lower = 'abcdefghijklmnopqrstuvwxyz'
+  const digits = '0123456789'
+  const symbols = '!@#$%&*'
+  const all = upper + lower + digits + symbols
+  const required = [
+    upper[Math.floor(Math.random() * upper.length)],
+    lower[Math.floor(Math.random() * lower.length)],
+    digits[Math.floor(Math.random() * digits.length)],
+    symbols[Math.floor(Math.random() * symbols.length)],
+  ]
+  for (let i = required.length; i < length; i++) {
+    required.push(all[Math.floor(Math.random() * all.length)])
+  }
+  return required.sort(() => Math.random() - 0.5).join('')
+}
+
 export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps) {
   const createUser = useCreateUser()
   const updateUser = useUpdateUser()
   const isEdit = !!user
+  const [showPassword, setShowPassword] = useState(false)
 
   const [form, setForm] = useState(() =>
     user ? {
@@ -124,13 +144,57 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
                   </div>
                   <div className="space-y-1.5">
                     <Label>{isEdit ? 'Новий пароль' : 'Пароль *'}</Label>
-                    <Input
-                      type="password"
-                      value={form.password}
-                      onChange={(e) => update('password', e.target.value)}
-                      required={!isEdit}
-                      placeholder={isEdit ? 'Залиште порожнім' : ''}
-                    />
+                    <div className="flex gap-1">
+                      <div className="relative flex-1">
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          value={form.password}
+                          onChange={(e) => update('password', e.target.value)}
+                          required={!isEdit}
+                          placeholder={isEdit ? 'Залиште порожнім' : ''}
+                          className="pr-8"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full w-8 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff className="h-3.5 w-3.5 text-muted-foreground" /> : <Eye className="h-3.5 w-3.5 text-muted-foreground" />}
+                        </Button>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0"
+                        title="Згенерувати пароль"
+                        onClick={() => {
+                          const pwd = generatePassword()
+                          update('password', pwd)
+                          setShowPassword(true)
+                        }}
+                      >
+                        <Shuffle className="h-4 w-4" />
+                      </Button>
+                      {form.password && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="shrink-0"
+                          title="Копіювати пароль"
+                          onClick={() => {
+                            navigator.clipboard.writeText(form.password)
+                            toast.success('Пароль скопійовано')
+                          }}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <Label>Ім'я</Label>
