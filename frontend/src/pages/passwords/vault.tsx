@@ -401,9 +401,9 @@ export default function PasswordVaultPage() {
           <DialogHeader>
             <DialogTitle>{editSystemId ? 'Редагувати систему' : 'Додати систему'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmitSystem} className="flex flex-col overflow-hidden -mx-6">
-            <ScrollArea className="max-h-[60vh]">
-              <div className="space-y-4 px-6 py-2">
+          <form onSubmit={handleSubmitSystem} className="flex flex-col overflow-hidden">
+            <ScrollArea className="max-h-[65vh] -mx-6">
+              <div className="space-y-4 px-6 pb-4">
                 <div className="space-y-2">
                   <Label>Назва *</Label>
                   <Input
@@ -491,13 +491,13 @@ export default function PasswordVaultPage() {
 
       {/* Account Dialog (Add/Edit) */}
       <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editAccountId ? 'Редагувати обліковий запис' : 'Додати обліковий запис'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmitAccount} className="flex flex-col overflow-hidden -mx-6">
-            <ScrollArea className="max-h-[60vh]">
-              <div className="space-y-3 px-6 py-2">
+          <form onSubmit={handleSubmitAccount} className="flex flex-col overflow-hidden">
+            <ScrollArea className="max-h-[70vh] -mx-6">
+              <div className="space-y-3 px-6 pb-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Користувач *</Label>
                   <Select
