@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCreateUser, useUpdateUser } from '@/hooks/use-users'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -62,27 +62,35 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
   const isEdit = !!user
   const [showPassword, setShowPassword] = useState(false)
 
-  const [form, setForm] = useState(() =>
-    user ? {
-      username: user.username || '',
+  const buildForm = (u?: User | null) =>
+    u ? {
+      username: u.username || '',
       password: '',
-      email: user.email || '',
-      first_name: user.first_name || '',
-      last_name: user.last_name || '',
-      phone: user.phone || '',
-      mobile_phone: user.mobile_phone || '',
-      department: user.department || '',
-      custom_department: user.custom_department || '',
-      position: user.position || '',
-      custom_position: user.custom_position || '',
-      office_location: user.office_location || '',
-      room_number: user.room_number || '',
-      employment_type: user.employment_type || '',
-      hire_date: user.hire_date || '',
-      is_staff: user.is_staff,
-      is_active: user.is_active,
+      email: u.email || '',
+      first_name: u.first_name || '',
+      last_name: u.last_name || '',
+      phone: u.phone || '',
+      mobile_phone: u.mobile_phone || '',
+      department: u.department || '',
+      custom_department: u.custom_department || '',
+      position: u.position || '',
+      custom_position: u.custom_position || '',
+      office_location: u.office_location || '',
+      room_number: u.room_number || '',
+      employment_type: u.employment_type || '',
+      hire_date: u.hire_date || '',
+      is_staff: u.is_staff,
+      is_active: u.is_active,
     } : emptyForm
-  )
+
+  const [form, setForm] = useState(() => buildForm(user))
+
+  useEffect(() => {
+    if (open) {
+      setForm(buildForm(user))
+      setShowPassword(false)
+    }
+  }, [open, user])
 
   const update = (field: string, value: string | boolean) =>
     setForm((prev) => ({ ...prev, [field]: value }))
