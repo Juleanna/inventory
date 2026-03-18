@@ -401,9 +401,9 @@ export default function PasswordVaultPage() {
           <DialogHeader>
             <DialogTitle>{editSystemId ? 'Редагувати систему' : 'Додати систему'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmitSystem} className="flex flex-col overflow-hidden">
-            <ScrollArea className="max-h-[65vh] -mx-6">
-              <div className="space-y-4 px-6 pb-4">
+          <form onSubmit={handleSubmitSystem} className="flex flex-col">
+            <ScrollArea className="max-h-[65vh]">
+              <div className="space-y-4 pb-4">
                 <div className="space-y-2">
                   <Label>Назва *</Label>
                   <Input
@@ -478,7 +478,7 @@ export default function PasswordVaultPage() {
                 </div>
               </div>
             </ScrollArea>
-            <div className="flex justify-end gap-2 px-6 py-4 border-t">
+            <div className="flex justify-end gap-2 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => setSystemDialogOpen(false)}>Скасувати</Button>
               <Button type="submit" disabled={isSystemPending}>
                 {isSystemPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -495,9 +495,9 @@ export default function PasswordVaultPage() {
           <DialogHeader>
             <DialogTitle>{editAccountId ? 'Редагувати обліковий запис' : 'Додати обліковий запис'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmitAccount} className="flex flex-col overflow-hidden">
-            <ScrollArea className="max-h-[70vh] -mx-6">
-              <div className="space-y-3 px-6 pb-4">
+          <form onSubmit={handleSubmitAccount} className="flex flex-col">
+            <ScrollArea className="max-h-[70vh]">
+              <div className="space-y-3 pb-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Користувач *</Label>
                   <Select
@@ -639,7 +639,7 @@ export default function PasswordVaultPage() {
                 </div>
               </div>
             </ScrollArea>
-            <div className="flex justify-end gap-2 px-6 pt-4 border-t">
+            <div className="flex justify-end gap-2 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => setAccountDialogOpen(false)}>Скасувати</Button>
               <Button type="submit" disabled={isAccountPending}>
                 {isAccountPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
