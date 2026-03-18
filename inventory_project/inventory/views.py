@@ -7,7 +7,9 @@ import xlsxwriter
 from django_filters.rest_framework import DjangoFilterBackend
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -1385,19 +1387,63 @@ class ExportView(APIView):
             worksheet.write(row, 6, item["days_since_maintenance"] or "")
             worksheet.write(row, 7, item["current_user"] or "")
 
+    @staticmethod
+    def _register_cyrillic_font():
+        """Реєструє шрифт з підтримкою кирилиці"""
+        import os
+
+        font_paths = [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        ]
+        if os.path.exists(font_paths[0]):
+            if "DejaVuSans" not in pdfmetrics.getRegisteredFontNames():
+                pdfmetrics.registerFont(TTFont("DejaVuSans", font_paths[0]))
+            if os.path.exists(font_paths[1]) and "DejaVuSans-Bold" not in pdfmetrics.getRegisteredFontNames():
+                pdfmetrics.registerFont(TTFont("DejaVuSans-Bold", font_paths[1]))
+            return "DejaVuSans", "DejaVuSans-Bold"
+        return "Helvetica", "Helvetica-Bold"
+
+    def _get_cyrillic_styles(self):
+        """Повертає стилі з підтримкою кирилиці"""
+        font_name, font_bold = self._register_cyrillic_font()
+        styles = getSampleStyleSheet()
+        styles.add(ParagraphStyle(
+            name="CyrTitle",
+            fontName=font_bold,
+            fontSize=16,
+            leading=20,
+            alignment=1,
+            spaceAfter=12,
+        ))
+        styles.add(ParagraphStyle(
+            name="CyrHeading",
+            fontName=font_bold,
+            fontSize=12,
+            leading=14,
+            spaceAfter=6,
+        ))
+        styles.add(ParagraphStyle(
+            name="CyrNormal",
+            fontName=font_name,
+            fontSize=10,
+            leading=12,
+        ))
+        return styles, font_name, font_bold
+
     def _export_pdf(self, request, report_type):
         """Експорт в PDF"""
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4)
         elements = []
-        styles = getSampleStyleSheet()
+        styles, font_name, font_bold = self._get_cyrillic_styles()
 
         if report_type == "inventory":
-            elements = self._create_inventory_pdf_elements(request, styles)
+            elements = self._create_inventory_pdf_elements(request, styles, font_name, font_bold)
         elif report_type == "financial":
-            elements = self._create_financial_pdf_elements(styles)
+            elements = self._create_financial_pdf_elements(styles, font_name, font_bold)
         elif report_type == "maintenance":
-            elements = self._create_maintenance_pdf_elements(styles)
+            elements = self._create_maintenance_pdf_elements(styles, font_name, font_bold)
 
         doc.build(elements)
         buffer.seek(0)
@@ -1408,12 +1454,12 @@ class ExportView(APIView):
         )
         return response
 
-    def _create_inventory_pdf_elements(self, request, styles):
+    def _create_inventory_pdf_elements(self, request, styles, font_name, font_bold):
         """Створити PDF елементи для інвентарного звіту"""
         elements = []
 
         # Заголовок
-        title = Paragraph("Інвентарний звіт", styles["Title"])
+        title = Paragraph("Інвентарний звіт", styles["CyrTitle"])
         elements.append(title)
 
         # Отримати дані
@@ -1451,8 +1497,10 @@ class ExportView(APIView):
                     ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
                     ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTNAME", (0, 0), (-1, 0), font_bold),
+                    ("FONTNAME", (0, 1), (-1, -1), font_name),
                     ("FONTSIZE", (0, 0), (-1, 0), 10),
+                    ("FONTSIZE", (0, 1), (-1, -1), 9),
                     ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
                     ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
                     ("GRID", (0, 0), (-1, -1), 1, colors.black),
@@ -1463,11 +1511,11 @@ class ExportView(APIView):
         elements.append(table)
         return elements
 
-    def _create_financial_pdf_elements(self, styles):
+    def _create_financial_pdf_elements(self, styles, font_name, font_bold):
         """Створити PDF для фінансового звіту"""
         elements = []
 
-        title = Paragraph("Фінансовий звіт", styles["Title"])
+        title = Paragraph("Фінансовий звіт", styles["CyrTitle"])
         elements.append(title)
 
         data = ReportService.generate_financial_report()
@@ -1481,16 +1529,16 @@ class ExportView(APIView):
         Відсоток амортизації: {data['summary']['depreciation_percentage']:.1f}%
         """
 
-        summary_para = Paragraph(summary_text, styles["Normal"])
+        summary_para = Paragraph(summary_text, styles["CyrNormal"])
         elements.append(summary_para)
 
         return elements
 
-    def _create_maintenance_pdf_elements(self, styles):
+    def _create_maintenance_pdf_elements(self, styles, font_name, font_bold):
         """Створити PDF для звіту по ТО"""
         elements = []
 
-        title = Paragraph("Звіт по технічному обслуговуванню", styles["Title"])
+        title = Paragraph("Звіт по технічному обслуговуванню", styles["CyrTitle"])
         elements.append(title)
 
         data = ReportService.generate_maintenance_report()
@@ -1499,7 +1547,7 @@ class ExportView(APIView):
         if needs_maintenance:
             subtitle = Paragraph(
                 f"Обладнання що потребує ТО ({len(needs_maintenance)} одиниць):",
-                styles["Heading2"],
+                styles["CyrHeading"],
             )
             elements.append(subtitle)
 
@@ -1522,7 +1570,8 @@ class ExportView(APIView):
                         ("BACKGROUND", (0, 0), (-1, 0), colors.red),
                         ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
                         ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                        ("FONTNAME", (0, 0), (-1, 0), font_bold),
+                        ("FONTNAME", (0, 1), (-1, -1), font_name),
                         ("GRID", (0, 0), (-1, -1), 1, colors.black),
                     ]
                 )
