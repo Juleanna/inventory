@@ -397,13 +397,13 @@ export default function PasswordVaultPage() {
 
       {/* System Dialog (Add/Edit) */}
       <Dialog open={systemDialogOpen} onOpenChange={setSystemDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0">
-          <DialogHeader className="px-6 pt-6 pb-0">
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+          <DialogHeader>
             <DialogTitle>{editSystemId ? 'Редагувати систему' : 'Додати систему'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmitSystem} className="flex flex-col overflow-hidden">
-            <ScrollArea className="max-h-[65vh]">
-              <div className="space-y-4 px-6 py-4">
+          <form onSubmit={handleSubmitSystem} className="flex flex-col overflow-hidden -mx-6">
+            <ScrollArea className="max-h-[60vh]">
+              <div className="space-y-4 px-6 py-2">
                 <div className="space-y-2">
                   <Label>Назва *</Label>
                   <Input
@@ -491,13 +491,13 @@ export default function PasswordVaultPage() {
 
       {/* Account Dialog (Add/Edit) */}
       <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col p-0">
-          <DialogHeader className="px-6 pt-6 pb-0">
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader>
             <DialogTitle>{editAccountId ? 'Редагувати обліковий запис' : 'Додати обліковий запис'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmitAccount} className="flex flex-col overflow-hidden">
-            <ScrollArea className="flex-1" style={{ maxHeight: 'calc(85vh - 130px)' }}>
-              <div className="space-y-3 px-6 pb-1">
+          <form onSubmit={handleSubmitAccount} className="flex flex-col overflow-hidden -mx-6">
+            <ScrollArea className="max-h-[60vh]">
+              <div className="space-y-3 px-6 py-2">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Користувач *</Label>
                   <Select
@@ -639,7 +639,7 @@ export default function PasswordVaultPage() {
                 </div>
               </div>
             </ScrollArea>
-            <div className="flex justify-end gap-2 px-6 py-4 border-t">
+            <div className="flex justify-end gap-2 px-6 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => setAccountDialogOpen(false)}>Скасувати</Button>
               <Button type="submit" disabled={isAccountPending}>
                 {isAccountPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
