@@ -809,7 +809,7 @@ class ExportReportView(APIView):
 
     def get(self, request):
         report_type = request.query_params.get("type", "inventory")
-        fmt = request.query_params.get("format", "excel")
+        fmt = request.query_params.get("export_format", "excel")
 
         if report_type == "depreciation":
             return self._export_depreciation(fmt)

@@ -30,10 +30,10 @@ export const equipmentApi = {
     apiClient.delete(`/equipment/${id}/`),
 
   exportExcel: (filters?: EquipmentFilters) =>
-    apiClient.get('/export/', { params: { ...filters, format: 'excel' }, responseType: 'blob' }),
+    apiClient.get('/export/', { params: { ...filters, export_format: 'excel' }, responseType: 'blob' }),
 
   exportPDF: (filters?: EquipmentFilters) =>
-    apiClient.get('/export/', { params: { ...filters, format: 'pdf' }, responseType: 'blob' }),
+    apiClient.get('/export/', { params: { ...filters, export_format: 'pdf' }, responseType: 'blob' }),
 
   regenerateCodes: (id: number) =>
     apiClient.post<Equipment>(`/equipment/${id}/regenerate-codes/`),

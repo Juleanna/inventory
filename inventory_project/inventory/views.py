@@ -1194,7 +1194,7 @@ class ExportView(APIView):
 
     def get(self, request):
         """Експорт звітів"""
-        export_format = request.query_params.get("format", "excel")  # excel або pdf
+        export_format = request.query_params.get("export_format", "excel")  # excel або pdf
         report_type = request.query_params.get("type", "inventory")
 
         try:
