@@ -1228,6 +1228,8 @@ class ExportView(APIView):
             self._create_maintenance_excel(workbook)
         elif report_type == "software":
             self._create_software_excel(workbook)
+        elif report_type == "peripherals":
+            self._create_peripherals_excel(workbook)
 
         workbook.close()
         output.seek(0)
@@ -1422,6 +1424,33 @@ class ExportView(APIView):
         worksheet.set_column(3, 3, 15)
         worksheet.set_column(4, 4, 40)
 
+    def _create_peripherals_excel(self, workbook):
+        """Створити звіт периферії в Excel"""
+        from .models import PeripheralDevice
+
+        worksheet = workbook.add_worksheet("Периферійні пристрої")
+        headers = ["Назва", "Тип", "Серійний номер", "Інв. номер", "Підключено до"]
+        header_format = workbook.add_format(
+            {"bold": True, "bg_color": "#D7E4BC", "border": 1}
+        )
+        for col, header in enumerate(headers):
+            worksheet.write(0, col, header, header_format)
+
+        devices = PeripheralDevice.objects.select_related("connected_to").all()
+
+        for row, dev in enumerate(devices, 1):
+            worksheet.write(row, 0, dev.name)
+            worksheet.write(row, 1, dev.get_type_display() if hasattr(dev, 'get_type_display') else dev.type)
+            worksheet.write(row, 2, dev.serial_number)
+            worksheet.write(row, 3, dev.inventory_number or "")
+            worksheet.write(row, 4, dev.connected_to.name if dev.connected_to else "")
+
+        worksheet.set_column(0, 0, 25)
+        worksheet.set_column(1, 1, 15)
+        worksheet.set_column(2, 2, 25)
+        worksheet.set_column(3, 3, 15)
+        worksheet.set_column(4, 4, 25)
+
     @staticmethod
     def _register_cyrillic_font():
         """Реєструє шрифт з підтримкою кирилиці"""
@@ -1481,6 +1510,8 @@ class ExportView(APIView):
             elements = self._create_maintenance_pdf_elements(styles, font_name, font_bold)
         elif report_type == "software":
             elements = self._create_software_pdf_elements(styles, font_name, font_bold)
+        elif report_type == "peripherals":
+            elements = self._create_peripherals_pdf_elements(styles, font_name, font_bold)
 
         doc.build(elements)
         buffer.seek(0)
@@ -1642,6 +1673,44 @@ class ExportView(APIView):
             ])
 
         table = Table(table_data, colWidths=[120, 60, 90, 70, 120])
+        table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4472C4")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (-1, 0), font_bold),
+                ("FONTNAME", (0, 1), (-1, -1), font_name),
+                ("FONTSIZE", (0, 0), (-1, 0), 9),
+                ("FONTSIZE", (0, 1), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F2F2F2")]),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ])
+        )
+        elements.append(table)
+        return elements
+
+    def _create_peripherals_pdf_elements(self, styles, font_name, font_bold):
+        """Створити PDF для звіту периферії"""
+        from .models import PeripheralDevice
+
+        elements = []
+        title = Paragraph("Периферійні пристрої", styles["CyrTitle"])
+        elements.append(title)
+
+        devices = PeripheralDevice.objects.select_related("connected_to").all()
+
+        table_data = [["Назва", "Тип", "Серійний номер", "Інв. номер", "Підключено до"]]
+        for dev in devices[:100]:
+            table_data.append([
+                dev.name[:25],
+                dev.get_type_display() if hasattr(dev, 'get_type_display') else dev.type,
+                dev.serial_number[:20],
+                (dev.inventory_number or "")[:15],
+                (dev.connected_to.name if dev.connected_to else "")[:25],
+            ])
+
+        table = Table(table_data, colWidths=[100, 70, 100, 80, 110])
         table.setStyle(
             TableStyle([
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4472C4")),

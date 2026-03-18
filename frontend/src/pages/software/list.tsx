@@ -20,7 +20,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { AppWindow, Plus, Trash2, Pencil, Loader2, ChevronRight, ChevronDown, Monitor, ArrowUp, ArrowDown, ArrowUpDown, Download } from 'lucide-react'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { AppWindow, Plus, Trash2, Pencil, Loader2, ChevronRight, ChevronDown, Monitor, ArrowUp, ArrowDown, ArrowUpDown, Download, FileSpreadsheet, FileText } from 'lucide-react'
 import type { Software, Equipment } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -187,14 +190,24 @@ export default function SoftwareListPage() {
                 Видалити ({selectedIds.size})
               </Button>
             )}
-            <Button variant="outline" onClick={() => exportSoftware('excel')}>
-              <Download className="mr-2 h-4 w-4" />
-              Excel
-            </Button>
-            <Button variant="outline" onClick={() => exportSoftware('pdf')}>
-              <Download className="mr-2 h-4 w-4" />
-              PDF
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
+                  Експорт
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => exportSoftware('excel')}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportSoftware('pdf')}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button onClick={handleAdd}>
               <Plus className="mr-2 h-4 w-4" />
               Додати

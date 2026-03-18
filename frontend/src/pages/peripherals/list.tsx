@@ -19,28 +19,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { Usb, Plus, Trash2, Pencil, Loader2, QrCode, ArrowUp, ArrowDown, ArrowUpDown, X, Shuffle, ChevronRight, ChevronDown, Monitor, Download } from 'lucide-react'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Usb, Plus, Trash2, Pencil, Loader2, QrCode, ArrowUp, ArrowDown, ArrowUpDown, X, Shuffle, ChevronRight, ChevronDown, Monitor, Download, FileSpreadsheet, FileText } from 'lucide-react'
 import { PERIPHERAL_TYPE_LABELS } from '@/lib/constants'
 import type { PeripheralDevice, Equipment } from '@/types'
+import apiClient from '@/api/client'
+import { toast } from 'sonner'
 
-function exportPeripheralsCsv(devices: PeripheralDevice[]) {
-  const BOM = '\uFEFF'
-  const header = ['Назва', 'Тип', 'Серійний номер', 'Інв. номер', 'Підключено до']
-  const rows = devices.map((d) => [
-    d.name,
-    PERIPHERAL_TYPE_LABELS[d.type] || d.type,
-    d.serial_number,
-    d.inventory_number || '',
-    d.connected_to?.name || '',
-  ])
-  const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
-  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'peripherals.csv'
-  a.click()
-  URL.revokeObjectURL(url)
+async function exportPeripherals(format: 'excel' | 'pdf') {
+  try {
+    const response = await apiClient.get('/export/', {
+      params: { export_format: format, type: 'peripherals' },
+      responseType: 'blob',
+    })
+    const ext = format === 'excel' ? 'xlsx' : 'pdf'
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `peripherals.${ext}`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    toast.success(`Експорт ${format === 'excel' ? 'Excel' : 'PDF'} завершено`)
+  } catch {
+    toast.error('Помилка експорту')
+  }
 }
 
 export default function PeripheralsListPage() {
@@ -191,10 +195,24 @@ export default function PeripheralsListPage() {
                 Видалити ({selectedIds.size})
               </Button>
             )}
-            <Button variant="outline" onClick={() => data?.results && exportPeripheralsCsv(data.results)}>
-              <Download className="mr-2 h-4 w-4" />
-              CSV
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
+                  Експорт
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => exportPeripherals('excel')}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportPeripherals('pdf')}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button onClick={handleAdd}>
               <Plus className="mr-2 h-4 w-4" />
               Додати
