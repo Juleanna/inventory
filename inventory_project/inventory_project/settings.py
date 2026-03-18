@@ -369,7 +369,7 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="inventory@yourcompany
 
 # Налаштування файлів
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = os.environ.get("MEDIA_ROOT", str(BASE_DIR / "media"))
 
 # Налаштування кешування
 if DEBUG:
