@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { automationApi, TRIGGER_TYPES, ACTION_TYPES, type AutomationRule } from '@/api/automation'
 import { useAuthStore } from '@/stores/auth-store'
@@ -239,6 +239,17 @@ function RuleDialog({ open, onOpenChange, rule, onSave, saving }: {
   const [conditionField, setConditionField] = useState('')
   const [conditionValue, setConditionValue] = useState('')
   const [actionType, setActionType] = useState('SEND_NOTIFICATION')
+
+  useEffect(() => {
+    if (open) {
+      setName(rule?.name || '')
+      setDescription(rule?.description || '')
+      setTriggerType(rule?.trigger_type || 'EQUIPMENT_AGE')
+      setConditionField('')
+      setConditionValue('')
+      setActionType('SEND_NOTIFICATION')
+    }
+  }, [open, rule])
 
   const handleSave = () => {
     if (!name.trim()) return

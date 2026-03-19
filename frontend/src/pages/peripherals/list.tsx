@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { usePeripheralsList, useCreatePeripheral, useUpdatePeripheral, useDeletePeripheral, useBulkDeletePeripherals, useRegeneratePeripheralCodes } from '@/hooks/use-peripherals'
 import { useEquipmentList } from '@/hooks/use-equipment'
 import { useDebounce } from '@/hooks/use-debounce'
@@ -529,21 +529,30 @@ function PeripheralFormDialog({ open, onOpenChange, device }: { open: boolean; o
   const updatePeripheral = useUpdatePeripheral()
   const { data: equipmentData } = useEquipmentList({ page_size: 200 })
 
-  const [form, setForm] = useState(() =>
-    device ? {
-      name: device.name || '',
-      type: device.type || '',
-      serial_number: device.serial_number || '',
-      inventory_number: device.inventory_number || '',
-      connected_to_id: device.connected_to ? String(device.connected_to.id) : '',
-    } : {
-      name: '',
-      type: '',
-      serial_number: '',
-      inventory_number: '',
-      connected_to_id: '',
+  const emptyForm = {
+    name: '',
+    type: '',
+    serial_number: '',
+    inventory_number: '',
+    connected_to_id: '',
+  }
+
+  const buildForm = (d?: PeripheralDevice | null) =>
+    d ? {
+      name: d.name || '',
+      type: d.type || '',
+      serial_number: d.serial_number || '',
+      inventory_number: d.inventory_number || '',
+      connected_to_id: d.connected_to ? String(d.connected_to.id) : '',
+    } : emptyForm
+
+  const [form, setForm] = useState(() => buildForm(device))
+
+  useEffect(() => {
+    if (open) {
+      setForm(buildForm(device))
     }
-  )
+  }, [open, device])
 
   const update = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }))

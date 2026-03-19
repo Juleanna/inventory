@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLicensesList, useCreateLicense, useUpdateLicense, useDeleteLicense } from '@/hooks/use-licenses'
 import { useSoftwareList } from '@/hooks/use-software'
 import { useUsersList } from '@/hooks/use-auth'
@@ -343,23 +343,30 @@ function LicenseFormDialog({ open, onOpenChange, license }: { open: boolean; onO
   const { data: equipmentData } = useEquipmentList({ page_size: 200 })
   const [swSearch, setSwSearch] = useState('')
 
-  const [form, setForm] = useState<LicenseFormState>(() =>
-    license ? {
-      license_type: license.license_type || '',
-      open_source_type: license.open_source_type || '',
-      key: license.key || '',
-      description: license.description || '',
-      activations: String(license.activations ?? 1),
-      start_date: license.start_date || '',
-      end_date: license.end_date || '',
-      is_perpetual: license.is_perpetual ?? false,
-      cost: license.cost || '',
-      trial_days: license.trial_days ? String(license.trial_days) : '',
-      oem_device: license.oem_device ? String(license.oem_device) : '',
-      software_ids: license.software_list?.map((s) => s.id) || [],
-      user: license.user ? String(license.user) : '',
+  const buildForm = (l?: License | null): LicenseFormState =>
+    l ? {
+      license_type: l.license_type || '',
+      open_source_type: l.open_source_type || '',
+      key: l.key || '',
+      description: l.description || '',
+      activations: String(l.activations ?? 1),
+      start_date: l.start_date || '',
+      end_date: l.end_date || '',
+      is_perpetual: l.is_perpetual ?? false,
+      cost: l.cost || '',
+      trial_days: l.trial_days ? String(l.trial_days) : '',
+      oem_device: l.oem_device ? String(l.oem_device) : '',
+      software_ids: l.software_list?.map((s) => s.id) || [],
+      user: l.user ? String(l.user) : '',
     } : emptyForm
-  )
+
+  const [form, setForm] = useState<LicenseFormState>(() => buildForm(license))
+
+  useEffect(() => {
+    if (open) {
+      setForm(buildForm(license))
+    }
+  }, [open, license])
 
   const update = (field: keyof LicenseFormState, value: string | boolean | number[]) =>
     setForm((prev) => ({ ...prev, [field]: value }))
