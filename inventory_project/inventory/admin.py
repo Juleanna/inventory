@@ -47,6 +47,7 @@ from .password_management import (
     SystemCategory,
 )
 from .spare_parts import (
+    Counterparty,
     PurchaseOrder,
     PurchaseOrderItem,
     SparePart,
@@ -770,6 +771,16 @@ class StorageLocationAdmin(ModelAdmin):
     search_fields = ("name",)
 
 
+@admin.register(Counterparty)
+class CounterpartyAdmin(ModelAdmin):
+    """Адмін для контрагентів"""
+    compressed_fields = True
+    list_display = ("name", "short_name", "edrpou", "contact_person", "phone", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("name", "short_name", "edrpou", "contact_person")
+    ordering = ("name",)
+
+
 @admin.register(SparePartCategory)
 class SparePartCategoryAdmin(ModelAdmin):
     compressed_fields = True
@@ -895,13 +906,14 @@ class PurchaseOrderAdmin(ModelAdmin):
     list_display = (
         "order_number",
         "supplier",
+        "counterparty",
         "status",
         "order_date",
         "total_amount",
         "expected_delivery_date",
     )
-    list_filter = ("status", "order_date", "expected_delivery_date")
-    search_fields = ("order_number", "supplier__name")
+    list_filter = ("status", "order_date", "expected_delivery_date", "counterparty")
+    search_fields = ("order_number", "supplier__name", "counterparty__name")
     readonly_fields = ("created_at", "updated_at")
     date_hierarchy = "order_date"
 
@@ -912,14 +924,15 @@ class PurchaseOrderItemAdmin(ModelAdmin):
 
     list_display = (
         "purchase_order",
-        "spare_part",
+        "item_type",
+        "display_name",
         "quantity_ordered",
         "quantity_received",
         "unit_price",
         "total_price",
     )
-    list_filter = ("purchase_order__status",)
-    search_fields = ("purchase_order__order_number", "spare_part__name")
+    list_filter = ("purchase_order__status", "item_type")
+    search_fields = ("purchase_order__order_number", "spare_part__name", "item_name")
     readonly_fields = ("total_price", "quantity_pending", "is_fully_received")
 
 

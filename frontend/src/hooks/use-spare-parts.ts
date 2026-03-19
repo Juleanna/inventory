@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { sparePartsApi } from '@/api/spare-parts'
-import type { SparePart, Supplier, PurchaseOrder } from '@/types'
+import type { SparePart, Supplier, Counterparty, PurchaseOrder } from '@/types'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
 
@@ -253,6 +253,69 @@ export function useIssueSparePart() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Помилка видачі запчастини'))
+    },
+  })
+}
+
+// === Контрагенти ===
+
+export function useCounterpartiesList(params?: { page?: number; page_size?: number; search?: string; is_active?: boolean }) {
+  return useQuery({
+    queryKey: ['counterparties', params],
+    queryFn: () => sparePartsApi.listCounterparties(params).then((r) => r.data),
+  })
+}
+
+export function useCounterparty(id: number) {
+  return useQuery({
+    queryKey: ['counterparty', id],
+    queryFn: () => sparePartsApi.getCounterparty(id).then((r) => r.data),
+    enabled: !!id,
+  })
+}
+
+export function useCreateCounterparty() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: Partial<Counterparty>) => sparePartsApi.createCounterparty(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['counterparties'] })
+      toast.success('Контрагента додано')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка додавання контрагента'))
+    },
+  })
+}
+
+export function useUpdateCounterparty() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Counterparty> }) =>
+      sparePartsApi.updateCounterparty(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['counterparties'] })
+      toast.success('Контрагента оновлено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка оновлення контрагента'))
+    },
+  })
+}
+
+export function useDeleteCounterparty() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => sparePartsApi.deleteCounterparty(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['counterparties'] })
+      toast.success('Контрагента видалено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка видалення контрагента'))
     },
   })
 }

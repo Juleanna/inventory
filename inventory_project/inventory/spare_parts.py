@@ -406,6 +406,46 @@ class SparePartMovement(models.Model):
         self.spare_part.save()
 
 
+class Counterparty(models.Model):
+    """Контрагент (організація, на яку здійснюється закупівля)"""
+
+    name = models.CharField(max_length=200, verbose_name="Назва організації")
+
+    short_name = models.CharField(
+        max_length=100, blank=True, verbose_name="Скорочена назва"
+    )
+
+    edrpou = models.CharField(
+        max_length=20, blank=True, verbose_name="Код ЄДРПОУ"
+    )
+
+    address = models.TextField(blank=True, verbose_name="Адреса")
+
+    contact_person = models.CharField(
+        max_length=200, blank=True, verbose_name="Контактна особа"
+    )
+
+    phone = models.CharField(max_length=50, blank=True, verbose_name="Телефон")
+
+    email = models.EmailField(blank=True, verbose_name="Email")
+
+    notes = models.TextField(blank=True, verbose_name="Примітки")
+
+    is_active = models.BooleanField(default=True, verbose_name="Активний")
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Створено")
+
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Оновлено")
+
+    class Meta:
+        verbose_name = "Контрагент"
+        verbose_name_plural = "Контрагенти"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.short_name or self.name
+
+
 class PurchaseOrder(models.Model):
     """Замовлення на закупівлю"""
 
@@ -427,6 +467,14 @@ class PurchaseOrder(models.Model):
 
     supplier = models.ForeignKey(
         Supplier, on_delete=models.CASCADE, verbose_name="Постачальник"
+    )
+
+    counterparty = models.ForeignKey(
+        Counterparty,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Контрагент (покупець)",
     )
 
     status = models.CharField(
@@ -523,6 +571,12 @@ class PurchaseOrder(models.Model):
 class PurchaseOrderItem(models.Model):
     """Позиція замовлення на закупівлю"""
 
+    ITEM_TYPE_CHOICES = [
+        ("SPARE_PART", "Запчастина"),
+        ("EQUIPMENT", "Обладнання"),
+        ("OTHER", "Інше"),
+    ]
+
     purchase_order = models.ForeignKey(
         PurchaseOrder,
         on_delete=models.CASCADE,
@@ -530,8 +584,26 @@ class PurchaseOrderItem(models.Model):
         verbose_name="Замовлення",
     )
 
+    item_type = models.CharField(
+        max_length=20,
+        choices=ITEM_TYPE_CHOICES,
+        default="SPARE_PART",
+        verbose_name="Тип позиції",
+    )
+
+    item_name = models.CharField(
+        max_length=300,
+        blank=True,
+        verbose_name="Назва позиції",
+        help_text="Для обладнання або іншого типу — назва вручну",
+    )
+
     spare_part = models.ForeignKey(
-        SparePart, on_delete=models.CASCADE, verbose_name="Запчастина"
+        SparePart,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="Запчастина",
     )
 
     quantity_ordered = models.PositiveIntegerField(verbose_name="Замовлена кількість")
@@ -557,10 +629,19 @@ class PurchaseOrderItem(models.Model):
     class Meta:
         verbose_name = "Позиція замовлення"
         verbose_name_plural = "Позиції замовлення"
-        unique_together = ["purchase_order", "spare_part"]
 
     def __str__(self):
-        return f"{self.spare_part.name} x {self.quantity_ordered}"
+        name = self.item_name or (self.spare_part.name if self.spare_part else "—")
+        return f"{name} x {self.quantity_ordered}"
+
+    @property
+    def display_name(self):
+        """Назва для відображення"""
+        if self.item_name:
+            return self.item_name
+        if self.spare_part:
+            return self.spare_part.name
+        return "—"
 
     @property
     def quantity_pending(self):
@@ -693,6 +774,7 @@ class SparePartsService:
                 "delivery_method",
                 "tracking_number",
                 "notes",
+                "counterparty_id",
             ):
                 if kwargs.get(field):
                     extra[field] = kwargs[field]
@@ -709,19 +791,28 @@ class SparePartsService:
 
             # Додати позиції
             for item_data in items:
-                spare_part = SparePart.objects.get(id=item_data["spare_part_id"])
+                item_type = item_data.get("item_type", "SPARE_PART")
                 quantity = item_data["quantity"]
-                unit_price = item_data.get("unit_price", spare_part.unit_cost)
+                unit_price = Decimal(str(item_data.get("unit_price", 0)))
                 add_to_inventory = item_data.get("add_to_inventory", True)
 
-                order_item = PurchaseOrderItem.objects.create(
-                    purchase_order=purchase_order,
-                    spare_part=spare_part,
-                    quantity_ordered=quantity,
-                    unit_price=unit_price,
-                    add_to_inventory=add_to_inventory,
-                )
+                item_kwargs = {
+                    "purchase_order": purchase_order,
+                    "item_type": item_type,
+                    "quantity_ordered": quantity,
+                    "unit_price": unit_price,
+                    "add_to_inventory": add_to_inventory,
+                }
 
+                if item_type == "SPARE_PART" and item_data.get("spare_part_id"):
+                    spare_part = SparePart.objects.get(id=item_data["spare_part_id"])
+                    item_kwargs["spare_part"] = spare_part
+                    if not unit_price:
+                        item_kwargs["unit_price"] = spare_part.unit_cost
+                else:
+                    item_kwargs["item_name"] = item_data.get("item_name", "")
+
+                order_item = PurchaseOrderItem.objects.create(**item_kwargs)
                 total_amount += order_item.total_price
 
             # Оновити загальну суму
@@ -746,8 +837,8 @@ class SparePartsService:
                 order_item.quantity_received += quantity_received
                 order_item.save()
 
-                # Створити рух запчастин тільки якщо позначено "додати до запасів"
-                if order_item.add_to_inventory:
+                # Створити рух запчастин тільки якщо це запчастина і позначено "додати до запасів"
+                if order_item.add_to_inventory and order_item.spare_part:
                     cls.receive_spare_part(
                         spare_part_id=order_item.spare_part.id,
                         quantity=quantity_received,

@@ -25,6 +25,7 @@ import {
   TrendingUp,
   Zap,
   Webhook,
+  Building2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -42,6 +43,7 @@ const operationsNav = [
   { path: '/maintenance', label: 'Обслуговування', icon: Wrench },
   { path: '/spare-parts', label: 'Запчастини', icon: Package },
   { path: '/contracts', label: 'Договори', icon: FileText },
+  { path: '/counterparties', label: 'Контрагенти', icon: Building2 },
 ]
 
 const toolsNav = [

@@ -197,11 +197,28 @@ export interface Supplier {
   updated_at: string
 }
 
+export interface Counterparty {
+  id: number
+  name: string
+  short_name: string
+  edrpou: string
+  address: string
+  contact_person: string
+  phone: string
+  email: string
+  notes: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface PurchaseOrder {
   id: string
   order_number: string
   supplier: number
   supplier_details?: Supplier
+  counterparty: number | null
+  counterparty_details?: Counterparty
   status: string
   order_date: string
   expected_delivery_date: string | null
@@ -221,8 +238,11 @@ export interface PurchaseOrder {
 
 export interface PurchaseOrderItem {
   id: number
-  spare_part: string
+  item_type: 'SPARE_PART' | 'EQUIPMENT' | 'OTHER'
+  item_name: string
+  spare_part: string | null
   spare_part_details?: SparePart
+  display_name: string
   quantity_ordered: number
   quantity_received: number
   unit_price: string

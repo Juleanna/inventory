@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { SparePart, Supplier, PurchaseOrder, SparePartCategory, SparePartsAnalytics, SparePartMovementsResponse, PaginatedResponse } from '@/types'
+import type { SparePart, Supplier, Counterparty, PurchaseOrder, SparePartCategory, SparePartsAnalytics, SparePartMovementsResponse, PaginatedResponse } from '@/types'
 
 export const sparePartsApi = {
   listParts: (params?: { page?: number; page_size?: number; search?: string; category?: number; primary_supplier?: number }) =>
@@ -75,4 +75,20 @@ export const sparePartsApi = {
     notes?: string
   }) =>
     apiClient.post<{ success: boolean }>('/spare-parts/movements/', data),
+
+  // Контрагенти
+  listCounterparties: (params?: { page?: number; page_size?: number; search?: string; is_active?: boolean }) =>
+    apiClient.get<PaginatedResponse<Counterparty>>('/counterparties/', { params }),
+
+  getCounterparty: (id: number) =>
+    apiClient.get<Counterparty>(`/counterparties/${id}/`),
+
+  createCounterparty: (data: Partial<Counterparty>) =>
+    apiClient.post<Counterparty>('/counterparties/', data),
+
+  updateCounterparty: (id: number, data: Partial<Counterparty>) =>
+    apiClient.patch<Counterparty>(`/counterparties/${id}/`, data),
+
+  deleteCounterparty: (id: number) =>
+    apiClient.delete(`/counterparties/${id}/`),
 }

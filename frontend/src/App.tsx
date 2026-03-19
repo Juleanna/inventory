@@ -42,6 +42,7 @@ const DepreciationPage = lazy(() => import('@/pages/depreciation'))
 const AdvancedAnalyticsPage = lazy(() => import('@/pages/advanced-analytics'))
 const AutomationRulesPage = lazy(() => import('@/pages/automation-rules'))
 const WebhooksPage = lazy(() => import('@/pages/webhooks'))
+const CounterpartiesPage = lazy(() => import('@/pages/counterparties'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -106,6 +107,7 @@ export default function App() {
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="backups" element={<BackupsPage />} />
+              <Route path="counterparties" element={<CounterpartiesPage />} />
               <Route path="contracts" element={<ContractsPage />} />
               <Route path="activity-log" element={<ActivityLogPage />} />
               <Route path="location-map" element={<LocationMapPage />} />

@@ -65,6 +65,7 @@ from .views import (  # Нові views для запчастин; 2FA views; Mai
     SparePartCategoriesViewSet,
     SparePartsViewSet,
     StartMaintenanceView,
+    CounterpartyViewSet,
     StorageLocationsViewSet,
     SuppliersViewSet,
     TwoFactorSetupView,
@@ -84,6 +85,7 @@ router.register(r"peripherals", PeripheralDeviceViewSet)
 # Нові ViewSets для запчастин
 router.register(r"spare-parts", SparePartsViewSet)
 router.register(r"suppliers", SuppliersViewSet)
+router.register(r"counterparties", CounterpartyViewSet)
 router.register(r"purchase-orders", PurchaseOrdersViewSet)
 router.register(r"spare-part-categories", SparePartCategoriesViewSet)
 router.register(r"storage-locations", StorageLocationsViewSet)

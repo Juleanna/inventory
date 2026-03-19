@@ -60,6 +60,7 @@ from .serializers import (
     SoftwareSerializer,
 )
 from .spare_parts import (
+    Counterparty,
     PurchaseOrder,
     PurchaseOrderItem,
     SparePart,
@@ -3707,6 +3708,34 @@ class SuppliersViewSet(ModelViewSet):
         return SupplierSerializer
 
 
+class CounterpartyViewSet(ModelViewSet):
+    """ViewSet для управління контрагентами"""
+
+    queryset = Counterparty.objects.all()
+    permission_classes = [IsAuthenticated]
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["name", "short_name", "edrpou", "contact_person"]
+    ordering_fields = ["name", "created_at"]
+    ordering = ["name"]
+
+    def get_serializer_class(self):
+        from rest_framework import serializers
+
+        class CounterpartySerializer(serializers.ModelSerializer):
+            class Meta:
+                model = Counterparty
+                fields = "__all__"
+
+        return CounterpartySerializer
+
+    def get_queryset(self):
+        queryset = Counterparty.objects.all()
+        is_active = self.request.query_params.get("is_active")
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == "true")
+        return queryset
+
+
 class StorageLocationsViewSet(ModelViewSet):
     """ViewSet для управління місцями зберігання"""
 
@@ -3741,18 +3770,22 @@ class PurchaseOrdersViewSet(ModelViewSet):
         from rest_framework import serializers
 
         class PurchaseOrderItemSerializer(serializers.ModelSerializer):
-            spare_part_name = serializers.CharField(
-                source="spare_part.name", read_only=True
-            )
+            spare_part_name = serializers.SerializerMethodField()
             spare_part_number = serializers.CharField(
-                source="spare_part.part_number", read_only=True
+                source="spare_part.part_number", read_only=True, default=""
             )
+            display_name = serializers.ReadOnlyField()
             quantity_pending = serializers.ReadOnlyField()
             is_fully_received = serializers.ReadOnlyField()
 
             class Meta:
                 model = PurchaseOrderItem
                 fields = "__all__"
+
+            def get_spare_part_name(self, obj):
+                if obj.spare_part:
+                    return obj.spare_part.name
+                return obj.item_name or ""
 
         class SupplierBriefSerializer(serializers.ModelSerializer):
             class Meta:
@@ -3764,22 +3797,31 @@ class PurchaseOrdersViewSet(ModelViewSet):
                 model = SparePart
                 fields = ["id", "name", "part_number"]
 
+        class CounterpartyBriefSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = Counterparty
+                fields = ["id", "name", "short_name", "edrpou"]
+
         class PurchaseOrderItemWithDetailsSerializer(serializers.ModelSerializer):
-            spare_part_name = serializers.CharField(
-                source="spare_part.name", read_only=True
-            )
+            spare_part_name = serializers.SerializerMethodField()
             spare_part_number = serializers.CharField(
-                source="spare_part.part_number", read_only=True
+                source="spare_part.part_number", read_only=True, default=""
             )
             spare_part_details = SparePartBriefSerializer(
                 source="spare_part", read_only=True
             )
+            display_name = serializers.ReadOnlyField()
             quantity_pending = serializers.ReadOnlyField()
             is_fully_received = serializers.ReadOnlyField()
 
             class Meta:
                 model = PurchaseOrderItem
                 fields = "__all__"
+
+            def get_spare_part_name(self, obj):
+                if obj.spare_part:
+                    return obj.spare_part.name
+                return obj.item_name or ""
 
         class PurchaseOrderSerializer(serializers.ModelSerializer):
             items = PurchaseOrderItemWithDetailsSerializer(many=True, read_only=True)
@@ -3788,6 +3830,9 @@ class PurchaseOrdersViewSet(ModelViewSet):
             )
             supplier_name = serializers.CharField(
                 source="supplier.name", read_only=True
+            )
+            counterparty_details = CounterpartyBriefSerializer(
+                source="counterparty", read_only=True
             )
             created_by_name = serializers.CharField(
                 source="created_by.get_full_name", read_only=True
@@ -3801,7 +3846,7 @@ class PurchaseOrdersViewSet(ModelViewSet):
 
     def get_queryset(self):
         """Кастомна фільтрація замовлень"""
-        queryset = PurchaseOrder.objects.select_related("supplier", "created_by")
+        queryset = PurchaseOrder.objects.select_related("supplier", "created_by", "counterparty")
 
         status = self.request.query_params.get("status")
         if status:
@@ -3867,6 +3912,7 @@ class CreatePurchaseOrderView(APIView):
             delivery_method=request.data.get("delivery_method", ""),
             tracking_number=request.data.get("tracking_number", ""),
             notes=request.data.get("notes", ""),
+            counterparty_id=request.data.get("counterparty_id"),
         )
 
         if purchase_order:
