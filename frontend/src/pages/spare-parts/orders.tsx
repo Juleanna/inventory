@@ -482,15 +482,12 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
             </div>
           </div>
 
-          {/* Expected date + Delivery */}
+          {/* Expected date + Delivery method */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Очікувана дата доставки</Label>
               <Input type="date" value={form.expected_delivery_date} onChange={(e) => update('expected_delivery_date', e.target.value)} />
             </div>
-
-          {/* Delivery method + Tracking */}
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Спосіб доставки</Label>
               <Select value={form.delivery_method} onValueChange={(v) => update('delivery_method', v === '_none' ? '' : v)}>
@@ -503,10 +500,12 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>ТТН / Трекінг номер</Label>
-              <Input value={form.tracking_number} onChange={(e) => update('tracking_number', e.target.value)} placeholder="20450..." />
-            </div>
+          </div>
+
+          {/* Tracking number */}
+          <div className="space-y-2">
+            <Label>ТТН / Трекінг номер</Label>
+            <Input value={form.tracking_number} onChange={(e) => update('tracking_number', e.target.value)} placeholder="20450..." />
           </div>
 
           <Separator />
