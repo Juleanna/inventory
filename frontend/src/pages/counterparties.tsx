@@ -84,7 +84,7 @@ export default function CounterpartiesPage() {
         <LoadingSpinner />
       ) : !data?.results?.length ? (
         <EmptyState
-          icon={Building2}
+          icon={<Building2 className="h-8 w-8" />}
           title="Контрагентів не знайдено"
           description="Додайте першого контрагента для ведення довідника організацій"
         />
