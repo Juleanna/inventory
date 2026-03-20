@@ -329,7 +329,7 @@ export default function OrdersPage() {
 }
 
 interface OrderItem {
-  item_type: 'SPARE_PART' | 'EQUIPMENT' | 'OTHER'
+  item_type: string
   spare_part_id: string
   item_name: string
   quantity: number
