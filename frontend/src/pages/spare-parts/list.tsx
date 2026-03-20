@@ -25,11 +25,12 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Package, Truck, ShoppingCart, Plus, Loader2, Download, AlertTriangle } from 'lucide-react'
 import { useColumnVisibility } from '@/hooks/use-column-visibility'
 import { ColumnVisibility } from '@/components/shared/column-visibility'
-import { SPARE_PART_CONDITION_LABELS } from '@/lib/constants'
+import { SPARE_PART_CONDITION_LABELS, ITEM_TYPE_LABELS } from '@/lib/constants'
 import type { SparePart } from '@/types'
 
 const SPARE_PARTS_COLUMNS = [
   { key: 'name' as const, label: 'Назва' },
+  { key: 'type' as const, label: 'Тип' },
   { key: 'partNumber' as const, label: 'Артикул' },
   { key: 'quantity' as const, label: 'Кількість' },
   { key: 'price' as const, label: 'Ціна' },
@@ -38,9 +39,9 @@ const SPARE_PARTS_COLUMNS = [
 
 function exportSparePartsCsv(parts: SparePart[]) {
   const BOM = '\uFEFF'
-  const headers = ['Назва', 'Артикул', 'Виробник', 'Кількість', 'Мін. запас', 'Ціна', 'Місце']
+  const headers = ['Назва', 'Тип', 'Артикул', 'Виробник', 'Кількість', 'Мін. запас', 'Ціна', 'Місце']
   const rows = parts.map((p) => [
-    p.name, p.part_number, p.manufacturer, String(p.quantity_in_stock),
+    p.name, ITEM_TYPE_LABELS[p.item_type] || p.item_type, p.part_number, p.manufacturer, String(p.quantity_in_stock),
     String(p.minimum_stock_level), p.unit_price, p.storage_name || p.storage_location || '',
   ])
   const csv = BOM + [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n')
@@ -48,7 +49,7 @@ function exportSparePartsCsv(parts: SparePart[]) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = 'spare-parts.csv'
+  a.download = 'items.csv'
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -58,10 +59,12 @@ export default function SparePartsListPage() {
   const [page, setPage] = useState(1)
   const [showCreate, setShowCreate] = useState(false)
   const [stockFilter, setStockFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
   const debouncedSearch = useDebounce(search)
   const { data, isLoading } = useSparePartsList({
     page,
     search: debouncedSearch || undefined,
+    item_type: typeFilter || undefined,
   })
   const totalPages = data ? Math.ceil(data.count / 25) : 0
 
@@ -84,7 +87,7 @@ export default function SparePartsListPage() {
   return (
     <div>
       <PageHeader
-        title="Запчастини"
+        title="Товари та матеріали"
         description={`Всього: ${data?.count || 0} позицій`}
         actions={
           <div className="flex gap-2">
@@ -155,9 +158,20 @@ export default function SparePartsListPage() {
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Пошук запчастин..."
+          placeholder="Пошук товарів..."
           className="sm:w-72"
         />
+        <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v === '_all' ? '' : v); setPage(1) }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Всі типи" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="_all">Всі типи</SelectItem>
+            {Object.entries(ITEM_TYPE_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>{label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {stockFilter && (
           <Badge variant="secondary" className="h-9 px-3 cursor-pointer" onClick={() => setStockFilter('')}>
             {stockFilter === 'low' ? 'Низький запас' : 'Немає в наявності'} &times;
@@ -170,7 +184,7 @@ export default function SparePartsListPage() {
       ) : !filteredResults?.length ? (
         <EmptyState
           icon={<Package className="h-12 w-12" />}
-          title="Запчастини не знайдено"
+          title="Товарів не знайдено"
         />
       ) : (
         <>
@@ -179,6 +193,7 @@ export default function SparePartsListPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Назва</TableHead>
+                  {isColumnVisible('type') && <TableHead>Тип</TableHead>}
                   {isColumnVisible('partNumber') && <TableHead>Артикул</TableHead>}
                   {isColumnVisible('quantity') && <TableHead>Кількість</TableHead>}
                   {isColumnVisible('price') && <TableHead>Ціна</TableHead>}
@@ -192,6 +207,11 @@ export default function SparePartsListPage() {
                       <Link to={`/spare-parts/${part.id}`} className="font-medium hover:underline text-primary">{part.name}</Link>
                       <p className="text-xs text-muted-foreground">{part.manufacturer}</p>
                     </TableCell>
+                    {isColumnVisible('type') && <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {ITEM_TYPE_LABELS[part.item_type] || part.item_type}
+                      </Badge>
+                    </TableCell>}
                     {isColumnVisible('partNumber') && <TableCell className="font-mono text-sm">
                       {part.part_number}
                     </TableCell>}
@@ -241,6 +261,7 @@ function CreateSparePartDialog({ open, onOpenChange }: { open: boolean; onOpenCh
   const createPart = useCreateSparePart()
 
   const initialForm = {
+    item_type: 'SPARE_PART',
     name: '',
     part_number: '',
     manufacturer_part_number: '',
@@ -270,6 +291,7 @@ function CreateSparePartDialog({ open, onOpenChange }: { open: boolean; onOpenCh
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const payload: Record<string, unknown> = {
+      item_type: form.item_type,
       name: form.name,
       part_number: form.part_number,
       condition: form.condition,
@@ -303,7 +325,7 @@ function CreateSparePartDialog({ open, onOpenChange }: { open: boolean; onOpenCh
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0">
         <DialogHeader className="px-6 pt-6 pb-0">
-          <DialogTitle>Додати запчастину</DialogTitle>
+          <DialogTitle>Додати товар</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <Tabs defaultValue="main" className="w-full">
@@ -314,6 +336,17 @@ function CreateSparePartDialog({ open, onOpenChange }: { open: boolean; onOpenCh
             </TabsList>
 
             <TabsContent value="main" className="px-6 pb-2 mt-0 space-y-4">
+              <div className="space-y-2">
+                <Label>Тип товару *</Label>
+                <Select value={form.item_type} onValueChange={(v) => update('item_type', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ITEM_TYPE_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Назва *</Label>
@@ -400,7 +433,7 @@ function CreateSparePartDialog({ open, onOpenChange }: { open: boolean; onOpenCh
                     checked={form.is_critical}
                     onCheckedChange={(checked) => update('is_critical', !!checked)}
                   />
-                  <Label htmlFor="is_critical" className="cursor-pointer">Критична запчастина</Label>
+                  <Label htmlFor="is_critical" className="cursor-pointer">Критичний товар</Label>
                 </div>
                 <div className="space-y-2">
                   <Label>Термін придатності</Label>

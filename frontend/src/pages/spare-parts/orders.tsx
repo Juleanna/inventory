@@ -20,7 +20,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { ArrowLeft, ShoppingCart, Plus, Loader2, ArrowRight, Eye, Trash2, Package, Truck } from 'lucide-react'
-import { ORDER_STATUS_LABELS, DELIVERY_METHOD_LABELS } from '@/lib/constants'
+import { ORDER_STATUS_LABELS, DELIVERY_METHOD_LABELS, ITEM_TYPE_LABELS } from '@/lib/constants'
 import type { PurchaseOrder } from '@/types'
 
 const STATUS_FLOW: Record<string, string[]> = {
@@ -337,11 +337,7 @@ interface OrderItem {
   add_to_inventory: boolean
 }
 
-const ITEM_TYPE_LABELS: Record<string, string> = {
-  SPARE_PART: 'Запчастина',
-  EQUIPMENT: 'Обладнання',
-  OTHER: 'Інше',
-}
+type ItemSource = 'catalog' | 'manual'
 
 function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const createOrder = useCreatePurchaseOrder()
@@ -360,6 +356,7 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
   const [items, setItems] = useState<OrderItem[]>([])
 
   // New item form
+  const [itemSource, setItemSource] = useState<ItemSource>('catalog')
   const [newItem, setNewItem] = useState({
     item_type: 'SPARE_PART' as 'SPARE_PART' | 'EQUIPMENT' | 'OTHER',
     spare_part_id: '',
@@ -375,16 +372,16 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
   const addItem = () => {
     if (newItem.quantity < 1) return
 
-    if (newItem.item_type === 'SPARE_PART') {
+    if (itemSource === 'catalog') {
       if (!newItem.spare_part_id) return
       const part = partsData?.results?.find((p) => String(p.id) === newItem.spare_part_id)
       if (!part) return
-      if (items.some((i) => i.item_type === 'SPARE_PART' && i.spare_part_id === newItem.spare_part_id)) return
+      if (items.some((i) => i.spare_part_id === newItem.spare_part_id && i.spare_part_id !== '')) return
 
       setItems((prev) => [
         ...prev,
         {
-          item_type: 'SPARE_PART',
+          item_type: part.item_type || 'SPARE_PART',
           spare_part_id: newItem.spare_part_id,
           item_name: part.name,
           quantity: newItem.quantity,
@@ -408,7 +405,7 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
       ])
     }
 
-    setNewItem({ item_type: newItem.item_type, spare_part_id: '', item_name: '', quantity: 1, unit_price: '', add_to_inventory: newItem.item_type === 'SPARE_PART' })
+    setNewItem({ item_type: newItem.item_type, spare_part_id: '', item_name: '', quantity: 1, unit_price: '', add_to_inventory: itemSource === 'catalog' })
   }
 
   const removeItem = (index: number) => {
@@ -559,23 +556,38 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
             <div className="rounded-md border p-3 space-y-3 bg-muted/30">
               <p className="text-xs font-medium text-muted-foreground">Додати позицію</p>
               <div className="flex gap-2 mb-2">
-                <Select value={newItem.item_type} onValueChange={(v) => setNewItem((prev) => ({
-                  ...prev,
-                  item_type: v as 'SPARE_PART' | 'EQUIPMENT' | 'OTHER',
-                  spare_part_id: '',
-                  item_name: '',
-                  add_to_inventory: v === 'SPARE_PART',
-                }))}>
-                  <SelectTrigger className="w-[160px] text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(ITEM_TYPE_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex rounded-md border overflow-hidden text-sm">
+                  <button
+                    type="button"
+                    className={`px-3 py-1.5 ${itemSource === 'catalog' ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-muted'}`}
+                    onClick={() => { setItemSource('catalog'); setNewItem((prev) => ({ ...prev, spare_part_id: '', item_name: '' })) }}
+                  >
+                    З довідника
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-3 py-1.5 ${itemSource === 'manual' ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-muted'}`}
+                    onClick={() => { setItemSource('manual'); setNewItem((prev) => ({ ...prev, spare_part_id: '', item_name: '' })) }}
+                  >
+                    Вручну
+                  </button>
+                </div>
+                {itemSource === 'manual' && (
+                  <Select value={newItem.item_type} onValueChange={(v) => setNewItem((prev) => ({
+                    ...prev,
+                    item_type: v as 'SPARE_PART' | 'EQUIPMENT' | 'OTHER',
+                  }))}>
+                    <SelectTrigger className="w-[180px] text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(ITEM_TYPE_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="grid grid-cols-[1fr,80px,100px] gap-2">
-                {newItem.item_type === 'SPARE_PART' ? (
+                {itemSource === 'catalog' ? (
                   <Select value={newItem.spare_part_id} onValueChange={(v) => {
                     const part = partsData?.results?.find((p) => String(p.id) === v)
                     setNewItem((prev) => ({
@@ -584,12 +596,17 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
                       unit_price: part?.unit_cost || prev.unit_price,
                     }))
                   }}>
-                    <SelectTrigger className="text-sm"><SelectValue placeholder="Оберіть запчастину" /></SelectTrigger>
+                    <SelectTrigger className="text-sm"><SelectValue placeholder="Оберіть з довідника" /></SelectTrigger>
                     <SelectContent>
                       {partsData?.results
-                        ?.filter((p) => !items.some((i) => i.item_type === 'SPARE_PART' && i.spare_part_id === String(p.id)))
+                        ?.filter((p) => !items.some((i) => i.spare_part_id === String(p.id) && i.spare_part_id !== ''))
                         .map((p) => (
-                          <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                          <SelectItem key={p.id} value={String(p.id)}>
+                            {p.name}
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              ({ITEM_TYPE_LABELS[p.item_type] || p.item_type})
+                            </span>
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
@@ -597,7 +614,7 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
                   <Input
                     value={newItem.item_name}
                     onChange={(e) => setNewItem((prev) => ({ ...prev, item_name: e.target.value }))}
-                    placeholder={newItem.item_type === 'EQUIPMENT' ? 'Ноутбук HP ProBook 450...' : 'Назва позиції...'}
+                    placeholder="Назва позиції..."
                     className="text-sm"
                   />
                 )}
@@ -620,7 +637,7 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
                 />
               </div>
               <div className="flex items-center justify-between">
-                {newItem.item_type === 'SPARE_PART' && (
+                {itemSource === 'catalog' && (
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="add-to-inv"
@@ -638,7 +655,7 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
                     size="sm"
                     variant="outline"
                     onClick={addItem}
-                    disabled={newItem.item_type === 'SPARE_PART' ? !newItem.spare_part_id : !newItem.item_name.trim()}
+                    disabled={itemSource === 'catalog' ? !newItem.spare_part_id : !newItem.item_name.trim()}
                   >
                     <Plus className="mr-1 h-3.5 w-3.5" />
                     Додати

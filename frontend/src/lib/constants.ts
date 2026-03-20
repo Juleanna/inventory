@@ -170,6 +170,15 @@ export const ACCOUNT_STATUS_LABELS: Record<string, string> = {
   locked: 'Заблокований',
 }
 
+export const ITEM_TYPE_LABELS: Record<string, string> = {
+  SPARE_PART: 'Запчастина',
+  EQUIPMENT: 'Обладнання',
+  CONSUMABLE: 'Витратний матеріал',
+  COMPONENT: 'Комплектуючі',
+  TOOL: 'Інструмент',
+  OTHER: 'Інше',
+}
+
 export const SPARE_PART_CONDITION_LABELS: Record<string, string> = {
   NEW: 'Нова',
   REFURBISHED: 'Відновлена',

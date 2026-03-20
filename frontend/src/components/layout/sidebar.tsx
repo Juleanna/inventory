@@ -41,7 +41,7 @@ const mainNav = [
 
 const operationsNav = [
   { path: '/maintenance', label: 'Обслуговування', icon: Wrench },
-  { path: '/spare-parts', label: 'Запчастини', icon: Package },
+  { path: '/spare-parts', label: 'Товари та матеріали', icon: Package },
   { path: '/contracts', label: 'Договори', icon: FileText },
   { path: '/counterparties', label: 'Контрагенти', icon: Building2 },
 ]

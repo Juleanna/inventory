@@ -104,7 +104,16 @@ class StorageLocation(models.Model):
 
 
 class SparePart(models.Model):
-    """Запчастина"""
+    """Товар / матеріал (запчастина, обладнання, витратний матеріал тощо)"""
+
+    ITEM_TYPE_CHOICES = [
+        ("SPARE_PART", "Запчастина"),
+        ("EQUIPMENT", "Обладнання"),
+        ("CONSUMABLE", "Витратний матеріал"),
+        ("COMPONENT", "Комплектуючі"),
+        ("TOOL", "Інструмент"),
+        ("OTHER", "Інше"),
+    ]
 
     CONDITION_CHOICES = [
         ("NEW", "Нова"),
@@ -123,7 +132,14 @@ class SparePart(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    name = models.CharField(max_length=200, verbose_name="Назва запчастини")
+    item_type = models.CharField(
+        max_length=20,
+        choices=ITEM_TYPE_CHOICES,
+        default="SPARE_PART",
+        verbose_name="Тип товару",
+    )
+
+    name = models.CharField(max_length=200, verbose_name="Назва")
 
     part_number = models.CharField(
         max_length=100, unique=True, verbose_name="Номер запчастини"

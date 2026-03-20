@@ -3414,6 +3414,11 @@ class SparePartsViewSet(ModelViewSet):
                 quantity_in_stock__lte=models.F("minimum_stock_level")
             )
 
+        # Фільтр по типу товару
+        item_type = self.request.query_params.get("item_type")
+        if item_type:
+            queryset = queryset.filter(item_type=item_type)
+
         # Фільтр по категорії
         category_id = self.request.query_params.get("category_id")
         if category_id:

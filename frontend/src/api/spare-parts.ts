@@ -2,7 +2,7 @@ import apiClient from './client'
 import type { SparePart, Supplier, Counterparty, PurchaseOrder, SparePartCategory, SparePartsAnalytics, SparePartMovementsResponse, PaginatedResponse } from '@/types'
 
 export const sparePartsApi = {
-  listParts: (params?: { page?: number; page_size?: number; search?: string; category?: number; primary_supplier?: number }) =>
+  listParts: (params?: { page?: number; page_size?: number; search?: string; category?: number; primary_supplier?: number; item_type?: string }) =>
     apiClient.get<PaginatedResponse<SparePart>>('/spare-parts/', { params }),
 
   getPart: (id: number) =>

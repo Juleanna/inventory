@@ -8,7 +8,7 @@ const ROUTE_LABELS: Record<string, string> = {
   peripherals: 'Периферія',
   maintenance: 'Обслуговування',
   schedule: 'Розклад',
-  'spare-parts': 'Запчастини',
+  'spare-parts': 'Товари та матеріали',
   suppliers: 'Постачальники',
   orders: 'Замовлення',
   passwords: 'Паролі',

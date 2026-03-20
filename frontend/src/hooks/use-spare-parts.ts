@@ -73,7 +73,7 @@ export function useSparePart(id: string) {
   })
 }
 
-export function useSparePartsList(params?: { page?: number; page_size?: number; search?: string; category?: number }) {
+export function useSparePartsList(params?: { page?: number; page_size?: number; search?: string; category?: number; item_type?: string }) {
   return useQuery({
     queryKey: ['spare-parts', params],
     queryFn: () => sparePartsApi.listParts(params).then((r) => r.data),

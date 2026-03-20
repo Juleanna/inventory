@@ -136,6 +136,7 @@ export interface MaintenanceSchedule {
 
 export interface SparePart {
   id: string
+  item_type: 'SPARE_PART' | 'EQUIPMENT' | 'CONSUMABLE' | 'COMPONENT' | 'TOOL' | 'OTHER'
   name: string
   part_number: string
   manufacturer_part_number: string
