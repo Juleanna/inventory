@@ -18,14 +18,9 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useDebounce } from '@/hooks/use-debounce'
-import { Building2, Plus, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Building2, Plus, Loader2, Pencil, Trash2, Mail, Phone, MapPin, FileText } from 'lucide-react'
 import type { Counterparty } from '@/types'
 
 export default function CounterpartiesPage() {
@@ -84,69 +79,81 @@ export default function CounterpartiesPage() {
         <LoadingSpinner />
       ) : !data?.results?.length ? (
         <EmptyState
-          icon={<Building2 className="h-8 w-8" />}
+          icon={<Building2 className="h-12 w-12" />}
           title="Контрагентів не знайдено"
           description="Додайте першого контрагента для ведення довідника організацій"
         />
       ) : (
         <>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Назва</TableHead>
-                  <TableHead>ЄДРПОУ</TableHead>
-                  <TableHead>Контактна особа</TableHead>
-                  <TableHead>Телефон</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead className="w-[50px]" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.results.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">
-                      <div>{item.name}</div>
-                      {item.short_name && (
-                        <div className="text-xs text-muted-foreground">{item.short_name}</div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {data.results.map((item) => (
+              <Card key={item.id} className="transition-colors hover:border-primary/50">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1 mr-2">
+                      {item.short_name ? (
+                        <>
+                          <CardTitle className="text-base text-primary">{item.short_name}</CardTitle>
+                          <p className="text-xs text-muted-foreground truncate">{item.name}</p>
+                        </>
+                      ) : (
+                        <CardTitle className="text-base">{item.name}</CardTitle>
                       )}
-                    </TableCell>
-                    <TableCell>{item.edrpou || '—'}</TableCell>
-                    <TableCell>{item.contact_person || '—'}</TableCell>
-                    <TableCell>{item.phone || '—'}</TableCell>
-                    <TableCell>{item.email || '—'}</TableCell>
-                    <TableCell>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => handleEdit(item)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive"
+                        onClick={() => setDeleteId(item.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                       <Badge variant={item.is_active ? 'default' : 'secondary'}>
                         {item.is_active ? 'Активний' : 'Неактивний'}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(item)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Редагувати
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setDeleteId(item.id)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Видалити
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  {item.edrpou && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <FileText className="h-3 w-3" />
+                      <span>ЄДРПОУ: {item.edrpou}</span>
+                    </div>
+                  )}
+                  {item.contact_person && (
+                    <p className="font-medium">{item.contact_person}</p>
+                  )}
+                  {item.email && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail className="h-3 w-3" />
+                      <span>{item.email}</span>
+                    </div>
+                  )}
+                  {item.phone && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Phone className="h-3 w-3" />
+                      <span>{item.phone}</span>
+                    </div>
+                  )}
+                  {item.address && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      <span>{item.address}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
           {totalPages > 1 && (
@@ -165,8 +172,9 @@ export default function CounterpartiesPage() {
         open={deleteId !== null}
         onOpenChange={() => setDeleteId(null)}
         title="Видалити контрагента?"
-        description="Цю дію не можна скасувати. Контрагент буде видалений з системи."
+        description="Ви впевнені, що хочете видалити цього контрагента? Цю дію неможливо скасувати."
         confirmLabel="Видалити"
+        variant="destructive"
         onConfirm={() => {
           if (deleteId) {
             deleteCounterparty.mutate(deleteId)
