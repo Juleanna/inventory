@@ -22,6 +22,12 @@ class License(models.Model):
         ("GOVERNMENT", "Державна"),
     ]
 
+    MANUAL_STATUS_CHOICES = [
+        ("", "Автоматично"),
+        ("SUSPENDED", "Призупинена"),
+        ("REVOKED", "Анульована"),
+    ]
+
     OPEN_SOURCE_LICENSE_CHOICES = [
         ("GPL", "GPL"),
         ("MIT", "MIT"),
@@ -65,6 +71,13 @@ class License(models.Model):
         blank=True,
         verbose_name="Прив'язаний пристрій (OEM)",
         related_name="oem_licenses",
+    )
+    manual_status = models.CharField(
+        max_length=20,
+        choices=MANUAL_STATUS_CHOICES,
+        blank=True,
+        default="",
+        verbose_name="Ручний статус",
     )
     user = models.ForeignKey(
         User,

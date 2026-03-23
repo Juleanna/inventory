@@ -345,6 +345,7 @@ export interface License {
   cost: string | null
   trial_days: number | null
   oem_device: number | null
+  manual_status: string
   user: number | null
   user_name: string
   software_list: Array<{ id: number; name: string; version: string }>

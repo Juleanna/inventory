@@ -109,6 +109,7 @@ class LicenseSerializer(serializers.ModelSerializer):
             "cost",
             "trial_days",
             "oem_device",
+            "manual_status",
             "user",
             "user_name",
             "software_list",

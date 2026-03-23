@@ -49,6 +49,12 @@ function getLicenseStatus(lic: License) {
 }
 
 function getStatusBadge(lic: License) {
+  // Ручний статус має пріоритет
+  if (lic.manual_status === 'SUSPENDED')
+    return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Призупинена</Badge>
+  if (lic.manual_status === 'REVOKED')
+    return <Badge variant="destructive">Анульована</Badge>
+
   const status = getLicenseStatus(lic)
   if (lic.license_type === 'FREEWARE' || lic.license_type === 'OPEN_SOURCE')
     return <Badge variant="default">Безкоштовна</Badge>
@@ -317,6 +323,7 @@ interface LicenseFormState {
   oem_device: string
   software_ids: number[]
   user: string
+  manual_status: string
 }
 
 const emptyForm: LicenseFormState = {
@@ -333,6 +340,7 @@ const emptyForm: LicenseFormState = {
   oem_device: '',
   software_ids: [],
   user: '',
+  manual_status: '',
 }
 
 function LicenseFormDialog({ open, onOpenChange, license }: { open: boolean; onOpenChange: (v: boolean) => void; license?: License | null }) {
@@ -358,6 +366,7 @@ function LicenseFormDialog({ open, onOpenChange, license }: { open: boolean; onO
       oem_device: l.oem_device ? String(l.oem_device) : '',
       software_ids: l.software_list?.map((s) => s.id) || [],
       user: l.user ? String(l.user) : '',
+      manual_status: l.manual_status || '',
     } : emptyForm
 
   const [form, setForm] = useState<LicenseFormState>(() => buildForm(license))
@@ -388,6 +397,7 @@ function LicenseFormDialog({ open, onOpenChange, license }: { open: boolean; onO
       license_type: form.license_type,
       description: form.description || undefined,
       software_ids: form.software_ids,
+      manual_status: form.manual_status || '',
     }
 
     // Conditional fields based on type
@@ -551,7 +561,7 @@ function LicenseFormDialog({ open, onOpenChange, license }: { open: boolean; onO
                 </div>
               )}
 
-              {/* User + Description row */}
+              {/* User + Status row */}
               <div className="grid grid-cols-2 gap-3">
                 {showUser ? (
                   <div className="space-y-1.5">
@@ -570,9 +580,24 @@ function LicenseFormDialog({ open, onOpenChange, license }: { open: boolean; onO
                   </div>
                 ) : <div />}
                 <div className="space-y-1.5">
-                  <Label>Опис</Label>
-                  <Input value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Примітка..." />
+                  <Label>Статус</Label>
+                  <Select value={form.manual_status || '_auto'} onValueChange={(v) => update('manual_status', v === '_auto' ? '' : v)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_auto">Автоматично</SelectItem>
+                      <SelectItem value="SUSPENDED">Призупинена</SelectItem>
+                      <SelectItem value="REVOKED">Анульована</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1.5">
+                <Label>Опис</Label>
+                <Input value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Примітка..." />
               </div>
 
               {/* Software multi-select */}
