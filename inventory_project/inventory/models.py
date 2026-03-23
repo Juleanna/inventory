@@ -33,6 +33,67 @@ logger = logging.getLogger("inventory")
 User = get_user_model()
 
 
+class Employee(models.Model):
+    """Довідник співробітників (незалежний від облікових записів системи)"""
+
+    DEPARTMENT_CHOICES = [
+        ("IT", "IT відділ"),
+        ("HR", "Кадри"),
+        ("FIN", "Бухгалтерія"),
+        ("SALES", "Відділ продажів"),
+        ("MGMT", "Керівництво"),
+        ("PROD", "Виробництво"),
+        ("LOG", "Логістика"),
+        ("LEGAL", "Юридичний"),
+        ("OTHER", "Інше"),
+    ]
+
+    last_name = models.CharField(max_length=100, verbose_name="Прізвище")
+    first_name = models.CharField(max_length=100, verbose_name="Ім'я")
+    middle_name = models.CharField(
+        max_length=100, blank=True, verbose_name="По батькові"
+    )
+    position = models.CharField(
+        max_length=200, blank=True, verbose_name="Посада"
+    )
+    department = models.CharField(
+        max_length=20,
+        choices=DEPARTMENT_CHOICES,
+        blank=True,
+        verbose_name="Відділ",
+    )
+    custom_department = models.CharField(
+        max_length=200, blank=True, verbose_name="Відділ (інший)"
+    )
+    email = models.EmailField(blank=True, verbose_name="Email")
+    phone = models.CharField(max_length=50, blank=True, verbose_name="Телефон")
+    is_active = models.BooleanField(default=True, verbose_name="Активний")
+    notes = models.TextField(blank=True, verbose_name="Примітки")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Співробітник"
+        verbose_name_plural = "Співробітники"
+        ordering = ["last_name", "first_name"]
+
+    def __str__(self):
+        full = f"{self.last_name} {self.first_name}"
+        if self.middle_name:
+            full += f" {self.middle_name}"
+        return full
+
+    @property
+    def full_name(self):
+        return str(self)
+
+    @property
+    def department_display(self):
+        if self.department == "OTHER" and self.custom_department:
+            return self.custom_department
+        return dict(self.DEPARTMENT_CHOICES).get(self.department, self.department)
+
+
 class EquipmentManager(models.Manager):
     """Менеджер для моделі Equipment з додатковими методами"""
 
@@ -216,9 +277,9 @@ class Equipment(models.Model):
         verbose_name="Пріоритет",
     )
 
-    # Користувачі
+    # Співробітники
     current_user = models.ForeignKey(
-        User,
+        Employee,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -226,7 +287,7 @@ class Equipment(models.Model):
         related_name="assigned_equipment",
     )
     responsible_person = models.ForeignKey(
-        User,
+        Employee,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

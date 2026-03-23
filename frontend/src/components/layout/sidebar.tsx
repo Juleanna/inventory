@@ -26,6 +26,7 @@ import {
   Zap,
   Webhook,
   Building2,
+  UserRound,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -44,6 +45,7 @@ const operationsNav = [
   { path: '/spare-parts', label: 'Товари та матеріали', icon: Package },
   { path: '/contracts', label: 'Договори', icon: FileText },
   { path: '/counterparties', label: 'Контрагенти', icon: Building2 },
+  { path: '/employees', label: 'Співробітники', icon: UserRound },
 ]
 
 const toolsNav = [

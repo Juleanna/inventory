@@ -10,6 +10,12 @@ class EquipmentSerializer(serializers.ModelSerializer):
         source="get_category_display", read_only=True
     )
     status_display = serializers.CharField(source="get_status_display", read_only=True)
+    current_user_name = serializers.CharField(
+        source="current_user.full_name", read_only=True, default=""
+    )
+    responsible_person_name = serializers.CharField(
+        source="responsible_person.full_name", read_only=True, default=""
+    )
 
     class Meta:
         model = Equipment
@@ -39,7 +45,9 @@ class EquipmentSerializer(serializers.ModelSerializer):
             "status_display",
             "priority",
             "current_user",
+            "current_user_name",
             "responsible_person",
+            "responsible_person_name",
             "purchase_price",
             "depreciation_rate",
             "cpu",

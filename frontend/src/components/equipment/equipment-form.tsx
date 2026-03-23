@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useCreateEquipment, useUpdateEquipment } from '@/hooks/use-equipment'
-import { useUsersList } from '@/hooks/use-auth'
+import { useEmployeesList } from '@/hooks/use-employees'
 import { useSuppliersList } from '@/hooks/use-spare-parts'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -64,7 +64,7 @@ const emptyForm = {
 export function EquipmentFormDialog({ open, onOpenChange, equipment }: EquipmentFormDialogProps) {
   const createEquipment = useCreateEquipment()
   const updateEquipment = useUpdateEquipment()
-  const { data: users } = useUsersList()
+  const { data: employeesData } = useEmployeesList({ page_size: 500, is_active: true })
   const { data: suppliers } = useSuppliersList({ page_size: 500 })
   const isEdit = !!equipment
 
@@ -279,10 +279,10 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
                       onValueChange={(v) => update('current_user', v)}
                       placeholder="Не призначено"
                       searchPlaceholder="Введіть ім'я..."
-                      emptyText="Користувача не знайдено"
-                      options={users?.map((u: { id: number; username: string; first_name: string; last_name: string; email: string; is_active: boolean }) => ({
-                        value: String(u.id),
-                        label: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username,
+                      emptyText="Співробітника не знайдено"
+                      options={employeesData?.results?.map((e) => ({
+                        value: String(e.id),
+                        label: e.full_name,
                       })) || []}
                     />
                   </div>
@@ -293,10 +293,10 @@ export function EquipmentFormDialog({ open, onOpenChange, equipment }: Equipment
                       onValueChange={(v) => update('responsible_person', v)}
                       placeholder="Не призначено"
                       searchPlaceholder="Введіть ім'я..."
-                      emptyText="Користувача не знайдено"
-                      options={users?.map((u: { id: number; username: string; first_name: string; last_name: string; email: string; is_active: boolean }) => ({
-                        value: String(u.id),
-                        label: u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username,
+                      emptyText="Співробітника не знайдено"
+                      options={employeesData?.results?.map((e) => ({
+                        value: String(e.id),
+                        label: e.full_name,
                       })) || []}
                     />
                   </div>

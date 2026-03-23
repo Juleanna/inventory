@@ -43,6 +43,7 @@ from .maintenance import (
     MaintenanceService,
 )
 from .models import (
+    Employee,
     Equipment,
     EquipmentDocument,
     License,
@@ -3735,6 +3736,37 @@ class CounterpartyViewSet(ModelViewSet):
 
     def get_queryset(self):
         queryset = Counterparty.objects.all()
+        is_active = self.request.query_params.get("is_active")
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == "true")
+        return queryset
+
+
+class EmployeeViewSet(ModelViewSet):
+    """ViewSet для довідника співробітників"""
+
+    queryset = Employee.objects.all()
+    permission_classes = [IsAuthenticated]
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["last_name", "first_name", "middle_name", "position", "email"]
+    ordering_fields = ["last_name", "first_name", "created_at"]
+    ordering = ["last_name", "first_name"]
+
+    def get_serializer_class(self):
+        from rest_framework import serializers
+
+        class EmployeeSerializer(serializers.ModelSerializer):
+            full_name = serializers.CharField(read_only=True)
+            department_display = serializers.CharField(read_only=True)
+
+            class Meta:
+                model = Employee
+                fields = "__all__"
+
+        return EmployeeSerializer
+
+    def get_queryset(self):
+        queryset = Employee.objects.all()
         is_active = self.request.query_params.get("is_active")
         if is_active is not None:
             queryset = queryset.filter(is_active=is_active.lower() == "true")

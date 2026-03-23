@@ -31,6 +31,7 @@ from django.utils.translation import gettext_lazy as _
 from .maintenance import MaintenanceRequest, MaintenanceSchedule, MaintenanceTask
 from .models import (
     CustomDashboard,
+    Employee,
     Equipment,
     EquipmentDocument,
     Notification,
@@ -769,6 +770,16 @@ class StorageLocationAdmin(ModelAdmin):
     list_display = ("name", "description", "is_active")
     list_filter = ("is_active",)
     search_fields = ("name",)
+
+
+@admin.register(Employee)
+class EmployeeAdmin(ModelAdmin):
+    """Адмін для довідника співробітників"""
+    compressed_fields = True
+    list_display = ("last_name", "first_name", "position", "department", "phone", "is_active")
+    list_filter = ("is_active", "department")
+    search_fields = ("last_name", "first_name", "middle_name", "position", "email")
+    ordering = ("last_name", "first_name")
 
 
 @admin.register(Counterparty)

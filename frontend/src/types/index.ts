@@ -50,9 +50,9 @@ export interface Equipment {
   status: string
   priority: string
   current_user: number | null
-  current_user_details?: User
+  current_user_name?: string
   responsible_person: number | null
-  responsible_person_details?: User
+  responsible_person_name?: string
   supplier: string
   purchase_price: string | null
   depreciation_rate: string | null
@@ -540,4 +540,22 @@ export interface RegisterData {
   password2: string
   first_name: string
   last_name: string
+}
+
+export interface Employee {
+  id: number
+  last_name: string
+  first_name: string
+  middle_name: string
+  full_name: string
+  position: string
+  department: string
+  department_display: string
+  custom_department: string
+  email: string
+  phone: string
+  is_active: boolean
+  notes: string
+  created_at: string
+  updated_at: string
 }
