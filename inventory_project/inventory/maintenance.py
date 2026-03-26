@@ -385,12 +385,17 @@ class MaintenanceService:
     def start_maintenance(cls, request_id, technician):
         """Розпочати виконання ТО"""
         try:
-            request = MaintenanceRequest.objects.get(
-                id=request_id, assigned_technician=technician
-            )
+            if technician.is_staff:
+                request = MaintenanceRequest.objects.get(id=request_id)
+            else:
+                request = MaintenanceRequest.objects.get(
+                    id=request_id, assigned_technician=technician
+                )
 
             request.status = "IN_PROGRESS"
             request.started_date = timezone.now()
+            if not request.assigned_technician:
+                request.assigned_technician = technician
             request.save()
 
             # Оновити статус обладнання
@@ -407,9 +412,12 @@ class MaintenanceService:
     ):
         """Завершити ТО"""
         try:
-            request = MaintenanceRequest.objects.get(
-                id=request_id, assigned_technician=technician
-            )
+            if technician.is_staff:
+                request = MaintenanceRequest.objects.get(id=request_id)
+            else:
+                request = MaintenanceRequest.objects.get(
+                    id=request_id, assigned_technician=technician
+                )
 
             request.status = "COMPLETED"
             request.completed_date = timezone.now()
