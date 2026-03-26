@@ -80,7 +80,7 @@ class DashboardService:
                     "department_name": dept_name,
                     "equipment_count": equipment_count,
                     "equipment_value": float(equipment_value),
-                    "user_count": users_in_dept.count(),
+                    "user_count": Employee.objects.filter(department=dept_code, is_active=True).count(),
                 }
             )
 
