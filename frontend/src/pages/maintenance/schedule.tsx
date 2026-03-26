@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useMaintenanceSchedules, useCreateMaintenanceSchedule, useUpdateMaintenanceSchedule, useDeleteMaintenanceSchedule, useMaintenanceRequests } from '@/hooks/use-maintenance'
 import { useEquipmentList } from '@/hooks/use-equipment'
-import { useUsersList } from '@/hooks/use-auth'
+import { useEmployeesList } from '@/hooks/use-employees'
 import { PageHeader } from '@/components/shared/page-header'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -669,7 +669,7 @@ export default function MaintenanceSchedulePage() {
 function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const createSchedule = useCreateMaintenanceSchedule()
   const { data: equipmentData } = useEquipmentList({ page_size: 200 })
-  const { data: users } = useUsersList()
+  const { data: employeesData } = useEmployeesList({ page_size: 500, is_active: true })
 
   const [form, setForm] = useState({
     equipment_id: '',
@@ -776,9 +776,9 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             <Select value={form.responsible_person} onValueChange={v => update('responsible_person', v)}>
               <SelectTrigger><SelectValue placeholder="Не призначено" /></SelectTrigger>
               <SelectContent>
-                {users?.map(u => (
-                  <SelectItem key={u.id} value={String(u.id)}>
-                    {u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username}
+                {employeesData?.results?.map(e => (
+                  <SelectItem key={e.id} value={String(e.id)}>
+                    {e.full_name}
                   </SelectItem>
                 ))}
               </SelectContent>
