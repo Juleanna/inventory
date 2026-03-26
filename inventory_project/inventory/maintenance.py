@@ -158,8 +158,15 @@ class MaintenanceRequest(models.Model):
 
     def save(self, *args, **kwargs):
         # Автоматично встановити дати при зміні статусу
-        if self.pk:
-            old_instance = MaintenanceRequest.objects.get(pk=self.pk)
+        if self.pk and not kwargs.get("force_insert", False):
+            try:
+                old_instance = MaintenanceRequest.objects.get(pk=self.pk)
+            except MaintenanceRequest.DoesNotExist:
+                old_instance = None
+        else:
+            old_instance = None
+
+        if old_instance:
 
             # Початок робіт
             if old_instance.status != "IN_PROGRESS" and self.status == "IN_PROGRESS":
