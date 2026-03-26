@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
   useMaintenanceRequests,
@@ -80,6 +81,7 @@ function StatCard({ label, value, icon: Icon, color }: { label: string; value: n
 }
 
 export default function MaintenanceListPage() {
+  const queryClient = useQueryClient()
   const [status, setStatus] = useState<string>('')
   const [priority, setPriority] = useState<string>('')
   const [page, setPage] = useState(1)
@@ -124,6 +126,7 @@ export default function MaintenanceListPage() {
       const res = await maintenanceApi.generateScheduledRequests()
       const created = (res.data as { created_count?: number })?.created_count ?? 0
       toast.success(created > 0 ? `Створено ${created} запитів на ТО` : 'Немає розкладів, які потребують генерації запитів (наступне ТО через більше ніж 7 днів)')
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] })
     } catch {
       toast.error('Помилка при генерації запитів')
     } finally {
