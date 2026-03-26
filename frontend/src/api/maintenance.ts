@@ -9,6 +9,9 @@ export const maintenanceApi = {
   createRequest: (data: Record<string, unknown>) =>
     apiClient.post<MaintenanceRequest>('/maintenance/requests/', data),
 
+  deleteRequest: (id: number | string) =>
+    apiClient.delete(`/maintenance/requests/${id}/`),
+
   // Розклади
   listSchedules: (params?: { page?: number; show_inactive?: boolean }) =>
     apiClient.get('/maintenance/schedules/', { params }),

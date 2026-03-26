@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   useMaintenanceRequests,
   useCreateMaintenanceRequest,
+  useDeleteMaintenanceRequest,
   useStartMaintenance,
   useCompleteMaintenance,
   useAssignTechnician,
@@ -13,6 +14,7 @@ import {
 import { useEquipmentList } from '@/hooks/use-equipment'
 import { PageHeader } from '@/components/shared/page-header'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
+import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { EmptyState } from '@/components/shared/empty-state'
 import { ListPagination } from '@/components/shared/list-pagination'
 import { Button } from '@/components/ui/button'
@@ -35,7 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Wrench, Calendar, Play, CheckCircle, Plus, Loader2, UserPlus, Clock, AlertTriangle, X, Eye, RefreshCw } from 'lucide-react'
+import { Wrench, Calendar, Play, CheckCircle, Plus, Loader2, UserPlus, Clock, AlertTriangle, X, Eye, RefreshCw, Trash2 } from 'lucide-react'
 import { maintenanceApi } from '@/api/maintenance'
 import { toast } from 'sonner'
 import { useColumnVisibility } from '@/hooks/use-column-visibility'
@@ -83,12 +85,14 @@ export default function MaintenanceListPage() {
   const [page, setPage] = useState(1)
   const [showCreate, setShowCreate] = useState(false)
   const [detailRequest, setDetailRequest] = useState<MaintenanceRequest | null>(null)
+  const [deleteId, setDeleteId] = useState<string | number | null>(null)
   const { data, isLoading } = useMaintenanceRequests({
     page,
     status: status || undefined,
   })
   const startMaintenance = useStartMaintenance()
   const completeMaintenance = useCompleteMaintenance()
+  const deleteRequest = useDeleteMaintenanceRequest()
   const assignTechnician = useAssignTechnician()
   const { data: technicians } = useTechnicians()
   const { data: dashboard } = useMaintenanceDashboard()
@@ -344,6 +348,9 @@ export default function MaintenanceListPage() {
                             <CheckCircle className="h-4 w-4" />
                           </Button>
                         )}
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(request.id)} title="Видалити">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -448,6 +455,21 @@ export default function MaintenanceListPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={() => setDeleteId(null)}
+        title="Видалити запит на обслуговування?"
+        description="Ви впевнені, що хочете видалити цей запит? Цю дію неможливо скасувати."
+        confirmLabel="Видалити"
+        variant="destructive"
+        onConfirm={() => {
+          if (deleteId) {
+            deleteRequest.mutate(deleteId)
+            setDeleteId(null)
+          }
+        }}
+      />
     </div>
   )
 }

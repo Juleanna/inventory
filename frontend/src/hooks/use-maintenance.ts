@@ -78,6 +78,21 @@ export function useDeleteMaintenanceSchedule() {
   })
 }
 
+export function useDeleteMaintenanceRequest() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number | string) => maintenanceApi.deleteRequest(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] })
+      toast.success('Запит на обслуговування видалено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка видалення запиту'))
+    },
+  })
+}
+
 export function useAssignTechnician() {
   const queryClient = useQueryClient()
 
