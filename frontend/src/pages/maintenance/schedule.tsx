@@ -827,7 +827,15 @@ function EditScheduleDialog({
       frequency: String(schedule.frequency || schedule.schedule_type || 'MONTHLY'),
       next_maintenance: String(schedule.next_maintenance || schedule.next_due || '').slice(0, 10),
       custom_interval_days: schedule.custom_interval_days ? String(schedule.custom_interval_days) : '',
-      estimated_duration_hours: schedule.estimated_duration_hours ? String(schedule.estimated_duration_hours) : '',
+      estimated_duration_hours: (() => {
+        if (schedule.estimated_duration_hours) return String(schedule.estimated_duration_hours)
+        if (schedule.estimated_duration) {
+          const dur = String(schedule.estimated_duration)
+          const parts = dur.split(':')
+          if (parts.length >= 2) return String(parseInt(parts[0]) + parseInt(parts[1]) / 60)
+        }
+        return ''
+      })(),
       is_active: schedule.is_active !== false,
     })
   }
