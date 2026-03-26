@@ -8,7 +8,7 @@ from accounts.models import CustomUser
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
-from .models import Equipment, Notification
+from .models import Employee, Equipment, Notification
 
 
 class DashboardService:
@@ -63,17 +63,15 @@ class DashboardService:
     @staticmethod
     def get_department_statistics() -> List[Dict[str, Any]]:
         """Статистика по відділах"""
-        # Групуємо по відділах користувачів
         dept_stats = []
 
-        for dept_code, dept_name in CustomUser.DEPARTMENT_CHOICES:
-            users_in_dept = CustomUser.objects.filter(department=dept_code)
+        for dept_code, dept_name in Employee.DEPARTMENT_CHOICES:
             equipment_count = Equipment.objects.filter(
-                current_user__in=users_in_dept
+                current_user__department=dept_code
             ).count()
 
             equipment_value = Equipment.objects.filter(
-                current_user__in=users_in_dept
+                current_user__department=dept_code
             ).aggregate(total=Sum("purchase_price"))["total"] or Decimal("0.00")
 
             dept_stats.append(
@@ -272,7 +270,8 @@ class ReportService:
                 "model",
                 "location",
                 "status",
-                "current_user__username",
+                "current_user__last_name",
+                "current_user__first_name",
                 "purchase_date",
                 "purchase_price",
                 "warranty_until",
@@ -345,7 +344,7 @@ class ReportService:
                         else None
                     ),
                     "current_user": (
-                        equipment.current_user.username
+                        str(equipment.current_user)
                         if equipment.current_user
                         else None
                     ),

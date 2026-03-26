@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 
-from .models import Equipment, Notification
+from .models import Employee, Equipment, Notification
 
 User = get_user_model()
 
@@ -209,7 +209,7 @@ class MaintenanceSchedule(models.Model):
     next_maintenance = models.DateTimeField(verbose_name="Наступне ТО")
 
     responsible_person = models.ForeignKey(
-        User,
+        Employee,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -502,7 +502,7 @@ class MaintenanceService:
                     schedule.next_maintenance.date() - timezone.now().date()
                 ).days,
                 "responsible": (
-                    schedule.responsible_person.get_full_name()
+                    str(schedule.responsible_person)
                     if schedule.responsible_person
                     else None
                 ),
@@ -573,8 +573,7 @@ class MaintenanceService:
                     request_type="SCHEDULED",
                     title=schedule.title,
                     description=schedule.description,
-                    requester=schedule.responsible_person
-                    or User.objects.filter(is_staff=True).first(),
+                    requester=User.objects.filter(is_staff=True).first(),
                     scheduled_date=schedule.next_maintenance,
                 )
 

@@ -1083,9 +1083,10 @@ def user_profile(request):
 def check_expired_equipment():
     expired_equipment = Equipment.objects.filter(expiry_date__lt=timezone.now())
     for item in expired_equipment:
-        if item.current_user:
+        # Сповіщення адміністраторам про закінчення терміну
+        for admin_user in User.objects.filter(is_staff=True, is_active=True):
             Notification.objects.create(
-                user=item.current_user,
+                user=admin_user,
                 title="Термін служби обладнання закінчився",
                 message=f"Термін служби обладнання {item.name} закінчився.",
             )
@@ -1293,7 +1294,7 @@ class ExportView(APIView):
             worksheet.write(row, 4, item.get("model", ""))
             worksheet.write(row, 5, item.get("location", ""))
             worksheet.write(row, 6, item.get("status", ""))
-            worksheet.write(row, 7, item.get("current_user__username", ""))
+            worksheet.write(row, 7, item.get("current_user__last_name", "") + " " + item.get("current_user__first_name", ""))
             worksheet.write(row, 8, str(item.get("purchase_date", "")))
             worksheet.write(row, 9, item.get("purchase_price", ""))
             worksheet.write(row, 10, str(item.get("warranty_until", "")))
@@ -2275,9 +2276,6 @@ class AdvancedSearchView(APIView):
             sort_field = f"-{sort_field}"
 
         equipment_qs = equipment_qs.select_related(
-            "manufacturer",
-            "category",
-            "department",
             "current_user",
             "responsible_person",
         ).order_by(sort_field)
@@ -2306,11 +2304,11 @@ class AdvancedSearchView(APIView):
                     "model": eq.model,
                     "status": eq.status,
                     "status_display": eq.get_status_display(),
-                    "manufacturer": eq.manufacturer.name if eq.manufacturer else None,
-                    "category": eq.category.name if eq.category else None,
-                    "department": eq.department.name if eq.department else None,
+                    "manufacturer": eq.manufacturer or None,
+                    "category": eq.get_category_display() if eq.category else None,
+                    "department": None,
                     "current_user": (
-                        eq.current_user.get_full_name() if eq.current_user else None
+                        str(eq.current_user) if eq.current_user else None
                     ),
                     "location": eq.location,
                     "purchase_date": (
@@ -3202,7 +3200,7 @@ class MaintenanceScheduleView(APIView):
                     "responsible_person": (
                         {
                             "id": schedule.responsible_person.id,
-                            "name": schedule.responsible_person.get_full_name(),
+                            "name": str(schedule.responsible_person),
                         }
                         if schedule.responsible_person
                         else None
@@ -3245,7 +3243,7 @@ class MaintenanceScheduleView(APIView):
                 next_maintenance=datetime.fromisoformat(
                     next_maintenance.replace("Z", "+00:00")
                 ),
-                responsible_person=request.user,
+                responsible_person_id=request.data.get("responsible_person"),
                 estimated_duration=timedelta(hours=estimated_duration_hours),
                 custom_interval_days=request.data.get("custom_interval_days"),
                 checklist=request.data.get("checklist", []),
