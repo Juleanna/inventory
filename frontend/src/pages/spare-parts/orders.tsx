@@ -20,7 +20,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { ArrowLeft, ShoppingCart, Plus, Loader2, ArrowRight, Eye, Trash2, Package, Truck } from 'lucide-react'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ArrowLeft, ShoppingCart, Plus, Loader2, ArrowRight, Eye, Trash2, Package, Truck, ChevronDown } from 'lucide-react'
 import { ORDER_STATUS_LABELS, DELIVERY_METHOD_LABELS, ITEM_TYPE_LABELS } from '@/lib/constants'
 import type { PurchaseOrder } from '@/types'
 
@@ -152,18 +155,40 @@ export default function OrdersPage() {
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDetailOrder(order)} title="Деталі">
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {nextStatuses.length > 0 && nextStatuses[0] !== 'CANCELLED' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 text-xs"
-                              disabled={updateOrder.isPending}
-                              onClick={() => handleStatusChange(order.id, nextStatuses[0])}
-                            >
-                              <ArrowRight className="mr-1 h-3 w-3" />
-                              {ORDER_STATUS_LABELS[nextStatuses[0]]}
-                            </Button>
-                          )}
+                          {(() => {
+                            const actionStatuses = nextStatuses.filter(s => s !== 'CANCELLED')
+                            if (actionStatuses.length === 0) return null
+                            if (actionStatuses.length === 1) return (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-xs"
+                                disabled={updateOrder.isPending}
+                                onClick={() => handleStatusChange(order.id, actionStatuses[0])}
+                              >
+                                <ArrowRight className="mr-1 h-3 w-3" />
+                                {ORDER_STATUS_LABELS[actionStatuses[0]]}
+                              </Button>
+                            )
+                            return (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button size="sm" variant="outline" className="h-8 text-xs" disabled={updateOrder.isPending}>
+                                    <ArrowRight className="mr-1 h-3 w-3" />
+                                    Змінити статус
+                                    <ChevronDown className="ml-1 h-3 w-3" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  {actionStatuses.map(s => (
+                                    <DropdownMenuItem key={s} onClick={() => handleStatusChange(order.id, s)}>
+                                      {ORDER_STATUS_LABELS[s]}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )
+                          })()}
                           <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(order.id)} title="Видалити">
                             <Trash2 className="h-4 w-4" />
                           </Button>
