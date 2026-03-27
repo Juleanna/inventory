@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Wrench, Calendar, Play, CheckCircle, Plus, Loader2, UserPlus, Clock, AlertTriangle, X, Eye, RefreshCw, Trash2, Pencil } from 'lucide-react'
 import { maintenanceApi } from '@/api/maintenance'
 import { toast } from 'sonner'
@@ -734,11 +735,13 @@ function EditMaintenanceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Редагувати запит</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden">
+          <ScrollArea className="max-h-[65vh]">
+            <div className="space-y-4 px-1 pb-2">
           <div className="space-y-2">
             <Label>Назва *</Label>
             <Input value={form.title} onChange={(e) => update('title', e.target.value)} required />
@@ -813,7 +816,9 @@ function EditMaintenanceDialog({
             <Label>Примітки</Label>
             <Textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={2} />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
+            </div>
+          </ScrollArea>
+          <div className="flex justify-end gap-2 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Скасувати</Button>
             <Button type="submit" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
