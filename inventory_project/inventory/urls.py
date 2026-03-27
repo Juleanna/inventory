@@ -119,6 +119,11 @@ urlpatterns = [
         name="spare-parts-movements",
     ),
     path(
+        "api/spare-parts/movements/<str:pk>/",
+        views.SparePartMovementDeleteView.as_view(),
+        name="spare-parts-movement-delete",
+    ),
+    path(
         "api/spare-parts/issue/",
         views.IssueSparePartView.as_view(),
         name="issue-spare-part",

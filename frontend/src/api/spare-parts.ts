@@ -68,6 +68,9 @@ export const sparePartsApi = {
   getMovements: (params?: { page?: number; page_size?: number; spare_part_id?: string }) =>
     apiClient.get<SparePartMovementsResponse>('/spare-parts/movements/', { params }),
 
+  deleteMovement: (id: string) =>
+    apiClient.delete(`/spare-parts/movements/${id}/`),
+
   createMovement: (data: {
     spare_part_id: string
     movement_type: string

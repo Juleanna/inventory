@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSparePartMovements, useCreateMovement, useSparePartsList } from '@/hooks/use-spare-parts'
+import { useSparePartMovements, useCreateMovement, useDeleteMovement, useSparePartsList } from '@/hooks/use-spare-parts'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Button } from '@/components/ui/button'
@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { ArrowRightLeft, Plus, Loader2 } from 'lucide-react'
+import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import { ArrowRightLeft, Plus, Loader2, Trash2 } from 'lucide-react'
 import { MOVEMENT_TYPE_LABELS } from '@/lib/constants'
 
 const MOVEMENT_COLORS: Record<string, string> = {
@@ -27,6 +28,8 @@ const MOVEMENT_COLORS: Record<string, string> = {
 export function MovementsTable() {
   const [page, setPage] = useState(1)
   const [showAdd, setShowAdd] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const deleteMovement = useDeleteMovement()
 
   const { data, isLoading } = useSparePartMovements({ page, page_size: 20 })
 
@@ -63,6 +66,7 @@ export function MovementsTable() {
                   <TableHead className="hidden md:table-cell">Обладнання</TableHead>
                   <TableHead className="hidden lg:table-cell">Виконав</TableHead>
                   <TableHead className="hidden xl:table-cell">Примітки</TableHead>
+                  <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -92,6 +96,11 @@ export function MovementsTable() {
                     <TableCell className="hidden xl:table-cell text-sm text-muted-foreground max-w-[200px] truncate">
                       {m.notes || '—'}
                     </TableCell>
+                    <TableCell>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeleteId(m.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -115,6 +124,21 @@ export function MovementsTable() {
           )}
         </>
       )}
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={() => setDeleteId(null)}
+        title="Видалити запис руху?"
+        description="Кількість товару буде відкатана. Цю дію неможливо скасувати."
+        confirmLabel="Видалити"
+        variant="destructive"
+        onConfirm={() => {
+          if (deleteId) {
+            deleteMovement.mutate(deleteId)
+            setDeleteId(null)
+          }
+        }}
+      />
 
       <AddMovementDialog open={showAdd} onOpenChange={setShowAdd} />
     </div>

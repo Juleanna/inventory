@@ -41,6 +41,22 @@ export function useSparePartMovements(params?: { page?: number; page_size?: numb
   })
 }
 
+export function useDeleteMovement() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => sparePartsApi.deleteMovement(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['spare-part-movements'] })
+      queryClient.invalidateQueries({ queryKey: ['spare-parts'] })
+      toast.success('Рух видалено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка видалення руху'))
+    },
+  })
+}
+
 export function useCreateMovement() {
   const queryClient = useQueryClient()
 

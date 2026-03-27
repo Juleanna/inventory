@@ -3684,6 +3684,34 @@ class SparePartMovementView(APIView):
             )
 
 
+class SparePartMovementDeleteView(APIView):
+    """API для видалення руху запчастини"""
+
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        try:
+            movement = SparePartMovement.objects.get(id=pk)
+            # Відкатити кількість
+            spare_part = movement.spare_part
+            if movement.movement_type == "RECEIPT":
+                spare_part.quantity_in_stock -= movement.quantity
+            elif movement.movement_type in ["ISSUE", "WRITE_OFF"]:
+                spare_part.quantity_in_stock += movement.quantity
+            elif movement.movement_type == "RETURN":
+                spare_part.quantity_in_stock -= movement.quantity
+            elif movement.movement_type == "ADJUSTMENT":
+                spare_part.quantity_in_stock -= movement.quantity
+
+            spare_part.update_status()
+            spare_part.save()
+            movement.delete()
+
+            return Response({"success": True, "message": "Рух видалено"})
+        except SparePartMovement.DoesNotExist:
+            return Response({"success": False, "error": "Рух не знайдено"}, status=404)
+
+
 class IssueSparePartView(APIView):
     """API для видачі запчастин"""
 
