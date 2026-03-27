@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useColumnVisibility } from '@/hooks/use-column-visibility'
 import { ColumnVisibility } from '@/components/shared/column-visibility'
@@ -23,7 +23,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowLeft, ShoppingCart, Plus, Loader2, ArrowRight, Eye, Trash2, Package, Truck, ChevronDown } from 'lucide-react'
+import { ArrowLeft, ShoppingCart, Plus, Loader2, ArrowRight, Eye, Trash2, Pencil, Package, Truck, ChevronDown } from 'lucide-react'
 import { ORDER_STATUS_LABELS, DELIVERY_METHOD_LABELS, ITEM_TYPE_LABELS } from '@/lib/constants'
 import type { PurchaseOrder } from '@/types'
 
@@ -68,6 +68,7 @@ export default function OrdersPage() {
   const updateOrder = useUpdatePurchaseOrder()
   const deleteOrder = useDeletePurchaseOrder()
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [editOrder, setEditOrder] = useState<PurchaseOrder | null>(null)
   const totalPages = data ? Math.ceil(data.count / 25) : 0
 
   const handleStatusChange = (orderId: string, newStatus: string) => {
@@ -189,6 +190,9 @@ export default function OrdersPage() {
                               </DropdownMenu>
                             )
                           })()}
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditOrder(order)} title="Редагувати">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                           <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(order.id)} title="Видалити">
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -355,6 +359,12 @@ export default function OrdersPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      <EditOrderDialog
+        open={!!editOrder}
+        onOpenChange={(v) => { if (!v) setEditOrder(null) }}
+        order={editOrder}
+      />
 
       <ConfirmDialog
         open={deleteId !== null}
@@ -722,6 +732,140 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
             <Button type="submit" disabled={createOrder.isPending || items.length === 0}>
               {createOrder.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Створити
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function EditOrderDialog({
+  open,
+  onOpenChange,
+  order,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  order: PurchaseOrder | null
+}) {
+  const updateOrder = useUpdatePurchaseOrder()
+  const { data: counterpartiesData } = useCounterpartiesList({ page_size: 500, is_active: true })
+
+  const [form, setForm] = useState({
+    expected_delivery_date: '',
+    actual_delivery_date: '',
+    delivery_method: '',
+    tracking_number: '',
+    shipping_cost: '',
+    tax_amount: '',
+    notes: '',
+    counterparty_id: '',
+  })
+
+  useEffect(() => {
+    if (open && order) {
+      setForm({
+        expected_delivery_date: order.expected_delivery_date || '',
+        actual_delivery_date: order.actual_delivery_date || '',
+        delivery_method: order.delivery_method || '',
+        tracking_number: order.tracking_number || '',
+        shipping_cost: order.shipping_cost || '',
+        tax_amount: order.tax_amount || '',
+        notes: order.notes || '',
+        counterparty_id: order.counterparty ? String(order.counterparty) : '',
+      })
+    }
+  }, [open, order])
+
+  const update = (field: string, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }))
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!order) return
+    const data: Record<string, unknown> = {
+      expected_delivery_date: form.expected_delivery_date || null,
+      actual_delivery_date: form.actual_delivery_date || null,
+      delivery_method: form.delivery_method || '',
+      tracking_number: form.tracking_number || '',
+      shipping_cost: form.shipping_cost || '0',
+      tax_amount: form.tax_amount || '0',
+      notes: form.notes || '',
+    }
+    if (form.counterparty_id) data.counterparty = Number(form.counterparty_id)
+    updateOrder.mutate(
+      { id: order.id, data: data as Partial<PurchaseOrder> },
+      { onSuccess: () => onOpenChange(false) }
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Редагувати замовлення {order?.order_number}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Контрагент (покупець)</Label>
+            <Select value={form.counterparty_id || '_none'} onValueChange={(v) => update('counterparty_id', v === '_none' ? '' : v)}>
+              <SelectTrigger><SelectValue placeholder="Оберіть організацію" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_none">— Не вказано —</SelectItem>
+                {counterpartiesData?.results?.map((c) => (
+                  <SelectItem key={c.id} value={String(c.id)}>{c.short_name || c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Очікувана доставка</Label>
+              <Input type="date" value={form.expected_delivery_date} onChange={(e) => update('expected_delivery_date', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Фактична доставка</Label>
+              <Input type="date" value={form.actual_delivery_date} onChange={(e) => update('actual_delivery_date', e.target.value)} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Спосіб доставки</Label>
+              <Select value={form.delivery_method || '_none'} onValueChange={(v) => update('delivery_method', v === '_none' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="Оберіть" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">— Не вказано —</SelectItem>
+                  {Object.entries(DELIVERY_METHOD_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>ТТН / Трекінг</Label>
+              <Input value={form.tracking_number} onChange={(e) => update('tracking_number', e.target.value)} placeholder="20450..." />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Доставка (грн)</Label>
+              <Input type="number" step="0.01" value={form.shipping_cost} onChange={(e) => update('shipping_cost', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Податок (грн)</Label>
+              <Input type="number" step="0.01" value={form.tax_amount} onChange={(e) => update('tax_amount', e.target.value)} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Нотатки</Label>
+            <Textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={2} />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Скасувати</Button>
+            <Button type="submit" disabled={updateOrder.isPending}>
+              {updateOrder.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Зберегти
             </Button>
           </div>
         </form>
