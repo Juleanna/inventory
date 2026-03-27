@@ -27,7 +27,6 @@ import { Package, Truck, ShoppingCart, Plus, Loader2, Download, AlertTriangle, P
 import { useColumnVisibility } from '@/hooks/use-column-visibility'
 import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { SPARE_PART_CONDITION_LABELS, ITEM_TYPE_LABELS } from '@/lib/constants'
-import type { SparePart } from '@/types'
 
 const SPARE_PARTS_COLUMNS = [
   { key: 'name' as const, label: 'Назва' },
