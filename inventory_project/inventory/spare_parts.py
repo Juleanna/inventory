@@ -145,6 +145,10 @@ class SparePart(models.Model):
         max_length=100, unique=True, verbose_name="Номер запчастини"
     )
 
+    manufacturer = models.CharField(
+        max_length=200, blank=True, verbose_name="Виробник"
+    )
+
     manufacturer_part_number = models.CharField(
         max_length=100, blank=True, verbose_name="Номер виробника"
     )
