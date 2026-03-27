@@ -65,7 +65,7 @@ export default function OrdersPage() {
   const totalPages = data ? Math.ceil(data.count / 25) : 0
 
   const handleStatusChange = (orderId: string, newStatus: string) => {
-    updateOrder.mutate({ id: Number(orderId), data: { status: newStatus } as Partial<PurchaseOrder> })
+    updateOrder.mutate({ id: orderId, data: { status: newStatus } as Partial<PurchaseOrder> })
     if (detailOrder && detailOrder.id === orderId) {
       setDetailOrder({ ...detailOrder, status: newStatus })
     }

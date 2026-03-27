@@ -167,7 +167,7 @@ export function useUpdatePurchaseOrder() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<PurchaseOrder> }) =>
+    mutationFn: ({ id, data }: { id: number | string; data: Partial<PurchaseOrder> }) =>
       sparePartsApi.updateOrder(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] })
