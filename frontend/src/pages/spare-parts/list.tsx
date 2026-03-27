@@ -23,7 +23,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MovementsTable } from '@/components/spare-parts/movements-table'
 import { SparePartsAnalyticsSection } from '@/components/spare-parts/analytics-section'
 import { Card, CardContent } from '@/components/ui/card'
-import { Package, Truck, ShoppingCart, Plus, Loader2, Download, AlertTriangle, Pencil, Trash2 } from 'lucide-react'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Package, Truck, ShoppingCart, Plus, Loader2, Download, AlertTriangle, Pencil, Trash2, FileSpreadsheet, FileText } from 'lucide-react'
 import { useColumnVisibility } from '@/hooks/use-column-visibility'
 import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { SPARE_PART_CONDITION_LABELS, ITEM_TYPE_LABELS } from '@/lib/constants'
@@ -97,16 +100,24 @@ export default function SparePartsListPage() {
         actions={
           <div className="flex gap-2">
             {data?.results && data.results.length > 0 && (
-              <>
-                <Button variant="outline" size="sm" onClick={() => exportSpareParts('excel')}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Excel
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => exportSpareParts('pdf')}>
-                  <Download className="mr-2 h-4 w-4" />
-                  PDF
-                </Button>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    Експорт
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => exportSpareParts('excel')}>
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportSpareParts('pdf')}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
             <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['name']} />
             <Button onClick={() => setShowCreate(true)}>
@@ -139,7 +150,7 @@ export default function SparePartsListPage() {
         <TabsContent value="list">
       {/* Low stock alerts */}
       {(lowStockCount > 0 || outOfStockCount > 0) && (
-        <div className="mb-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="mb-4 flex flex-wrap gap-3">
           {outOfStockCount > 0 && (
             <Card className="border-red-200 dark:border-red-900 cursor-pointer" onClick={() => setStockFilter(stockFilter === 'out' ? '' : 'out')}>
               <CardContent className="flex items-center gap-3 p-3">
@@ -220,7 +231,7 @@ export default function SparePartsListPage() {
                       <p className="text-xs text-muted-foreground">{part.manufacturer}</p>
                     </TableCell>
                     {isColumnVisible('type') && <TableCell>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs whitespace-nowrap">
                         {ITEM_TYPE_LABELS[part.item_type] || part.item_type}
                       </Badge>
                     </TableCell>}
@@ -228,14 +239,16 @@ export default function SparePartsListPage() {
                       {part.part_number}
                     </TableCell>}
                     {isColumnVisible('quantity') && <TableCell>
-                      <Badge
-                        variant={part.quantity_in_stock <= part.minimum_stock_level ? 'destructive' : 'secondary'}
-                      >
-                        {part.quantity_in_stock}
-                      </Badge>
-                      {part.quantity_in_stock <= part.minimum_stock_level && (
-                        <span className="ml-2 text-xs text-destructive">Мін: {part.minimum_stock_level}</span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={part.quantity_in_stock <= part.minimum_stock_level ? 'destructive' : 'secondary'}
+                        >
+                          {part.quantity_in_stock}
+                        </Badge>
+                        {part.quantity_in_stock <= part.minimum_stock_level && (
+                          <span className="text-xs text-destructive whitespace-nowrap">мін: {part.minimum_stock_level}</span>
+                        )}
+                      </div>
                     </TableCell>}
                     {isColumnVisible('price') && <TableCell>
                       {part.unit_price} грн
