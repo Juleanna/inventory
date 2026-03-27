@@ -426,11 +426,12 @@ function SparePartEditDialog({ open, onOpenChange, part }: { open: boolean; onOp
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex gap-1">
+                  <div className="flex gap-2">
                     <Input
                       value={newCategoryName}
                       onChange={(e) => setNewCategoryName(e.target.value)}
                       placeholder="Назва нової категорії"
+                      className="flex-1"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
