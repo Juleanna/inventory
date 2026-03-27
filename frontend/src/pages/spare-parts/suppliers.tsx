@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSuppliersList, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '@/hooks/use-spare-parts'
 import { PageHeader } from '@/components/shared/page-header'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
@@ -162,31 +162,38 @@ function SupplierFormDialog({
   const createSupplier = useCreateSupplier()
   const updateSupplier = useUpdateSupplier()
 
-  const [form, setForm] = useState(() =>
-    supplier ? {
-      short_name: supplier.short_name || '',
-      name: supplier.name || '',
-      contact_person: supplier.contact_person || '',
-      email: supplier.email || '',
-      phone: supplier.phone || '',
-      address: supplier.address || '',
-      website: supplier.website || '',
-      tax_id: supplier.tax_id || '',
-      rating: supplier.rating || '',
-      notes: supplier.notes || '',
-    } : {
-      short_name: '',
-      name: '',
-      contact_person: '',
-      email: '',
-      phone: '',
-      address: '',
-      website: '',
-      tax_id: '',
-      rating: '',
-      notes: '',
-    }
-  )
+  const emptyForm = {
+    short_name: '',
+    name: '',
+    contact_person: '',
+    email: '',
+    phone: '',
+    address: '',
+    website: '',
+    tax_id: '',
+    rating: '',
+    notes: '',
+  }
+
+  const buildForm = (s?: Supplier | null) =>
+    s ? {
+      short_name: s.short_name || '',
+      name: s.name || '',
+      contact_person: s.contact_person || '',
+      email: s.email || '',
+      phone: s.phone || '',
+      address: s.address || '',
+      website: s.website || '',
+      tax_id: s.tax_id || '',
+      rating: s.rating || '',
+      notes: s.notes || '',
+    } : emptyForm
+
+  const [form, setForm] = useState(() => buildForm(supplier))
+
+  useEffect(() => {
+    if (open) setForm(buildForm(supplier))
+  }, [open, supplier])
 
   const update = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }))
