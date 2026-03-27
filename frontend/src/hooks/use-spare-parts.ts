@@ -183,7 +183,7 @@ export function useUpdateSparePart() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<SparePart> }) =>
+    mutationFn: ({ id, data }: { id: number | string; data: Partial<SparePart> }) =>
       sparePartsApi.updatePart(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['spare-parts'] })
@@ -245,7 +245,7 @@ export function useIssueSparePart() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ partId, data }: { partId: number; data: { quantity: number; equipment_id?: number; notes?: string } }) =>
+    mutationFn: ({ partId, data }: { partId: number | string; data: { quantity: number; equipment_id?: number; notes?: string } }) =>
       sparePartsApi.issuePart(partId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['spare-parts'] })

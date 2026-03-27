@@ -42,7 +42,7 @@ export default function SparePartDetailPage() {
 
   const handleIssue = () => {
     issuePart.mutate(
-      { partId: Number(part.id), data: { quantity: issueQty, notes: issueNotes } },
+      { partId: part.id, data: { quantity: issueQty, notes: issueNotes } },
       { onSuccess: () => { setIssueOpen(false); setIssueQty(1); setIssueNotes('') } }
     )
   }
@@ -305,7 +305,7 @@ function SparePartEditDialog({ open, onOpenChange, part }: { open: boolean; onOp
       storage: form.storage ? Number(form.storage) : null,
     }
     updatePart.mutate(
-      { id: Number(part.id), data: payload },
+      { id: part.id, data: payload },
       { onSuccess: () => onOpenChange(false) }
     )
   }

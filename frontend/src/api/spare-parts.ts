@@ -17,7 +17,7 @@ export const sparePartsApi = {
   deletePart: (id: number | string) =>
     apiClient.delete(`/spare-parts/${id}/`),
 
-  issuePart: (partId: number, data: { quantity: number; equipment_id?: number; notes?: string }) =>
+  issuePart: (partId: number | string, data: { quantity: number; equipment_id?: number; notes?: string }) =>
     apiClient.post(`/spare-parts/issue/${partId}/`, data),
 
   receivePart: (partId: number, data: { quantity: number; notes?: string }) =>
