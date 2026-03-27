@@ -3383,10 +3383,22 @@ class SparePartsViewSet(ModelViewSet):
             storage_name = serializers.CharField(
                 source="storage.name", read_only=True, default=""
             )
+            category_details = serializers.SerializerMethodField()
+            primary_supplier_details = serializers.SerializerMethodField()
 
             class Meta:
                 model = SparePart
                 fields = "__all__"
+
+            def get_category_details(self, obj):
+                if obj.category:
+                    return {"id": obj.category.id, "name": obj.category.name}
+                return None
+
+            def get_primary_supplier_details(self, obj):
+                if obj.primary_supplier:
+                    return {"id": obj.primary_supplier.id, "name": obj.primary_supplier.name}
+                return None
 
         return SparePartSerializer
 
