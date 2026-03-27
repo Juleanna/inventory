@@ -38,21 +38,24 @@ const SPARE_PARTS_COLUMNS = [
   { key: 'location' as const, label: 'Місце' },
 ]
 
-function exportSparePartsCsv(parts: SparePart[]) {
-  const BOM = '\uFEFF'
-  const headers = ['Назва', 'Тип', 'Артикул', 'Виробник', 'Кількість', 'Мін. запас', 'Ціна', 'Місце']
-  const rows = parts.map((p) => [
-    p.name, ITEM_TYPE_LABELS[p.item_type] || p.item_type, p.part_number, p.manufacturer, String(p.quantity_in_stock),
-    String(p.minimum_stock_level), p.unit_price, p.storage_name || p.storage_location || '',
-  ])
-  const csv = BOM + [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'items.csv'
-  a.click()
-  URL.revokeObjectURL(url)
+async function exportSpareParts(format: 'excel' | 'pdf') {
+  try {
+    const { default: apiClient } = await import('@/api/client')
+    const response = await apiClient.get('/export/', {
+      params: { export_format: format, type: 'spare_parts' },
+      responseType: 'blob',
+    })
+    const ext = format === 'excel' ? 'xlsx' : 'pdf'
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `items.${ext}`
+    link.click()
+    window.URL.revokeObjectURL(url)
+  } catch {
+    const { toast } = await import('sonner')
+    toast.error('Помилка експорту')
+  }
 }
 
 export default function SparePartsListPage() {
@@ -95,10 +98,16 @@ export default function SparePartsListPage() {
         actions={
           <div className="flex gap-2">
             {data?.results && data.results.length > 0 && (
-              <Button variant="outline" size="sm" onClick={() => exportSparePartsCsv(data.results)}>
-                <Download className="mr-2 h-4 w-4" />
-                CSV
-              </Button>
+              <>
+                <Button variant="outline" size="sm" onClick={() => exportSpareParts('excel')}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Excel
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => exportSpareParts('pdf')}>
+                  <Download className="mr-2 h-4 w-4" />
+                  PDF
+                </Button>
+              </>
             )}
             <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['name']} />
             <Button onClick={() => setShowCreate(true)}>

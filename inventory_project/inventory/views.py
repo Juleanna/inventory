@@ -1233,6 +1233,8 @@ class ExportView(APIView):
             self._create_software_excel(workbook)
         elif report_type == "peripherals":
             self._create_peripherals_excel(workbook)
+        elif report_type == "spare_parts":
+            self._create_spare_parts_excel(workbook)
 
         workbook.close()
         output.seek(0)
@@ -1454,6 +1456,36 @@ class ExportView(APIView):
         worksheet.set_column(3, 3, 15)
         worksheet.set_column(4, 4, 25)
 
+    def _create_spare_parts_excel(self, workbook):
+        """Створити звіт товарів та матеріалів в Excel"""
+        worksheet = workbook.add_worksheet("Товари та матеріали")
+        headers = ["Назва", "Тип", "Артикул", "Виробник", "Кількість", "Мін. запас", "Ціна", "Вартість", "Місце", "Стан", "Статус"]
+        header_format = workbook.add_format(
+            {"bold": True, "bg_color": "#D7E4BC", "border": 1}
+        )
+        for col, header in enumerate(headers):
+            worksheet.write(0, col, header, header_format)
+
+        parts = SparePart.objects.select_related("storage").all()
+
+        type_labels = {"SPARE_PART": "Запчастина", "EQUIPMENT": "Обладнання", "CONSUMABLE": "Витратний матеріал", "COMPONENT": "Комплектуюча", "TOOL": "Інструмент", "OTHER": "Інше"}
+
+        for row, part in enumerate(parts, 1):
+            worksheet.write(row, 0, part.name)
+            worksheet.write(row, 1, type_labels.get(part.item_type, part.item_type))
+            worksheet.write(row, 2, part.part_number)
+            worksheet.write(row, 3, part.manufacturer or "")
+            worksheet.write(row, 4, part.quantity_in_stock)
+            worksheet.write(row, 5, part.minimum_stock_level)
+            worksheet.write(row, 6, float(part.unit_price))
+            worksheet.write(row, 7, float(part.unit_cost))
+            worksheet.write(row, 8, part.storage.name if part.storage else "")
+            worksheet.write(row, 9, part.get_condition_display())
+            worksheet.write(row, 10, part.get_status_display())
+
+        for col in range(11):
+            worksheet.set_column(col, col, 18)
+
     @staticmethod
     def _register_cyrillic_font():
         """Реєструє шрифт з підтримкою кирилиці"""
@@ -1515,6 +1547,8 @@ class ExportView(APIView):
             elements = self._create_software_pdf_elements(styles, font_name, font_bold)
         elif report_type == "peripherals":
             elements = self._create_peripherals_pdf_elements(styles, font_name, font_bold)
+        elif report_type == "spare_parts":
+            elements = self._create_spare_parts_pdf_elements(styles, font_name, font_bold)
 
         doc.build(elements)
         buffer.seek(0)
@@ -1719,6 +1753,46 @@ class ExportView(APIView):
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4472C4")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
                 ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (-1, 0), font_bold),
+                ("FONTNAME", (0, 1), (-1, -1), font_name),
+                ("FONTSIZE", (0, 0), (-1, 0), 9),
+                ("FONTSIZE", (0, 1), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F2F2F2")]),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ])
+        )
+        elements.append(table)
+        return elements
+
+    def _create_spare_parts_pdf_elements(self, styles, font_name, font_bold):
+        """Створити PDF для звіту товарів та матеріалів"""
+        elements = []
+        title = Paragraph("Товари та матеріали", styles["CyrTitle"])
+        elements.append(title)
+
+        parts = SparePart.objects.select_related("storage").all()
+        type_labels = {"SPARE_PART": "Запчастина", "EQUIPMENT": "Обладнання", "CONSUMABLE": "Витратний", "COMPONENT": "Комплект.", "TOOL": "Інструмент", "OTHER": "Інше"}
+
+        table_data = [["Назва", "Тип", "Артикул", "К-сть", "Ціна", "Місце", "Статус"]]
+        for part in parts[:100]:
+            table_data.append([
+                part.name[:30],
+                type_labels.get(part.item_type, part.item_type)[:12],
+                part.part_number[:15],
+                str(part.quantity_in_stock),
+                f"{float(part.unit_price):.2f}",
+                (part.storage.name if part.storage else "")[:20],
+                part.get_status_display()[:15],
+            ])
+
+        table = Table(table_data, colWidths=[120, 60, 70, 35, 55, 80, 60])
+        table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4472C4")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("ALIGN", (3, 1), (4, -1), "RIGHT"),
                 ("FONTNAME", (0, 0), (-1, 0), font_bold),
                 ("FONTNAME", (0, 1), (-1, -1), font_name),
                 ("FONTSIZE", (0, 0), (-1, 0), 9),
