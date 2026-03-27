@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useSparePart, useSparePartMovements, useIssueSparePart, useUpdateSparePart, useSuppliersList, useSparePartCategories, useStorageLocations, useCreateStorageLocation } from '@/hooks/use-spare-parts'
+import { useEquipmentList } from '@/hooks/use-equipment'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { PageHeader } from '@/components/shared/page-header'
 import { Button } from '@/components/ui/button'
@@ -35,8 +36,10 @@ export default function SparePartDetailPage() {
   const { data: movementsData } = useSparePartMovements({ spare_part_id: id, page_size: 20 })
   const issuePart = useIssueSparePart()
 
+  const { data: equipmentData } = useEquipmentList({ page_size: 200 })
   const [issueOpen, setIssueOpen] = useState(false)
   const [issueQty, setIssueQty] = useState(1)
+  const [issueEquipment, setIssueEquipment] = useState('')
   const [issueNotes, setIssueNotes] = useState('')
   const [editOpen, setEditOpen] = useState(false)
 
@@ -45,8 +48,8 @@ export default function SparePartDetailPage() {
 
   const handleIssue = () => {
     issuePart.mutate(
-      { partId: part.id, data: { quantity: issueQty, notes: issueNotes } },
-      { onSuccess: () => { setIssueOpen(false); setIssueQty(1); setIssueNotes('') } }
+      { partId: part.id, data: { quantity: issueQty, equipment_id: issueEquipment ? Number(issueEquipment) : undefined, notes: issueNotes } },
+      { onSuccess: () => { setIssueOpen(false); setIssueQty(1); setIssueEquipment(''); setIssueNotes('') } }
     )
   }
 
@@ -249,24 +252,38 @@ export default function SparePartDetailPage() {
 
       {/* Діалог видачі */}
       <Dialog open={issueOpen} onOpenChange={setIssueOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Видати запчастину</DialogTitle>
+            <DialogTitle>Видати: {part.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Кількість (макс: {part.quantity_in_stock})</Label>
-              <Input
-                type="number"
-                min={1}
-                max={part.quantity_in_stock}
-                value={issueQty}
-                onChange={(e) => setIssueQty(Number(e.target.value))}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Кількість (макс: {part.quantity_in_stock})</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={part.quantity_in_stock}
+                  value={issueQty}
+                  onChange={(e) => setIssueQty(Number(e.target.value))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>На обладнання</Label>
+                <Select value={issueEquipment || '_none'} onValueChange={(v) => setIssueEquipment(v === '_none' ? '' : v)}>
+                  <SelectTrigger><SelectValue placeholder="Не вказано" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">Не вказано</SelectItem>
+                    {equipmentData?.results?.map((eq) => (
+                      <SelectItem key={eq.id} value={String(eq.id)}>{eq.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Примітки</Label>
-              <Input value={issueNotes} onChange={(e) => setIssueNotes(e.target.value)} placeholder="Причина видачі..." />
+              <Textarea value={issueNotes} onChange={(e) => setIssueNotes(e.target.value)} placeholder="Причина видачі, кому видано..." rows={2} />
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIssueOpen(false)}>Скасувати</Button>

@@ -3659,10 +3659,10 @@ class SparePartMovementView(APIView):
                 movement_type=movement_type,
                 quantity=int(quantity),
                 unit_cost=unit_cost or spare_part.unit_cost,
-                reference_number=reference_number,
+                reference_number=reference_number or "",
                 equipment=equipment,
                 maintenance_request=maintenance_request,
-                notes=notes,
+                notes=notes or "",
                 performed_by=request.user,
             )
 
