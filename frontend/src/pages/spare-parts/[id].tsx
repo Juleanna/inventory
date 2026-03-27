@@ -408,9 +408,9 @@ function SparePartEditDialog({ open, onOpenChange, part }: { open: boolean; onOp
                 <Label className="text-xs">Опис</Label>
                 <Textarea value={form.description} onChange={(e) => update('description', e.target.value)} rows={2} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Категорія</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Категорія</Label>
+                {!addingCategory ? (
                   <div className="flex gap-1">
                     <Select value={form.category || '_none'} onValueChange={(v) => update('category', v === '_none' ? '' : v)}>
                       <SelectTrigger><SelectValue placeholder="Не вказано" /></SelectTrigger>
@@ -421,36 +421,44 @@ function SparePartEditDialog({ open, onOpenChange, part }: { open: boolean; onOp
                         ))}
                       </SelectContent>
                     </Select>
-                    {!addingCategory ? (
-                      <Button type="button" variant="outline" size="icon" className="shrink-0" onClick={() => setAddingCategory(true)}>
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    ) : (
-                      <div className="flex gap-1">
-                        <Input
-                          value={newCategoryName}
-                          onChange={(e) => setNewCategoryName(e.target.value)}
-                          placeholder="Назва"
-                          className="w-28"
-                          autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              if (newCategoryName.trim()) {
-                                createCategory.mutate({ name: newCategoryName.trim() }, {
-                                  onSuccess: () => { setAddingCategory(false); setNewCategoryName('') }
-                                })
-                              }
-                            }
-                          }}
-                        />
-                        <Button type="button" variant="outline" size="icon" className="shrink-0" onClick={() => { setAddingCategory(false); setNewCategoryName('') }}>
-                          ✕
-                        </Button>
-                      </div>
-                    )}
+                    <Button type="button" variant="outline" size="icon" className="shrink-0" onClick={() => setAddingCategory(true)}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex gap-1">
+                    <Input
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="Назва нової категорії"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          if (newCategoryName.trim()) {
+                            createCategory.mutate({ name: newCategoryName.trim() }, {
+                              onSuccess: () => { setAddingCategory(false); setNewCategoryName('') }
+                            })
+                          }
+                        }
+                        if (e.key === 'Escape') { setAddingCategory(false); setNewCategoryName('') }
+                      }}
+                    />
+                    <Button type="button" variant="outline" size="sm" className="shrink-0" disabled={createCategory.isPending || !newCategoryName.trim()} onClick={() => {
+                      if (newCategoryName.trim()) {
+                        createCategory.mutate({ name: newCategoryName.trim() }, {
+                          onSuccess: () => { setAddingCategory(false); setNewCategoryName('') }
+                        })
+                      }
+                    }}>
+                      {createCategory.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Додати'}
+                    </Button>
+                    <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={() => { setAddingCategory(false); setNewCategoryName('') }}>
+                      ✕
+                    </Button>
+                  </div>
+                )}
+              </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Постачальник</Label>
                 <Select value={form.primary_supplier || '_none'} onValueChange={(v) => update('primary_supplier', v === '_none' ? '' : v)}>
@@ -462,7 +470,6 @@ function SparePartEditDialog({ open, onOpenChange, part }: { open: boolean; onOp
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
               </div>
             </TabsContent>
 
