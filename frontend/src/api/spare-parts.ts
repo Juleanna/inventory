@@ -48,7 +48,7 @@ export const sparePartsApi = {
     apiClient.get<PurchaseOrder>(`/purchase-orders/${id}/`),
 
   createOrder: (data: Partial<PurchaseOrder>) =>
-    apiClient.post<PurchaseOrder>('/spare-parts/create-purchase-order/', data),
+    apiClient.post<PurchaseOrder>('/spare-parts/create-order/', data),
 
   updateOrder: (id: number, data: Partial<PurchaseOrder>) =>
     apiClient.patch<PurchaseOrder>(`/purchase-orders/${id}/`, data),
