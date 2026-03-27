@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { useSparePartsList, useCreateSparePart, useStorageLocations, useCreateStorageLocation } from '@/hooks/use-spare-parts'
+import { useSparePartsList, useCreateSparePart, useUpdateSparePart, useDeleteSparePart, useStorageLocations, useCreateStorageLocation } from '@/hooks/use-spare-parts'
 import { useDebounce } from '@/hooks/use-debounce'
 import { PageHeader } from '@/components/shared/page-header'
 import { SearchInput } from '@/components/shared/search-input'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { EmptyState } from '@/components/shared/empty-state'
+import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { ListPagination } from '@/components/shared/list-pagination'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -22,7 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MovementsTable } from '@/components/spare-parts/movements-table'
 import { SparePartsAnalyticsSection } from '@/components/spare-parts/analytics-section'
 import { Card, CardContent } from '@/components/ui/card'
-import { Package, Truck, ShoppingCart, Plus, Loader2, Download, AlertTriangle } from 'lucide-react'
+import { Package, Truck, ShoppingCart, Plus, Loader2, Download, AlertTriangle, Pencil, Trash2 } from 'lucide-react'
 import { useColumnVisibility } from '@/hooks/use-column-visibility'
 import { ColumnVisibility } from '@/components/shared/column-visibility'
 import { SPARE_PART_CONDITION_LABELS, ITEM_TYPE_LABELS } from '@/lib/constants'
@@ -58,6 +59,8 @@ export default function SparePartsListPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [showCreate, setShowCreate] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const deletePart = useDeleteSparePart()
   const [stockFilter, setStockFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const debouncedSearch = useDebounce(search)
@@ -198,6 +201,7 @@ export default function SparePartsListPage() {
                   {isColumnVisible('quantity') && <TableHead>Кількість</TableHead>}
                   {isColumnVisible('price') && <TableHead>Ціна</TableHead>}
                   {isColumnVisible('location') && <TableHead>Місце</TableHead>}
+                  <TableHead className="w-20">Дії</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -231,6 +235,16 @@ export default function SparePartsListPage() {
                     {isColumnVisible('location') && <TableCell className="text-sm text-muted-foreground">
                       {part.storage_name || part.storage_location}
                     </TableCell>}
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" className="h-8 w-8" asChild>
+                          <Link to={`/spare-parts/${part.id}`}><Pencil className="h-4 w-4" /></Link>
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(part.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -253,6 +267,21 @@ export default function SparePartsListPage() {
       </Tabs>
 
       <CreateSparePartDialog open={showCreate} onOpenChange={setShowCreate} />
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={() => setDeleteId(null)}
+        title="Видалити товар?"
+        description="Ви впевнені, що хочете видалити цей товар? Цю дію неможливо скасувати."
+        confirmLabel="Видалити"
+        variant="destructive"
+        onConfirm={() => {
+          if (deleteId) {
+            deletePart.mutate(deleteId)
+            setDeleteId(null)
+          }
+        }}
+      />
     </div>
   )
 }
