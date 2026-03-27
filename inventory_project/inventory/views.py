@@ -1235,6 +1235,8 @@ class ExportView(APIView):
             self._create_peripherals_excel(workbook)
         elif report_type == "spare_parts":
             self._create_spare_parts_excel(workbook)
+        elif report_type == "licenses":
+            self._create_licenses_excel(workbook)
 
         workbook.close()
         output.seek(0)
@@ -1486,6 +1488,62 @@ class ExportView(APIView):
         for col in range(11):
             worksheet.set_column(col, col, 18)
 
+    def _create_licenses_excel(self, workbook):
+        """Створити звіт ліцензій в Excel"""
+        worksheet = workbook.add_worksheet("Ліцензії")
+        headers = ["Тип", "Ключ", "Активацій", "Початок", "Кінець", "Вартість", "Програми"]
+        header_format = workbook.add_format({"bold": True, "bg_color": "#D7E4BC", "border": 1})
+        for col, header in enumerate(headers):
+            worksheet.write(0, col, header, header_format)
+
+        licenses = License.objects.prefetch_related("licensed_software").all()
+        for row, lic in enumerate(licenses, 1):
+            worksheet.write(row, 0, lic.get_license_type_display())
+            worksheet.write(row, 1, lic.key or "")
+            worksheet.write(row, 2, lic.activations)
+            worksheet.write(row, 3, str(lic.start_date) if lic.start_date else "")
+            worksheet.write(row, 4, str(lic.end_date) if lic.end_date else "")
+            worksheet.write(row, 5, float(lic.cost) if lic.cost else 0)
+            programs = ", ".join(s.name for s in lic.licensed_software.all())
+            worksheet.write(row, 6, programs)
+
+        for col in range(7):
+            worksheet.set_column(col, col, 20)
+
+    def _create_licenses_pdf_elements(self, styles, font_name, font_bold):
+        """Створити PDF для ліцензій"""
+        elements = []
+        title = Paragraph("Ліцензії", styles["CyrTitle"])
+        elements.append(title)
+
+        licenses = License.objects.prefetch_related("licensed_software").all()
+        table_data = [["Тип", "Ключ", "Початок", "Кінець", "Вартість", "Програми"]]
+        for lic in licenses[:100]:
+            programs = ", ".join(s.name for s in lic.licensed_software.all())
+            table_data.append([
+                lic.get_license_type_display()[:20],
+                (lic.key or "")[:20],
+                str(lic.start_date) if lic.start_date else "—",
+                str(lic.end_date) if lic.end_date else "—",
+                f"{float(lic.cost):.2f}" if lic.cost else "—",
+                programs[:40],
+            ])
+
+        table = Table(table_data, colWidths=[80, 80, 60, 60, 55, 140])
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4472C4")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+            ("FONTNAME", (0, 0), (-1, 0), font_bold),
+            ("FONTNAME", (0, 1), (-1, -1), font_name),
+            ("FONTSIZE", (0, 0), (-1, 0), 9),
+            ("FONTSIZE", (0, 1), (-1, -1), 8),
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F2F2F2")]),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ]))
+        elements.append(table)
+        return elements
+
     @staticmethod
     def _register_cyrillic_font():
         """Реєструє шрифт з підтримкою кирилиці"""
@@ -1549,6 +1607,8 @@ class ExportView(APIView):
             elements = self._create_peripherals_pdf_elements(styles, font_name, font_bold)
         elif report_type == "spare_parts":
             elements = self._create_spare_parts_pdf_elements(styles, font_name, font_bold)
+        elif report_type == "licenses":
+            elements = self._create_licenses_pdf_elements(styles, font_name, font_bold)
 
         doc.build(elements)
         buffer.seek(0)

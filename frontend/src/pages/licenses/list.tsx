@@ -24,7 +24,10 @@ import {
 } from '@/components/ui/table'
 import { useColumnVisibility } from '@/hooks/use-column-visibility'
 import { ColumnVisibility } from '@/components/shared/column-visibility'
-import { FileKey, Plus, Trash2, Pencil, Loader2, Download, X } from 'lucide-react'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { FileKey, Plus, Trash2, Pencil, Loader2, Download, X, FileSpreadsheet, FileText } from 'lucide-react'
 import type { License } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -82,27 +85,24 @@ function formatLicenseType(lic: License) {
   return label
 }
 
-function exportLicensesCsv(licenses: License[]) {
-  const BOM = '\uFEFF'
-  const headers = ['Тип ліцензії', 'Ключ', 'Активацій', 'Початок', 'Кінець', 'Програма', 'Вартість', 'Статус']
-  const rows = licenses.map((lic) => [
-    formatLicenseType(lic),
-    lic.key || '',
-    String(lic.activations),
-    lic.start_date ? new Date(lic.start_date).toLocaleDateString('uk-UA') : '',
-    lic.end_date ? new Date(lic.end_date).toLocaleDateString('uk-UA') : '',
-    lic.software_list?.map((s) => `${s.name} ${s.version}`).join('; ') || '',
-    lic.cost || '',
-    getLicenseStatus(lic),
-  ])
-  const csv = BOM + [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'licenses.csv'
-  a.click()
-  URL.revokeObjectURL(url)
+async function exportLicenses(format: 'excel' | 'pdf') {
+  try {
+    const { default: apiClient } = await import('@/api/client')
+    const response = await apiClient.get('/export/', {
+      params: { export_format: format, type: 'licenses' },
+      responseType: 'blob',
+    })
+    const ext = format === 'excel' ? 'xlsx' : 'pdf'
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `licenses.${ext}`
+    link.click()
+    window.URL.revokeObjectURL(url)
+  } catch {
+    const { toast } = await import('sonner')
+    toast.error('Помилка експорту')
+  }
 }
 
 export default function LicensesListPage() {
@@ -146,10 +146,24 @@ export default function LicensesListPage() {
         actions={
           <div className="flex gap-2">
             {data?.results && data.results.length > 0 && (
-              <Button variant="outline" size="sm" onClick={() => exportLicensesCsv(data.results)}>
-                <Download className="mr-2 h-4 w-4" />
-                CSV
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    Експорт
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => exportLicenses('excel')}>
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportLicenses('pdf')}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
             <ColumnVisibility allColumns={allColumns} isColumnVisible={isColumnVisible} toggleColumn={toggleColumn} disabledColumns={['type']} />
             <Button onClick={() => setShowCreate(true)}>
