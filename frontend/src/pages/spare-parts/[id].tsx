@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useSparePart, useSparePartMovements, useIssueSparePart, useUpdateSparePart, useSuppliersList, useSparePartCategories, useStorageLocations, useCreateStorageLocation } from '@/hooks/use-spare-parts'
+import { useSparePart, useSparePartMovements, useIssueSparePart, useUpdateSparePart, useSuppliersList, useSparePartCategories, useCreateSparePartCategory, useStorageLocations, useCreateStorageLocation } from '@/hooks/use-spare-parts'
 import { useEquipmentList } from '@/hooks/use-equipment'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { PageHeader } from '@/components/shared/page-header'
@@ -306,6 +306,9 @@ function SparePartEditDialog({ open, onOpenChange, part }: { open: boolean; onOp
   const updatePart = useUpdateSparePart()
   const { data: suppliersData } = useSuppliersList({ page_size: 500 })
   const { data: categoriesData } = useSparePartCategories()
+  const createCategory = useCreateSparePartCategory()
+  const [addingCategory, setAddingCategory] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
 
   const buildForm = (p: SparePart) => ({
     name: p.name || '',
@@ -408,15 +411,45 @@ function SparePartEditDialog({ open, onOpenChange, part }: { open: boolean; onOp
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Категорія</Label>
-                  <Select value={form.category || '_none'} onValueChange={(v) => update('category', v === '_none' ? '' : v)}>
-                    <SelectTrigger><SelectValue placeholder="Не вказано" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">Не вказано</SelectItem>
-                      {categoriesData?.results?.map((c) => (
-                        <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-1">
+                    <Select value={form.category || '_none'} onValueChange={(v) => update('category', v === '_none' ? '' : v)}>
+                      <SelectTrigger><SelectValue placeholder="Не вказано" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none">Не вказано</SelectItem>
+                        {categoriesData?.results?.map((c) => (
+                          <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!addingCategory ? (
+                      <Button type="button" variant="outline" size="icon" className="shrink-0" onClick={() => setAddingCategory(true)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <div className="flex gap-1">
+                        <Input
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          placeholder="Назва"
+                          className="w-28"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              if (newCategoryName.trim()) {
+                                createCategory.mutate({ name: newCategoryName.trim() }, {
+                                  onSuccess: () => { setAddingCategory(false); setNewCategoryName('') }
+                                })
+                              }
+                            }
+                          }}
+                        />
+                        <Button type="button" variant="outline" size="icon" className="shrink-0" onClick={() => { setAddingCategory(false); setNewCategoryName('') }}>
+                          ✕
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Постачальник</Label>

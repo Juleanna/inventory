@@ -72,6 +72,24 @@ export function useSparePartCategories() {
   })
 }
 
+export function useCreateSparePartCategory() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { name: string; description?: string }) =>
+      sparePartsApi.listCategories().then(() =>
+        import('@/api/client').then(m => m.default.post('/spare-part-categories/', data))
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['spare-part-categories'] })
+      toast.success('Категорію додано')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка додавання категорії'))
+    },
+  })
+}
+
 export function useSparePart(id: string) {
   return useQuery({
     queryKey: ['spare-parts', id],
