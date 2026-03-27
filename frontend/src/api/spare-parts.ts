@@ -53,6 +53,9 @@ export const sparePartsApi = {
   updateOrder: (id: number | string, data: Partial<PurchaseOrder>) =>
     apiClient.patch<PurchaseOrder>(`/purchase-orders/${id}/`, data),
 
+  deleteOrder: (id: number | string) =>
+    apiClient.delete(`/purchase-orders/${id}/`),
+
   listStorageLocations: () =>
     apiClient.get<PaginatedResponse<{ id: number; name: string; description: string; is_active: boolean }>>('/storage-locations/'),
 

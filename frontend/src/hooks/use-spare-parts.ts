@@ -163,6 +163,21 @@ export function useCreatePurchaseOrder() {
   })
 }
 
+export function useDeletePurchaseOrder() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number | string) => sparePartsApi.deleteOrder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] })
+      toast.success('Замовлення видалено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка видалення замовлення'))
+    },
+  })
+}
+
 export function useUpdatePurchaseOrder() {
   const queryClient = useQueryClient()
 

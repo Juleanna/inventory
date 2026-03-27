@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useColumnVisibility } from '@/hooks/use-column-visibility'
 import { ColumnVisibility } from '@/components/shared/column-visibility'
-import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePurchaseOrder, useSuppliersList, useSparePartsList, useCounterpartiesList } from '@/hooks/use-spare-parts'
+import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePurchaseOrder, useDeletePurchaseOrder, useSuppliersList, useSparePartsList, useCounterpartiesList } from '@/hooks/use-spare-parts'
 import { PageHeader } from '@/components/shared/page-header'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { EmptyState } from '@/components/shared/empty-state'
+import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -62,6 +63,8 @@ export default function OrdersPage() {
     status: status || undefined,
   })
   const updateOrder = useUpdatePurchaseOrder()
+  const deleteOrder = useDeletePurchaseOrder()
+  const [deleteId, setDeleteId] = useState<string | null>(null)
   const totalPages = data ? Math.ceil(data.count / 25) : 0
 
   const handleStatusChange = (orderId: string, newStatus: string) => {
@@ -161,6 +164,9 @@ export default function OrdersPage() {
                               {ORDER_STATUS_LABELS[nextStatuses[0]]}
                             </Button>
                           )}
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(order.id)} title="Видалити">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -324,6 +330,21 @@ export default function OrdersPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={() => setDeleteId(null)}
+        title="Видалити замовлення?"
+        description="Ви впевнені, що хочете видалити це замовлення? Цю дію неможливо скасувати."
+        confirmLabel="Видалити"
+        variant="destructive"
+        onConfirm={() => {
+          if (deleteId) {
+            deleteOrder.mutate(deleteId)
+            setDeleteId(null)
+          }
+        }}
+      />
     </div>
   )
 }
