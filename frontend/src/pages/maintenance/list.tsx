@@ -320,7 +320,9 @@ export default function MaintenanceListPage() {
                       </Badge>
                     </TableCell>}
                     {isColumnVisible('date') && <TableCell className="text-sm text-muted-foreground">
-                      {request.scheduled_date || new Date(request.created_at).toLocaleDateString('uk-UA')}
+                      {request.scheduled_date
+                        ? new Date(request.scheduled_date).toLocaleDateString('uk-UA')
+                        : new Date(request.created_at).toLocaleDateString('uk-UA')}
                     </TableCell>}
                     <TableCell>
                       <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
