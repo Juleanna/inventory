@@ -119,7 +119,7 @@ export function useTechnicians() {
 export function useMaintenanceDashboard() {
   return useQuery({
     queryKey: ['maintenance', 'dashboard'],
-    queryFn: () => maintenanceApi.getDashboard().then((r) => r.data),
+    queryFn: () => maintenanceApi.getDashboard().then((r) => r.data?.data || r.data),
   })
 }
 
