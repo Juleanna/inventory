@@ -65,6 +65,13 @@ export function useCreateMovement() {
   })
 }
 
+export function useSparePartCategories() {
+  return useQuery({
+    queryKey: ['spare-part-categories'],
+    queryFn: () => sparePartsApi.listCategories().then((r) => r.data),
+  })
+}
+
 export function useSparePart(id: string) {
   return useQuery({
     queryKey: ['spare-parts', id],
