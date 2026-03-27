@@ -266,8 +266,8 @@ export default function SupplierDetailPage() {
                         <th className="pb-2 font-medium">Назва</th>
                         <th className="pb-2 font-medium">Артикул</th>
                         <th className="pb-2 font-medium text-right">Ціна</th>
-                        <th className="pb-2 font-medium text-right">В наявності</th>
-                        <th className="pb-2 font-medium">Статус</th>
+                        <th className="pb-2 font-medium text-right whitespace-nowrap px-3">В наявності</th>
+                        <th className="pb-2 font-medium whitespace-nowrap px-3">Статус</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -287,10 +287,10 @@ export default function SupplierDetailPage() {
                           <td className="py-2.5 text-right font-mono">
                             {part.unit_cost ? `${parseFloat(part.unit_cost).toLocaleString('uk-UA')} грн` : '—'}
                           </td>
-                          <td className="py-2.5 text-right font-mono">
+                          <td className="py-2.5 text-right font-mono px-3">
                             {part.quantity_in_stock}
                           </td>
-                          <td className="py-2.5">
+                          <td className="py-2.5 px-3">
                             <Badge
                               variant="secondary"
                               className={
