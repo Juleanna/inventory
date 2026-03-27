@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ArrowLeft, Package, TrendingDown, TrendingUp, Pencil, Loader2, Plus } from 'lucide-react'
+import { ArrowLeft, Package, TrendingDown, TrendingUp, Pencil, Loader2, Plus, Shuffle } from 'lucide-react'
 import { SPARE_PART_CONDITION_LABELS, SPARE_PART_STATUS_LABELS, ITEM_TYPE_LABELS } from '@/lib/constants'
 import { useState, useEffect } from 'react'
 import type { SparePart } from '@/types'
@@ -530,7 +530,20 @@ function SparePartEditDialog({ open, onOpenChange, part }: { open: boolean; onOp
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Штрих-код</Label>
-                  <Input value={form.barcode} onChange={(e) => update('barcode', e.target.value)} />
+                  <div className="flex gap-1">
+                    <Input value={form.barcode} onChange={(e) => update('barcode', e.target.value)} className="flex-1 font-mono" />
+                    <Button type="button" variant="outline" size="icon" className="shrink-0" title="Згенерувати" onClick={() => {
+                      const prefix = '200'
+                      const random = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10)).join('')
+                      const code = prefix + random
+                      const digits = code.split('').map(Number)
+                      const sum = digits.reduce((acc, d, i) => acc + d * (i % 2 === 0 ? 1 : 3), 0)
+                      const check = (10 - (sum % 10)) % 10
+                      update('barcode', code + check)
+                    }}>
+                      <Shuffle className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div className="space-y-1.5">
