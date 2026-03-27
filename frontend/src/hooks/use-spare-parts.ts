@@ -68,7 +68,7 @@ export function useCreateMovement() {
 export function useSparePart(id: string) {
   return useQuery({
     queryKey: ['spare-parts', id],
-    queryFn: () => sparePartsApi.getPart(Number(id)).then((r) => r.data),
+    queryFn: () => sparePartsApi.getPart(id).then((r) => r.data),
     enabled: !!id,
   })
 }

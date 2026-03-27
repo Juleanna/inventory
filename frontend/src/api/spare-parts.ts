@@ -5,13 +5,13 @@ export const sparePartsApi = {
   listParts: (params?: { page?: number; page_size?: number; search?: string; category?: number; primary_supplier?: number; item_type?: string }) =>
     apiClient.get<PaginatedResponse<SparePart>>('/spare-parts/', { params }),
 
-  getPart: (id: number) =>
+  getPart: (id: number | string) =>
     apiClient.get<SparePart>(`/spare-parts/${id}/`),
 
   createPart: (data: Partial<SparePart>) =>
     apiClient.post<SparePart>('/spare-parts/', data),
 
-  updatePart: (id: number, data: Partial<SparePart>) =>
+  updatePart: (id: number | string, data: Partial<SparePart>) =>
     apiClient.patch<SparePart>(`/spare-parts/${id}/`, data),
 
   deletePart: (id: number | string) =>
