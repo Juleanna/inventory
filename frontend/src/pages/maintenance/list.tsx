@@ -14,6 +14,7 @@ import {
   useMaintenanceSchedules,
 } from '@/hooks/use-maintenance'
 import { useEquipmentList } from '@/hooks/use-equipment'
+import { useSparePartsList } from '@/hooks/use-spare-parts'
 import { PageHeader } from '@/components/shared/page-header'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
@@ -506,6 +507,7 @@ export default function MaintenanceListPage() {
 function CreateMaintenanceDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const createRequest = useCreateMaintenanceRequest()
   const { data: equipmentData } = useEquipmentList({ page_size: 200 })
+  const { data: partsData } = useSparePartsList({ page_size: 500 })
 
   const [form, setForm] = useState({
     equipment_id: '',
@@ -632,7 +634,34 @@ function CreateMaintenanceDialog({ open, onOpenChange }: { open: boolean; onOpen
               </div>
               <div className="space-y-1.5">
                 <Label>Необхідні запчастини</Label>
-                <Input value={form.parts_needed} onChange={(e) => update('parts_needed', e.target.value)} placeholder="Перелік запчастин..." />
+                <Select value="_trigger" onValueChange={(v) => {
+                  if (v === '_trigger') return
+                  const current = form.parts_needed ? form.parts_needed.split(', ').filter(Boolean) : []
+                  const part = partsData?.results?.find(p => String(p.id) === v)
+                  if (part && !current.includes(part.name)) {
+                    update('parts_needed', [...current, part.name].join(', '))
+                  }
+                }}>
+                  <SelectTrigger><SelectValue placeholder={form.parts_needed || 'Оберіть запчастини...'} /></SelectTrigger>
+                  <SelectContent>
+                    {partsData?.results?.map(p => (
+                      <SelectItem key={p.id} value={String(p.id)}>{p.name} ({p.part_number})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.parts_needed && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {form.parts_needed.split(', ').map((name, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs gap-1">
+                        {name}
+                        <X className="h-3 w-3 cursor-pointer" onClick={() => {
+                          const parts = form.parts_needed.split(', ').filter((_, idx) => idx !== i)
+                          update('parts_needed', parts.join(', '))
+                        }} />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -675,6 +704,7 @@ function EditMaintenanceDialog({
   onSave: (data: Record<string, unknown>) => void
   isPending: boolean
 }) {
+  const { data: partsData } = useSparePartsList({ page_size: 500 })
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -802,7 +832,34 @@ function EditMaintenanceDialog({
           </div>
           <div className="space-y-2">
             <Label>Запчастини</Label>
-            <Input value={form.parts_needed} onChange={(e) => update('parts_needed', e.target.value)} />
+            <Select value="_trigger" onValueChange={(v) => {
+              if (v === '_trigger') return
+              const current = form.parts_needed ? form.parts_needed.split(', ').filter(Boolean) : []
+              const part = partsData?.results?.find(p => String(p.id) === v)
+              if (part && !current.includes(part.name)) {
+                update('parts_needed', [...current, part.name].join(', '))
+              }
+            }}>
+              <SelectTrigger><SelectValue placeholder={form.parts_needed || 'Оберіть запчастини...'} /></SelectTrigger>
+              <SelectContent>
+                {partsData?.results?.map(p => (
+                  <SelectItem key={p.id} value={String(p.id)}>{p.name} ({p.part_number})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.parts_needed && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {form.parts_needed.split(', ').map((name, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs gap-1">
+                    {name}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => {
+                      const parts = form.parts_needed.split(', ').filter((_, idx) => idx !== i)
+                      update('parts_needed', parts.join(', '))
+                    }} />
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Checkbox
