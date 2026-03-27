@@ -405,8 +405,11 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
     supplier: '',
     counterparty_id: '',
     expected_delivery_date: '',
+    actual_delivery_date: '',
     delivery_method: '',
     tracking_number: '',
+    shipping_cost: '',
+    tax_amount: '',
     notes: '',
   })
   const [items, setItems] = useState<OrderItem[]>([])
@@ -479,8 +482,11 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
         supplier: Number(form.supplier),
         counterparty_id: form.counterparty_id ? Number(form.counterparty_id) : undefined,
         expected_delivery_date: form.expected_delivery_date || undefined,
+        actual_delivery_date: form.actual_delivery_date || undefined,
         delivery_method: form.delivery_method || undefined,
         tracking_number: form.tracking_number || undefined,
+        shipping_cost: form.shipping_cost || undefined,
+        tax_amount: form.tax_amount || undefined,
         notes: form.notes || undefined,
         items: items.map((i) => ({
           item_type: i.item_type,
@@ -494,7 +500,7 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
       {
         onSuccess: () => {
           onOpenChange(false)
-          setForm({ supplier: '', counterparty_id: '', expected_delivery_date: '', delivery_method: '', tracking_number: '', notes: '' })
+          setForm({ supplier: '', counterparty_id: '', expected_delivery_date: '', actual_delivery_date: '', delivery_method: '', tracking_number: '', shipping_cost: '', tax_amount: '', notes: '' })
           setItems([])
         },
       }
@@ -535,15 +541,23 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
             </div>
           </div>
 
-          {/* Expected date + Delivery method */}
+          {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Очікувана дата доставки</Label>
+              <Label>Очікувана доставка</Label>
               <Input type="date" value={form.expected_delivery_date} onChange={(e) => update('expected_delivery_date', e.target.value)} />
             </div>
             <div className="space-y-2">
+              <Label>Фактична доставка</Label>
+              <Input type="date" value={form.actual_delivery_date} onChange={(e) => update('actual_delivery_date', e.target.value)} />
+            </div>
+          </div>
+
+          {/* Delivery method + Tracking */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label>Спосіб доставки</Label>
-              <Select value={form.delivery_method} onValueChange={(v) => update('delivery_method', v === '_none' ? '' : v)}>
+              <Select value={form.delivery_method || '_none'} onValueChange={(v) => update('delivery_method', v === '_none' ? '' : v)}>
                 <SelectTrigger><SelectValue placeholder="Оберіть" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="_none">— Не вказано —</SelectItem>
@@ -553,12 +567,22 @@ function CreateOrderDialog({ open, onOpenChange }: { open: boolean; onOpenChange
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>ТТН / Трекінг</Label>
+              <Input value={form.tracking_number} onChange={(e) => update('tracking_number', e.target.value)} placeholder="20450..." />
+            </div>
           </div>
 
-          {/* Tracking number */}
-          <div className="space-y-2">
-            <Label>ТТН / Трекінг номер</Label>
-            <Input value={form.tracking_number} onChange={(e) => update('tracking_number', e.target.value)} placeholder="20450..." />
+          {/* Costs */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Доставка (грн)</Label>
+              <Input type="number" step="0.01" value={form.shipping_cost} onChange={(e) => update('shipping_cost', e.target.value)} placeholder="0.00" />
+            </div>
+            <div className="space-y-2">
+              <Label>Податок (грн)</Label>
+              <Input type="number" step="0.01" value={form.tax_amount} onChange={(e) => update('tax_amount', e.target.value)} placeholder="0.00" />
+            </div>
           </div>
 
           <Separator />
