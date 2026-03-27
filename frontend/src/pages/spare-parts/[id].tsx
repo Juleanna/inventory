@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useSparePart, useSparePartMovements, useIssueSparePart, useUpdateSparePart, useStorageLocations, useCreateStorageLocation } from '@/hooks/use-spare-parts'
+import { useSparePart, useSparePartMovements, useIssueSparePart, useUpdateSparePart, useSuppliersList, useStorageLocations, useCreateStorageLocation } from '@/hooks/use-spare-parts'
 import { LoadingSpinner } from '@/components/shared/loading-spinner'
 import { PageHeader } from '@/components/shared/page-header'
 import { Button } from '@/components/ui/button'
@@ -12,9 +12,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import { ArrowLeft, Package, TrendingDown, TrendingUp, Pencil, Loader2, Plus } from 'lucide-react'
-import { SPARE_PART_CONDITION_LABELS, SPARE_PART_STATUS_LABELS } from '@/lib/constants'
-import { useState } from 'react'
+import { SPARE_PART_CONDITION_LABELS, SPARE_PART_STATUS_LABELS, ITEM_TYPE_LABELS } from '@/lib/constants'
+import { useState, useEffect } from 'react'
 import type { SparePart } from '@/types'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -284,76 +287,193 @@ export default function SparePartDetailPage() {
 
 function SparePartEditDialog({ open, onOpenChange, part }: { open: boolean; onOpenChange: (v: boolean) => void; part: SparePart }) {
   const updatePart = useUpdateSparePart()
-  const [form, setForm] = useState({
-    name: part.name,
-    part_number: part.part_number,
-    manufacturer: part.manufacturer,
-    minimum_stock_level: part.minimum_stock_level,
-    maximum_stock_level: part.maximum_stock_level,
-    reorder_point: part.reorder_point,
-    storage: part.storage ? String(part.storage) : '',
-    notes: part.notes,
+  const { data: suppliersData } = useSuppliersList({ page_size: 500 })
+
+  const buildForm = (p: SparePart) => ({
+    name: p.name || '',
+    part_number: p.part_number || '',
+    manufacturer_part_number: p.manufacturer_part_number || '',
+    manufacturer: p.manufacturer || '',
+    description: p.description || '',
+    item_type: p.item_type || 'SPARE_PART',
+    condition: p.condition || 'NEW',
+    unit_cost: p.unit_cost || '0',
+    unit_price: p.unit_price || '0',
+    minimum_stock_level: p.minimum_stock_level,
+    maximum_stock_level: p.maximum_stock_level,
+    reorder_point: p.reorder_point,
+    primary_supplier: p.primary_supplier ? String(p.primary_supplier) : '',
+    storage: p.storage ? String(p.storage) : '',
+    weight: p.weight || '',
+    dimensions: p.dimensions || '',
+    barcode: p.barcode || '',
+    warranty_period_days: p.warranty_period_days,
+    is_critical: p.is_critical,
+    notes: p.notes || '',
   })
 
-  const update = (field: string, value: string | number) =>
+  const [form, setForm] = useState(() => buildForm(part))
+
+  useEffect(() => {
+    if (open) setForm(buildForm(part))
+  }, [open, part])
+
+  const update = (field: string, value: string | number | boolean) =>
     setForm((prev) => ({ ...prev, [field]: value }))
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const payload = {
+    const payload: Record<string, unknown> = {
       ...form,
+      primary_supplier: form.primary_supplier ? Number(form.primary_supplier) : null,
       storage: form.storage ? Number(form.storage) : null,
+      weight: form.weight || null,
     }
     updatePart.mutate(
-      { id: part.id, data: payload },
+      { id: part.id, data: payload as Partial<SparePart> },
       { onSuccess: () => onOpenChange(false) }
     )
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Редагувати запчастину</DialogTitle>
+          <DialogTitle>Редагувати товар</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Назва</Label>
-            <Input value={form.name} onChange={(e) => update('name', e.target.value)} required />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Артикул</Label>
-              <Input value={form.part_number} onChange={(e) => update('part_number', e.target.value)} required />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Виробник</Label>
-              <Input value={form.manufacturer} onChange={(e) => update('manufacturer', e.target.value)} />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Мін. запас</Label>
-              <Input type="number" value={form.minimum_stock_level} onChange={(e) => update('minimum_stock_level', Number(e.target.value))} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Макс. запас</Label>
-              <Input type="number" value={form.maximum_stock_level} onChange={(e) => update('maximum_stock_level', Number(e.target.value))} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Точка замовл.</Label>
-              <Input type="number" value={form.reorder_point} onChange={(e) => update('reorder_point', Number(e.target.value))} />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Місце зберігання</Label>
-            <StorageLocationSelect value={form.storage} onChange={(v) => update('storage', v)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Примітки</Label>
-            <Input value={form.notes} onChange={(e) => update('notes', e.target.value)} />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
+        <form onSubmit={handleSubmit}>
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="basic">Основне</TabsTrigger>
+              <TabsTrigger value="stock">Склад і фінанси</TabsTrigger>
+              <TabsTrigger value="tech">Характеристики</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="basic" className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Назва *</Label>
+                <Input value={form.name} onChange={(e) => update('name', e.target.value)} required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Артикул *</Label>
+                  <Input value={form.part_number} onChange={(e) => update('part_number', e.target.value)} required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Артикул виробника</Label>
+                  <Input value={form.manufacturer_part_number} onChange={(e) => update('manufacturer_part_number', e.target.value)} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Виробник</Label>
+                  <Input value={form.manufacturer} onChange={(e) => update('manufacturer', e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Тип</Label>
+                  <Select value={form.item_type} onValueChange={(v) => update('item_type', v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(ITEM_TYPE_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Опис</Label>
+                <Textarea value={form.description} onChange={(e) => update('description', e.target.value)} rows={2} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Постачальник</Label>
+                <Select value={form.primary_supplier || '_none'} onValueChange={(v) => update('primary_supplier', v === '_none' ? '' : v)}>
+                  <SelectTrigger><SelectValue placeholder="Не вказано" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">Не вказано</SelectItem>
+                    {suppliersData?.results?.map((s) => (
+                      <SelectItem key={s.id} value={String(s.id)}>{s.short_name || s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="stock" className="space-y-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Мін. запас</Label>
+                  <Input type="number" value={form.minimum_stock_level} onChange={(e) => update('minimum_stock_level', Number(e.target.value))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Макс. запас</Label>
+                  <Input type="number" value={form.maximum_stock_level} onChange={(e) => update('maximum_stock_level', Number(e.target.value))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Замовити при залишку</Label>
+                  <Input type="number" value={form.reorder_point} onChange={(e) => update('reorder_point', Number(e.target.value))} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Місце зберігання</Label>
+                <StorageLocationSelect value={form.storage} onChange={(v) => update('storage', v)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Ціна продажу (грн)</Label>
+                  <Input type="number" step="0.01" value={form.unit_price} onChange={(e) => update('unit_price', e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Вартість (грн)</Label>
+                  <Input type="number" step="0.01" value={form.unit_cost} onChange={(e) => update('unit_cost', e.target.value)} />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="tech" className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Стан</Label>
+                  <Select value={form.condition} onValueChange={(v) => update('condition', v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(SPARE_PART_CONDITION_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Вага (кг)</Label>
+                  <Input type="number" step="0.001" value={form.weight} onChange={(e) => update('weight', e.target.value)} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Розміри</Label>
+                  <Input value={form.dimensions} onChange={(e) => update('dimensions', e.target.value)} placeholder="Д x Ш x В" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Штрих-код</Label>
+                  <Input value={form.barcode} onChange={(e) => update('barcode', e.target.value)} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Гарантія (днів)</Label>
+                <Input type="number" value={form.warranty_period_days} onChange={(e) => update('warranty_period_days', Number(e.target.value))} />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox checked={form.is_critical} onCheckedChange={(v) => update('is_critical', !!v)} />
+                <span className="text-sm">Критичний товар</span>
+              </label>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Примітки</Label>
+                <Textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={2} />
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Скасувати</Button>
             <Button type="submit" disabled={updatePart.isPending}>
               {updatePart.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
