@@ -199,7 +199,7 @@ export function useDeleteSparePart() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: number) => sparePartsApi.deletePart(id),
+    mutationFn: (id: number | string) => sparePartsApi.deletePart(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['spare-parts'] })
       toast.success('Запчастину видалено')

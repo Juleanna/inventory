@@ -14,7 +14,7 @@ export const sparePartsApi = {
   updatePart: (id: number, data: Partial<SparePart>) =>
     apiClient.patch<SparePart>(`/spare-parts/${id}/`, data),
 
-  deletePart: (id: number) =>
+  deletePart: (id: number | string) =>
     apiClient.delete(`/spare-parts/${id}/`),
 
   issuePart: (partId: number, data: { quantity: number; equipment_id?: number; notes?: string }) =>

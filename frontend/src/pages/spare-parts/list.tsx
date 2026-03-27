@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { useSparePartsList, useCreateSparePart, useUpdateSparePart, useDeleteSparePart, useStorageLocations, useCreateStorageLocation } from '@/hooks/use-spare-parts'
+import { useSparePartsList, useCreateSparePart, useDeleteSparePart, useStorageLocations, useCreateStorageLocation } from '@/hooks/use-spare-parts'
 import { useDebounce } from '@/hooks/use-debounce'
 import { PageHeader } from '@/components/shared/page-header'
 import { SearchInput } from '@/components/shared/search-input'
