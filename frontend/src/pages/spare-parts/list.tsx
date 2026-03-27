@@ -386,7 +386,7 @@ function CreateSparePartDialog({ open, onOpenChange }: { open: boolean; onOpenCh
                   <Input type="number" value={form.maximum_stock_level} onChange={(e) => update('maximum_stock_level', e.target.value)} placeholder="0" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Точка замовлення</Label>
+                  <Label>Замовити при залишку</Label>
                   <Input type="number" value={form.reorder_point} onChange={(e) => update('reorder_point', e.target.value)} placeholder="0" />
                 </div>
                 <div className="space-y-2 col-span-2">
