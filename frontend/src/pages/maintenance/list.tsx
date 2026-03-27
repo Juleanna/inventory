@@ -140,9 +140,14 @@ export default function MaintenanceListPage() {
     return data.results.filter((r) => r.priority === priority)
   }, [data, priority])
 
-  // Dashboard stats
+  // Dashboard stats - map backend keys to display
   const stats = useMemo(() => {
-    if (dashboard) return dashboard
+    if (dashboard) return {
+      pending: dashboard.pending_requests || 0,
+      in_progress: dashboard.in_progress || 0,
+      completed: dashboard.completed_this_week || 0,
+      urgent: dashboard.overdue || 0,
+    }
     if (!data?.results) return null
     const results = data.results
     return {
