@@ -9,6 +9,9 @@ export const maintenanceApi = {
   createRequest: (data: Record<string, unknown>) =>
     apiClient.post<MaintenanceRequest>('/maintenance/requests/', data),
 
+  updateRequest: (id: number | string, data: Record<string, unknown>) =>
+    apiClient.patch<MaintenanceRequest>(`/maintenance/requests/${id}/`, data),
+
   deleteRequest: (id: number | string) =>
     apiClient.delete(`/maintenance/requests/${id}/`),
 

@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
   useMaintenanceRequests,
   useCreateMaintenanceRequest,
+  useUpdateMaintenanceRequest,
   useDeleteMaintenanceRequest,
   useStartMaintenance,
   useCompleteMaintenance,
@@ -38,7 +39,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Wrench, Calendar, Play, CheckCircle, Plus, Loader2, UserPlus, Clock, AlertTriangle, X, Eye, RefreshCw, Trash2 } from 'lucide-react'
+import { Wrench, Calendar, Play, CheckCircle, Plus, Loader2, UserPlus, Clock, AlertTriangle, X, Eye, RefreshCw, Trash2, Pencil } from 'lucide-react'
 import { maintenanceApi } from '@/api/maintenance'
 import { toast } from 'sonner'
 import { useColumnVisibility } from '@/hooks/use-column-visibility'
@@ -95,7 +96,9 @@ export default function MaintenanceListPage() {
   const startMaintenance = useStartMaintenance()
   const completeMaintenance = useCompleteMaintenance()
   const deleteRequest = useDeleteMaintenanceRequest()
+  const updateRequest = useUpdateMaintenanceRequest()
   const assignTechnician = useAssignTechnician()
+  const [editRequest, setEditRequest] = useState<MaintenanceRequest | null>(null)
   const { data: technicians } = useTechnicians()
   const { data: dashboard } = useMaintenanceDashboard()
 
@@ -358,6 +361,9 @@ export default function MaintenanceListPage() {
                             <CheckCircle className="h-4 w-4" />
                           </Button>
                         )}
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditRequest(request)} title="Редагувати">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(request.id)} title="Видалити">
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -465,6 +471,18 @@ export default function MaintenanceListPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      <EditMaintenanceDialog
+        open={!!editRequest}
+        onOpenChange={(v) => { if (!v) setEditRequest(null) }}
+        request={editRequest}
+        onSave={(data) => {
+          if (editRequest) {
+            updateRequest.mutate({ id: editRequest.id, data }, { onSuccess: () => setEditRequest(null) })
+          }
+        }}
+        isPending={updateRequest.isPending}
+      />
 
       <ConfirmDialog
         open={deleteId !== null}
@@ -635,6 +653,171 @@ function CreateMaintenanceDialog({ open, onOpenChange }: { open: boolean; onOpen
             <Button type="submit" disabled={createRequest.isPending}>
               {createRequest.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Створити
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function EditMaintenanceDialog({
+  open,
+  onOpenChange,
+  request,
+  onSave,
+  isPending,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  request: MaintenanceRequest | null
+  onSave: (data: Record<string, unknown>) => void
+  isPending: boolean
+}) {
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    request_type: 'REPAIR',
+    priority: 'MEDIUM',
+    status: 'PENDING',
+    scheduled_date: '',
+    estimated_cost: '',
+    estimated_duration: '',
+    parts_needed: '',
+    downtime_required: false,
+    notes: '',
+  })
+
+  useEffect(() => {
+    if (open && request) {
+      setForm({
+        title: request.title || '',
+        description: request.description || '',
+        request_type: request.request_type || 'REPAIR',
+        priority: request.priority || 'MEDIUM',
+        status: request.status || 'PENDING',
+        scheduled_date: request.scheduled_date ? request.scheduled_date.slice(0, 10) : '',
+        estimated_cost: request.estimated_cost || '',
+        estimated_duration: (() => {
+          if (!request.estimated_duration) return ''
+          const parts = String(request.estimated_duration).split(':')
+          if (parts.length >= 2) return String(parseInt(parts[0]) + parseInt(parts[1]) / 60)
+          return request.estimated_duration
+        })(),
+        parts_needed: request.parts_needed || '',
+        downtime_required: request.downtime_required || false,
+        notes: request.notes || '',
+      })
+    }
+  }, [open, request])
+
+  const update = (field: string, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }))
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const data: Record<string, unknown> = {
+      title: form.title,
+      description: form.description,
+      request_type: form.request_type,
+      priority: form.priority,
+      status: form.status,
+      scheduled_date: form.scheduled_date || null,
+      notes: form.notes,
+      parts_needed: form.parts_needed,
+      downtime_required: form.downtime_required,
+    }
+    if (form.estimated_cost) data.estimated_cost = form.estimated_cost
+    if (form.estimated_duration) data.estimated_duration = `${form.estimated_duration}:00:00`
+    onSave(data)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Редагувати запит</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Назва *</Label>
+            <Input value={form.title} onChange={(e) => update('title', e.target.value)} required />
+          </div>
+          <div className="space-y-2">
+            <Label>Опис</Label>
+            <Textarea value={form.description} onChange={(e) => update('description', e.target.value)} rows={3} />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-2">
+              <Label>Тип</Label>
+              <Select value={form.request_type} onValueChange={(v) => update('request_type', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(REQUEST_TYPE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Пріоритет</Label>
+              <Select value={form.priority} onValueChange={(v) => update('priority', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="LOW">Низький</SelectItem>
+                  <SelectItem value="MEDIUM">Середній</SelectItem>
+                  <SelectItem value="HIGH">Високий</SelectItem>
+                  <SelectItem value="URGENT">Терміновий</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Статус</Label>
+              <Select value={form.status} onValueChange={(v) => update('status', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(MAINTENANCE_STATUS_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-2">
+              <Label>Дата</Label>
+              <Input type="date" value={form.scheduled_date} onChange={(e) => update('scheduled_date', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Вартість (грн)</Label>
+              <Input type="number" step="0.01" value={form.estimated_cost} onChange={(e) => update('estimated_cost', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Тривалість (год)</Label>
+              <Input type="number" step="0.5" value={form.estimated_duration} onChange={(e) => update('estimated_duration', e.target.value)} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Запчастини</Label>
+            <Input value={form.parts_needed} onChange={(e) => update('parts_needed', e.target.value)} />
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="edit-downtime"
+              checked={form.downtime_required}
+              onCheckedChange={(checked) => setForm(prev => ({...prev, downtime_required: !!checked}))}
+            />
+            <Label htmlFor="edit-downtime" className="cursor-pointer">Потрібна зупинка обладнання</Label>
+          </div>
+          <div className="space-y-2">
+            <Label>Примітки</Label>
+            <Textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={2} />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Скасувати</Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Зберегти
             </Button>
           </div>
         </form>

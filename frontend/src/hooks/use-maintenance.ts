@@ -78,6 +78,22 @@ export function useDeleteMaintenanceSchedule() {
   })
 }
 
+export function useUpdateMaintenanceRequest() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number | string; data: Record<string, unknown> }) =>
+      maintenanceApi.updateRequest(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] })
+      toast.success('Запит на обслуговування оновлено')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Помилка оновлення запиту'))
+    },
+  })
+}
+
 export function useDeleteMaintenanceRequest() {
   const queryClient = useQueryClient()
 
